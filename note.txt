@@ -1,5 +1,16 @@
 1. split a region
+  RPC CLIENT SIDE:
+  hbase-client/...
+  client/HBaseAdmin.java  2007    split() calls the ProtobufUtil.split()
+                                  method.
+  protobuf/ProtobufUtil.java
+                          1691    split() wraps the
+                                  AdminService.BlockingInterface.splitRegion()
+                                  RPC method.
+                          
 
+  RPC SERVER SIDE:
+  hbase-server/...
   RSRpcServices.java      683     The constructor exposes its own services
                                   to the rpcServer by calling getServices()
                                   on line 713.
