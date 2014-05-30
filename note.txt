@@ -1,0 +1,42 @@
+1. split a region
+
+  RSRpcServices.java      683     The constructor exposes its own services
+                                  to the rpcServer by calling getServices()
+                                  on line 713.
+  RSRpcServices.java      818     getServices() returns a list of all RPC
+                                  services provided by RSRpcServices including 
+                                  RSRpcServices.splitRegion() by 
+                                  calling newReflectiveBlockingService(this),
+                                  AdminService and ClientService are generated
+                                  classes under
+                                  hbase-protocol/.../protobuf/generaged.
+                                  more about google's protobuf at:
+                                  https://code.google.com/p/protobuf/
+  RSRpcServices.java      1435    splitRegion() calls HRegion.checkSplit() 
+                                  on line 1449 to get splitpoints. It then
+                                  calls HRegion.startRegionOperation() to 
+                                  acquire the lock. After that, it calls 
+                                  HRegion.forceSplit() to set the split flag
+                                  and splitting points. Finally, it calls
+                                  CompactSplitThread.requestSplit() to force
+                                  instant split.
+  CompactSplitThread.java 214     requestSplit() uses a SplitRequest object as
+                                  a parameter when calling
+                                  ThreadPoolExecutor.execute() to execute the
+                                  split request on line 221.
+  SplitRequest.java       57      run() calls  SplitTransaction.execute() on
+                                  line 82 to execute the split transaction.
+  SplitTransaction.java   565     execute() calls createDaughters() which in
+                                  turn calls stepsBeforePONR() to create two
+                                  daughter regions. Then it calls
+                                  stepsAfterPONR() which in turn calls 
+                                  openDaughters() to open the two daughter 
+                                  regions.
+  HRegion.java            5658    checkSplit() calls 
+                                  RegionSplitPolicy.getSplitPoint() on line 
+                                  5678 to get split points
+  RegionSplitPolicy.java          as an abstract class has two implementations
+                                  IncreasingToUpperBoundRegionSplitPolicy.java
+                                  and ConstantSizeRegionSplitPolicy.java
+
+
