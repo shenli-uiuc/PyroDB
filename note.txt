@@ -4,8 +4,12 @@ do store merges
 
 Question:
 1. can a client call one region server to get data from another one?
+  A: in the current implementation, NO. I current understanding is that, the
+     RSRpcServer still need to extract the region information from GetRequest
+     as RSRpcServer and HRegion do not form a 1-to-1 binding. One physical
+     server may host multiple HRegions, but only one RSRpcServer.
 
-Call Trace:
+Call Traces:
 1. get request
   RPC CLIENT SIDE:
   client/HTable.java      801     get() declares a subclass of abstract class
@@ -14,31 +18,73 @@ Call Trace:
                                   by calling 
                                   RequestConverter.buildGetRequest(), then the
                                   get request is issued using 
-                                  ClientService.BlockingInterface.get()
+                                  ClientService.BlockingInterface.get().
+                                    In order to get the right region servers
+                                  to query with, RegionServerCallable has a 
+                                  field location, which can be returned by 
+                                  calling getLocation(). The location field
+                                  is initialized by 
+                                  HConnection.getRegionLocation() whose impl is
+                                  ConnectionManager.HConnectionImplementation.
+  client/ConnectionManager.java
+                          464     class HConnectionImplementation locates the
+                                  correct set of region servers by calling
+                                  locateRegion(...) on line 982. If the info
+                                  is in cache, Registry.getMetaRegionLocation()
+                                  will return it. Otherwise, it calls 
+                                  locateRegionInMeta() on line 995.
+  client/ConnectionManager.java
+                          1003    locateRegionInMeta() first checks if it
+                                  should look into the cache on line 1008.
+                                  getCachedLocation(table, row) returns the in
+                                  cache data. MetaScanner.getHRegionInfor()
+                                  on line 1060 converts the row result to
+                                  HRegionLocation.
+
   protobuf/RequestConverter.java
                           157     buildGetReuest() calls 
                                   buildRegionSpecifier() on line 159 to build
                                   a RegionSpecifier. Then it uses 
-                                  GetRequest.Builder to build the GetRequest
+                                  GetRequest.Builder to build the GetRequest.
+                                  The GetRequest contains the encoded name of
+                                  the target region, which is passed through
+                                  the RPC call.
 
 
   RPC SERVER SIDE:
   hbase-server/regionserver/...
-  RSRpcServices.java      1562    get() calls HRegion.getClosestRowBefore()
+  RSRpcServices.java      1562    get() first identify the right region to
+                                  query by translating the encoded name of 
+                                  the region into an HRegion object.
+                                  Then it calls HRegion.getClosestRowBefore()
                                   and HRegion.get() on line 1583 and 1590
                                   respectively.
-  HServer.java            4735    Result get() wraps List<Cell> get()
+  HRegion.java            4735    Result get() wraps List<Cell> get()
                                   method on line 4747.
-  HServer.java            4756    List<Cell> get() calls RegionScanner.next()
+  HRegion.java            4756    List<Cell> get() calls RegionScanner.next()
                                   on line 4773.
-  HServer.java            3698    RegionScannerImpl implements the interface
+  HRegion.java            3698    RegionScannerImpl implements the interface
                                   RegionScanner.
-  HServer.java            3817    next() calls nextRaw() on line 3826, which
+  HRegion.java            3817    next() calls nextRaw() on line 3826, which
                                   then calls nextInternal() on line 3847.
-  HServer.java            3918    nextInternal()
+  HRegion.java            3918    nextInternal()
 
 2. scan request
+  RPC SERVER SIDE:
+  RSRpcService.java       1798    scan(). 
+
 3. put request
+  Surprisingly, the put request is done IN BATCH on the client side.
+  RPC CLIENT SIDE:
+  hbase-client/...
+  client/HTable.java      965     put() calls doPut().
+  client/HTable.java      982     doPut() first add the put request into 
+                                  its writeAsyncBuffer. When the buffer size
+                                  is larger than a threshold, it calls
+                                  backgroundFlushCommits() to the server side.
+  client/HTable.java      1009    backgroundFlushCommits() calls 
+                                  AsyncProcess.submit() to push the changes.
+
 4. split a region
   RPC CLIENT SIDE:
   hbase-client/...
