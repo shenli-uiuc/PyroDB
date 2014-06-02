@@ -14,6 +14,10 @@ Question:
 
 Remember:
 1. getStub() returns a ClientService.BlockingInterface object
+2. APPEND, INCREMENT, PUT, DELETE are all encapsulated by a mutate request. 
+   But it seems that the encapsulation for the PUT request is never used.
+   Instead, every PUT request is handled using the multi() API exposed by
+   the RSRpcServices. Remaining actions are handled using mutate.
 
 Call Traces:
 0. init RPC info:
@@ -119,10 +123,24 @@ Call Traces:
                                   results. The callable implementation is 
                                   MultiServerCallable
   client/MultiServerCallable.java
-                          84      call() finally gives rpcFactoryController
+                          84      call() finally gives controller
                                   and the requestProto to the 
-                                  ClientService.blockingInterface.multi to 
+                                  ClientService.blockingInterface.multi() to 
                                   get the response.
+
+  RPC SERVER SIDE:
+  hbase-server/.../regionserver/
+  RSRpcServices.java      1626    multi() gets the RpcController and the
+                                  MultiRequest objects through RPC. It then
+                                  calls mutateRows(...) on line 1663.
+  RSRpcServices.java      348     mutateRows(...) adds the put actions into
+                                  row mutations object by using 
+                                  ProtobufUtil.toPut. Then it calls
+                                  HRegion.mutateRow().
+  HRegion.java            4798    mutateRow(...) after a few thin warppers,
+                                  it call reaches processRowsWithLocks on 
+                                  line 4851.
+
 4. split a region
   RPC CLIENT SIDE:
   hbase-client/...
@@ -175,4 +193,4 @@ Call Traces:
                                   IncreasingToUpperBoundRegionSplitPolicy.java
                                   and ConstantSizeRegionSplitPolicy.java
 
-
+5. data format
