@@ -7,6 +7,21 @@ Question:
 
 Call Trace:
 1. get request
+  RPC CLIENT SIDE:
+  client/HTable.java      801     get() declares a subclass of abstract class
+                                  RegionServerCallable at line 728. In that 
+                                  definition, it constructs the request object 
+                                  by calling 
+                                  RequestConverter.buildGetRequest(), then the
+                                  get request is issued using 
+                                  ClientService.BlockingInterface.get()
+  protobuf/RequestConverter.java
+                          157     buildGetReuest() calls 
+                                  buildRegionSpecifier() on line 159 to build
+                                  a RegionSpecifier. Then it uses 
+                                  GetRequest.Builder to build the GetRequest
+
+
   RPC SERVER SIDE:
   hbase-server/regionserver/...
   RSRpcServices.java      1562    get() calls HRegion.getClosestRowBefore()
