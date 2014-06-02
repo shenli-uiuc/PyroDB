@@ -8,8 +8,28 @@ Question:
      RSRpcServer still need to extract the region information from GetRequest
      as RSRpcServer and HRegion do not form a 1-to-1 binding. One physical
      server may host multiple HRegions, but only one RSRpcServer.
+2. which object caches region server info on the client side?
+  A: HConnection, whose implementation is 
+     ConnectionManager.HConnectionImplementation.
+
+Remember:
+1. getStub() returns a ClientService.BlockingInterface object
 
 Call Traces:
+0. init RPC info:
+  RPC CLIENT SIDE:
+  client/HTable.java      333     initialize the configuration based on
+                                  ClusterConeciton.getConfiguration().
+                                  This configuration was later passed to
+                                  RpcControllerFactory.instantiate(...) to
+                                  create a new rpcControllerFactory. Then the
+                                  RpcControllerFactory object is passed to the
+                                  AsyncProcess constructor to grant it 
+                                  knowledge about the RPC info.
+  ipc/rpcControllerFactory.java
+                          56      based on the information in the configuration
+                                  it creates a new RpcControllerFactory using
+                                  ReflectionUtils.instantiateWithCustomCtor.
 1. get request
   RPC CLIENT SIDE:
   client/HTable.java      801     get() declares a subclass of abstract class
@@ -84,7 +104,25 @@ Call Traces:
                                   backgroundFlushCommits() to the server side.
   client/HTable.java      1009    backgroundFlushCommits() calls 
                                   AsyncProcess.submit() to push the changes.
-
+  client/AsyncProcess.java
+                          277     submit(...) calls createAsyncRequestFuture()
+                                  which in turn constructs an 
+                                  AsyncRequestFutureImpl object, then it calls
+                                  AsyncRequestFutureImpl.sendMultiAction() to
+                                  flush the actions.
+  client/AsyncProcess.java
+                          513     class AsyncRequestFutureImpl
+  client/AsyncProcess.java
+                          586     AsyncRequestFutureImpl.sendMultiAction()
+                                  calls RpcRetryingCaller.callWithoutRetries() 
+                                  on line 602 to send actions and wait for
+                                  results. The callable implementation is 
+                                  MultiServerCallable
+  client/MultiServerCallable.java
+                          84      call() finally gives rpcFactoryController
+                                  and the requestProto to the 
+                                  ClientService.blockingInterface.multi to 
+                                  get the response.
 4. split a region
   RPC CLIENT SIDE:
   hbase-client/...
