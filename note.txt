@@ -11,6 +11,9 @@ Question:
 2. which object caches region server info on the client side?
   A: HConnection, whose implementation is 
      ConnectionManager.HConnectionImplementation.
+3. how does the server side achieves concurrency?
+  A: In the RpcServer.java, the listener has a fixed number of Readers in an
+     ExecutorPool, 10 by default.
 
 Remember:
 1. getStub() returns a ClientService.BlockingInterface object
