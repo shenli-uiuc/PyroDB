@@ -21,6 +21,7 @@ Remember:
    But it seems that the encapsulation for the PUT request is never used.
    Instead, every PUT request is handled using the multi() API exposed by
    the RSRpcServices. Remaining actions are handled using mutate.
+3. The RPC part should be reusable. 
 
 Call Traces:
 0. init RPC info:
