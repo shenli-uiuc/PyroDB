@@ -23,6 +23,7 @@ Remember:
    Instead, every PUT request is handled using the multi() API exposed by
    the RSRpcServices. Remaining actions are handled using mutate.
 3. The RPC part should be reusable. 
+4. The wrapper (Storefile) of HFile should be reusable.
 
 Call Traces:
 0. init RPC info:
@@ -257,11 +258,13 @@ Call Traces:
   HStore.java             787     flushCache() StoreFlusher.flushSnapshop() on
                                   line 798. StoreFlusher has two 
                                   implementations DefaultStoreFlusher and 
-                                  StripeStoreFlusher.
+                                  StripeStoreFlusher. StoreFlusher is a member
+                                  of StoreEngine. HStore passes itself to 
+                                  StoreEngine on creation.
   DefaultStoreFlusher.java
                           44      flushSnapshot() constructs an InternalScanner
                                   from the MemStoreSnapshot object on line 52. 
-                                  It also constructs a writer for its
+                                  It also constructs a StoreFile.Writer for its
                                   HStore by calling HStore,createWriterInTmp()
                                   on line 64.
                                   Then, it calls StoreFlusher.performFlush().
@@ -280,3 +283,8 @@ Call Traces:
                                   add to variable stores one by one. The add()
                                   method initially put the kv into the memstore
                                   of the called store.
+  hbase-server/.../io/hfil/...
+  HFile.java              291     defines the interface Writer
+  AbstractHFileWriter.java
+                          48      implements HFile.Writer
+  HFileWriterVx                   extends AbstractHFileWriter
