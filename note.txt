@@ -14,6 +14,7 @@ Question:
 3. how does the server side achieves concurrency?
   A: In the RpcServer.java, the listener has a fixed number of Readers in an
      ExecutorPool, 10 by default.
+4. which component triggers MemStore flush and HFile compaction?
 
 Remember:
 1. getStub() returns a ClientService.BlockingInterface object
@@ -144,6 +145,15 @@ Call Traces:
   HRegion.java            4798    mutateRow(...) after a few thin warppers,
                                   it call reaches processRowsWithLocks on 
                                   line 4851.
+  HRegion.java            4851    processRowsWithLocks() calls
+                                  doProcessRowWithTimeout() on line 4905 to
+                                  generate mutations into the variable 
+                                  "mutations". Then, the result mutations are
+                                  applied to the memstore on line 4916.
+                                  MultiRowMutationProcessor.java is the
+                                  RowProcessor implementation.
+  HRegion.java            4979    doProcessRowWithTimeout() class 
+                                  MultiRowMutationProcessor on line 5005. 
 
 4. split a region
   RPC CLIENT SIDE:
@@ -197,4 +207,41 @@ Call Traces:
                                   IncreasingToUpperBoundRegionSplitPolicy.java
                                   and ConstantSizeRegionSplitPolicy.java
 
-5. data format
+5. flush MemStore to HFiles
+  hbase-server/.../regionserver
+  HRegion.java            4851    In processRowsWithLocks(), it checks whether
+                                  the memstore is getting too large by calling
+                                  isFlushSize() on line 4969. TODO, also
+                                  called elsewhere, basically, every time there
+                                  are content inserted into the memstore, a
+                                  check will be performed.
+  HRegion.java            1547    flushcache() calls internalFlushcache() on
+                                  line 1590.
+  HRegion.java            1669    internalFlushcache() calls 
+                                  StoreFlushContext.flushCache() on line 1787.
+                                  The implementation is StoreFlusherImpl on
+                                  line 1950 of HStore.java. The storeFlushCtxs
+                                  object of HRegion contains StoreFlushContexts
+                                  of all stores in this region.
+  DefaultStoreFlusher.java
+                          44      flushSnapshot() constructs an InternalScanner
+                                  from the MemStoreSnapshot object on line 52. 
+                                  It also constructs a writer for its
+                                  HStore by calling HStore,createWriterInTmp()
+                                  on line 64.
+                                  Then, it calls StoreFlusher.performFlush().
+                                  The HStore object is passed to it during its
+                                  construction.
+  StoreFlusher.java       110     performFlush() writes data from the scanner
+                                  into the sink. Data is ordered during 
+                                  flushing. StoreFlusher itself is a abstract
+                                  class. Its subclasses are DefaultStoreFlusher
+                                  and StripStoreFlusher.
+
+6. data format
+  HRegion.java            254     variable stores maps column family names into
+                                  HStore object. On line 795, inside the
+                                  initializeRegionStores method, "stores" are
+                                  add to variable stores one by one. The add()
+                                  method initially put the kv into the memstore
+                                  of the called store.
