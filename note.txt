@@ -211,10 +211,39 @@ Call Traces:
   hbase-server/.../regionserver
   HRegion.java            4851    In processRowsWithLocks(), it checks whether
                                   the memstore is getting too large by calling
-                                  isFlushSize() on line 4969. TODO, also
-                                  called elsewhere, basically, every time there
-                                  are content inserted into the memstore, a
-                                  check will be performed.
+                                  isFlushSize() on line 4969. In fact, 
+                                  isFlushSize() is called every time some 
+                                  mutation is performs: 
+                                    append() on line 5042, called at line 5191
+                                    increment() on 5232, called at 5384
+                                    batchMutate() on 2254, called at 2280
+                                    processRowsWithLocks()
+                                  Whenever isFlushSize() returns True, the
+                                  requestFlush() method will be called.
+  HRegion.java            3037    requestFlush() get a FlushRequester from
+                                  RegionServerServices.getFlushRequester().
+                                  In the current implementation, HRegionServer
+                                  implements RegionServerServices, and the
+                                  impl of FlushRequester is MemStoreFlusher,
+                                  which implements the requestFlush() method.
+  MemStoreFlusher.java    340     requestFlush() returns near immediately, it
+                                  only put a FlushRegionEntry object into the 
+                                  flushQueue. MemStoreFlusher implements a 
+                                  pool of FlushHandler those do flushes in the 
+                                  backend. Each flush will call the 
+                                  flushRegion() method.
+  MemStoreFlusher.java    417     flushRegion() calls nofityFlushRequst() on
+                                  line 477, and calls HRegion.flushcache() on
+                                  line 478.
+  MemStoreFlusher.java    510     notifyFlushRequest() notify all
+                                  FlushRequestListener objects in 
+                                  flushRequestListeners. An HRegionServer owns
+                                  the MemStoreFlusher, and it passes the 
+                                  MemStoreFlusher when creating the
+                                  HeapMemoryManager object. The 
+                                  HeapMemoryManager registers a 
+                                  HeapMemoryTunerChore object as a 
+                                  FlushRequestListener when the manager starts.
   HRegion.java            1547    flushcache() calls internalFlushcache() on
                                   line 1590.
   HRegion.java            1669    internalFlushcache() calls 
