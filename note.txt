@@ -1,6 +1,8 @@
 TODO:
 1. continue to learn KeyValueHeap.java which is used in RegionScannerImpl to
-do store merges
+   do store merges
+2. continue to learn HFileBlockIndex, think about how we should generate the
+   index for the moore files.
 
 Question:
 1. can a client call one region server to get data from another one?
@@ -24,6 +26,10 @@ Remember:
    the RSRpcServices. Remaining actions are handled using mutate.
 3. The RPC part should be reusable. 
 4. The wrapper (Storefile) of HFile should be reusable.
+5. It seems that we should be able to reuse a large part of HFile 
+   implementation, as the moore serialization will finally serialize it into
+   a 1-D key range. But, we need to reimplement how the index is generated,
+   and how the file is queried.
 
 Call Traces:
 0. init RPC info:
