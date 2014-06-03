@@ -1,0 +1,2 @@
+1. why moore curve:
+  It allow us to answer an area query with tunnable runtime precision without actually storing the quad-tree infrastructure. To be more precise, just generate moore index ranges with more digits. But an index file still helps to reduce the research delay. Again, the point is that one cannot add the offset of every key into the index file. Besides, moore serialization results in more sequential read.
