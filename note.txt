@@ -251,7 +251,13 @@ Call Traces:
                                   The implementation is StoreFlusherImpl on
                                   line 1950 of HStore.java. The storeFlushCtxs
                                   object of HRegion contains StoreFlushContexts
-                                  of all stores in this region.
+                                  of all stores in this region. 
+  HStore.java             1970    StoreFlusherImpl.flushCache() calls
+                                  HStore.flushCache() on line 1970.
+  HStore.java             787     flushCache() StoreFlusher.flushSnapshop() on
+                                  line 798. StoreFlusher has two 
+                                  implementations DefaultStoreFlusher and 
+                                  StripeStoreFlusher.
   DefaultStoreFlusher.java
                           44      flushSnapshot() constructs an InternalScanner
                                   from the MemStoreSnapshot object on line 52. 
