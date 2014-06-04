@@ -3,6 +3,8 @@ TODO:
    do store merges
 2. continue to learn HFileBlockIndex, think about how we should generate the
    index for the moore files.
+3. HFileBlockIndex.BlockIndexReader holds secondary indice to achieve finer 
+   granularity? Find out the detailed format.
 
 Question:
 1. can a client call one region server to get data from another one?
@@ -294,3 +296,14 @@ Call Traces:
   AbstractHFileWriter.java
                           48      implements HFile.Writer
   HFileWriterVx                   extends AbstractHFileWriter
+
+7. seek key
+  HFileReaderV2.java      558     AbstractScannerV2 extends 
+                                  AbstractHFileReader.Scanner which in turn 
+                                  implements HFileScanner.
+  HFileReaderV2.java      645     AbstractScannerV2.seekTo(Cell, boolean) calls
+                                  loadBlockAndSeekToKey() on line 653.
+  HFileReaderV2.java      750     ScannerV2 extends AbstractScannerV2 which
+                                  defines loadBlockAndSeekToKey() on line 897.
+  HFileReaderV2.java      897     loadBlockAndSeekToKey().
+  HFileReaderV2.java      987     blockSeek()
