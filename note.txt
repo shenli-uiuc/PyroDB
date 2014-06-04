@@ -106,6 +106,7 @@ Call Traces:
   HRegion.java            3817    next() calls nextRaw() on line 3826, which
                                   then calls nextInternal() on line 3847.
   HRegion.java            3918    nextInternal()
+  HRegion.java            3945    calls KeyValueHeap.peek() to get the next
 
 2. scan request
   RPC SERVER SIDE:

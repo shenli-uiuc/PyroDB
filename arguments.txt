@@ -1,2 +1,8 @@
 1. why moore curve:
   It allow us to answer an area query with tunnable runtime precision without actually storing the quad-tree infrastructure. To be more precise, just generate moore index ranges with more digits. But an index file still helps to reduce the research delay. Again, the point is that one cannot add the offset of every key into the index file. Besides, moore serialization results in more sequential read.
+
+2. why using moore serialization above original HBase not enough:
+  The serialization reduces the precision to some degree. Without known the future datapoints, we cannot determine the most efficient encoding. The 1-D precision may be too coarse to distinguish data points.
+
+3. why HFile format is inefficient? 
+  a pyro query is usually translated into a set of range queries, containing both very large range queries and very small range queries. HFile reads data block by block, which is inefficient. Allow key-value series to be retrieved without obeying block boundaries. Link all key-value pairs into a skip-list to accelerate searches inside the variable block. Variant-size block helps to load just enough data for both large ranges and small ranges, while the keyvalue-level skiplist helps to reduce the cpu cost for small queries.
