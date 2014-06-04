@@ -1,10 +1,10 @@
 TODO:
-1. continue to learn KeyValueHeap.java which is used in RegionScannerImpl to
-   do store merges
 2. continue to learn HFileBlockIndex, think about how we should generate the
    index for the moore files.
 3. HFileBlockIndex.BlockIndexReader holds secondary indice to achieve finer 
    granularity? Find out the detailed format.
+   A: only block-level indics. The index is kept in a hierarchical structure.
+4. Look at StoreFileScanner to learn how the scanner read data from HFiles.
 
 Question:
 1. can a client call one region server to get data from another one?
@@ -32,6 +32,11 @@ Remember:
    implementation, as the moore serialization will finally serialize it into
    a 1-D key range. But, we need to reimplement how the index is generated,
    and how the file is queried.
+6. A store has a single StoreScanner, but a StoreScanner may contain multiple
+   StoreFileScanner and MemStoreScanners(in DefaultMemStore). They have a
+   common ancestor: KeyValueScanner. KeyValueHeap also implements 
+   KeyValueScanner, as both StoreScanner and RegionScanner uses KeyValueHeap
+   to aggregate data from multiple sources.
 
 Call Traces:
 0. init RPC info:
@@ -105,9 +110,17 @@ Call Traces:
                                   RegionScanner.
   HRegion.java            3817    next() calls nextRaw() on line 3826, which
                                   then calls nextInternal() on line 3847.
-  HRegion.java            3918    nextInternal()
-  HRegion.java            3945    calls KeyValueHeap.peek() to get the next
-
+  HRegion.java            3918    nextInternal() calls KeyValueHeap.peek() to 
+                                  get the current, it also calls
+                                  RgionScannerImpl.nextRow() on line 3970 and
+                                  4001 to get next row.
+  HRegion.java            4072    nextRow() calls KeyValueHeap.next()
+  KeyValueHeap.java       134     updates the heap. HRegion calls (line 3764) 
+                                  HStore.getScanner() on all stores to passe
+                                  StoreScanner or ReversedStoreScanner to
+                                  KeyValueHeap during construction. 
+  HStore.java             1778    getScanner()
+  StoreScanner.java       445     next()
 2. scan request
   RPC SERVER SIDE:
   RSRpcService.java       1798    scan(). 
