@@ -5,6 +5,11 @@ import org.apache.hadoop.hbase.KeyValue;
 /*
  * A thin wrapper over KeyValue to allow convenient operations on forward 
  * pointers. May need to implement Cell, HeapSize, and Cloneable later.
+ *
+ * Fields:
+ *  1. pointerNum
+ *  2. pointers
+ *  3. KeyValue
  */
 public class PKeyValue {
 
@@ -37,4 +42,7 @@ public class PKeyValue {
    * @param offset offset to the start of the PKeyValue
    * @param length length of the PKeyValue
    */
+  public PKeyValue(final byte [] bytes, final int offset, final int length) {
+    //TODO
+  }
 }
