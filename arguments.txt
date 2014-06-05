@@ -6,3 +6,7 @@
 
 3. why HFile format is inefficient? 
   a pyro query is usually translated into a set of range queries, containing both very large range queries and very small range queries. HFile reads data block by block, which is inefficient. Allow key-value series to be retrieved without obeying block boundaries. Link all key-value pairs into a skip-list to accelerate searches inside the variable block. Variant-size block helps to load just enough data for both large ranges and small ranges, while the keyvalue-level skiplist helps to reduce the cpu cost for small queries.
+4. what are the differences st apps bring?
+  a. very rare single row query
+  b. lots of range queries with various sizes
+  c. the return order of the keys does NOT matter, because the serialization itself does not make sense in the application layer.

@@ -1,5 +1,8 @@
 package org.apache.hadoop.hbase.io.pfile;
 
+
+import org.apache.hadoop.hbase.io.HFileWriterV2;
+
 /*
  * PFile format:
  * Entries are oganized into a skiplist. Each entry contains 6 fields:
@@ -18,14 +21,13 @@ package org.apache.hadoop.hbase.io.pfile;
  *       2. we also need a new encoder
  */
 
-public class PFileWriter extends AbstractHFileWriter {
-  /**
-   * Add a key/value to the PFile. The order of keys has to agree with
-   * caomparators. 
-   *
+public class PFileWriter extends  HFileWriterV2{
+
+  /*
+   * flush all PKeyValue entries into file system. Write index
    */
   @Override
-  public void append(final KeyValue kv) throws IOException {
+  private void finishBlock() throws IOException{
   }
 
 }
