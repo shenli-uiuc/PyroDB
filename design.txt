@@ -1,0 +1,3 @@
+1. PFile format, this design benefits all HBase applications
+2. server side daemon thats translate area queries into range queries, a quad-tree is needed as it is difficult to determine shape overlaps using Moore curve
+3. fast and light-weight local split

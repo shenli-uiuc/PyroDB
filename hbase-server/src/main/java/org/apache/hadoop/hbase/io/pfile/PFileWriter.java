@@ -5,13 +5,7 @@ import org.apache.hadoop.hbase.io.HFileWriterV2;
 
 /*
  * PFile format:
- * Entries are oganized into a skiplist. Each entry contains 6 fields:
- *    1. pointerNum:  the number of forward pointers
- *    2. keyLen: same
- *    3. ValueLen: same
- *    4. pointers: forward pointers of this skiplist node
- *    5. key: same
- *    6. value: same
+ *    header followed by a series of PKeyValue entries
  * TODO: check if we could inherit from HFileWriterV2
  * TODO: should I remove the header of each block?
  * TODO: 1. need to implement another HFileBlock.Writer. Note that either
