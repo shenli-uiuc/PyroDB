@@ -121,6 +121,10 @@ Call Traces:
                                   KeyValueHeap during construction. 
   HStore.java             1778    getScanner()
   StoreScanner.java       445     next()
+  StoreFileScanner.java   
+  HFileScanner.java
+  AbstractHFileReader.java        see 7 seek key.
+
 2. scan request
   RPC SERVER SIDE:
   RSRpcService.java       1798    scan(). 
