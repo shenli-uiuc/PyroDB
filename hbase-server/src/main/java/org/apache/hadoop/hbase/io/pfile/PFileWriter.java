@@ -18,10 +18,12 @@ import org.apache.hadoop.hbase.io.HFileWriterV2;
 public class PFileWriter extends  HFileWriterV2{
 
   /*
-   * flush all PKeyValue entries into file system. Write index
+   * tell the PFileBlockWriter to flush the current block
    */
   @Override
   private void finishBlock() throws IOException{
   }
+
+  
 
 }

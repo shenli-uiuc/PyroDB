@@ -10,3 +10,4 @@
   a. very rare single row query
   b. lots of range queries with various sizes
   c. the return order of the keys does NOT matter, because the serialization itself does not make sense in the application layer.
+5. HFile index is a perfect heat map to merge range queries. experiments need to be done to compare reading 
