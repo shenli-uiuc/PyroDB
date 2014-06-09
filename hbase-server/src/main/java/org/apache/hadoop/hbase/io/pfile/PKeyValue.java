@@ -20,8 +20,8 @@ import org.apache.hadoop.hbase.util.Bytes;
  * until needed.
  */
 public class PKeyValue {
-  private static final int POINTER_NUM_SIZE = Bytes.SIZEOF_BYTE;
-  private static final int POINTER_SIZE = Bytes.SIZEOF_INT;
+  public static final int POINTER_NUM_SIZE = Bytes.SIZEOF_BYTE;
+  public static final int POINTER_SIZE = Bytes.SIZEOF_INT;
 
   private byte [] bytes = null;
   private int offset = 0;
