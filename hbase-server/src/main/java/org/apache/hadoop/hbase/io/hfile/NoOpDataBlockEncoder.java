@@ -38,7 +38,7 @@ public class NoOpDataBlockEncoder implements HFileDataBlockEncoder {
       new NoOpDataBlockEncoder();
 
   /** Cannot be instantiated. Use {@link #INSTANCE} instead. */
-  private NoOpDataBlockEncoder() {
+  protected NoOpDataBlockEncoder() {
   }
 
   @Override

@@ -1,4 +1,4 @@
-package org.apache.hadoop.hbase;
+package org.apache.hadoop.hbase.io.pfile;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -40,9 +40,8 @@ public class PKeyValue {
    * construct a PKeyValue from byte array starting from offset.
    */
   public PKeyValue(final byte [] bytes, final int offset) {
-    int pHeaderLength = getPHeaderLength(bytes, offset);
-    this(bytes, offset, pHeaderLength, 
-         KeyValue.getLength(bytes, offset + pHeaderLength));
+    this(bytes, offset, getPHeaderLength(bytes, offset), 
+         KeyValue.getLength(bytes, offset + getPHeaderLength(bytes, offset)));
   }
 
   /*

@@ -1228,7 +1228,7 @@ public class KeyValue implements Cell, HeapSize, Cloneable {
    * @param offset offset to start of the KeyValue
    * @return length of entire KeyValue, in bytes
    */
-  private static int getLength(byte [] bytes, int offset) {
+  public static int getLength(byte [] bytes, int offset) {
     int klength = ROW_OFFSET + Bytes.toInt(bytes, offset);
     int vlength = Bytes.toInt(bytes, offset + Bytes.SIZEOF_INT);
     return klength + vlength;

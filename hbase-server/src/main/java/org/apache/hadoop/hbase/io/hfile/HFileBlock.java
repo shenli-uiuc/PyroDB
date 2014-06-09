@@ -604,22 +604,22 @@ public class HFileBlock implements Cacheable {
    */
   public static class Writer {
 
-    private enum State {
+    protected enum State {
       INIT,
       WRITING,
       BLOCK_READY
     };
 
     /** Writer state. Used to ensure the correct usage protocol. */
-    private State state = State.INIT;
+    protected State state = State.INIT;
 
     /** Data block encoder used for data blocks */
-    private final HFileDataBlockEncoder dataBlockEncoder;
+    protected final HFileDataBlockEncoder dataBlockEncoder;
 
-    private HFileBlockEncodingContext dataBlockEncodingCtx;
+    protected HFileBlockEncodingContext dataBlockEncodingCtx;
 
     /** block encoding context for non-data blocks */
-    private HFileBlockDefaultEncodingContext defaultBlockEncodingCtx;
+    protected HFileBlockDefaultEncodingContext defaultBlockEncodingCtx;
 
     /**
      * The stream we use to accumulate data in uncompressed format for each
@@ -627,31 +627,31 @@ public class HFileBlock implements Cacheable {
      * header is written as the first {@link HConstants#HFILEBLOCK_HEADER_SIZE} bytes into this
      * stream.
      */
-    private ByteArrayOutputStream baosInMemory;
+    protected ByteArrayOutputStream baosInMemory;
 
     /**
      * Current block type. Set in {@link #startWriting(BlockType)}. Could be
      * changed in {@link #encodeDataBlockForDisk()} from {@link BlockType#DATA}
      * to {@link BlockType#ENCODED_DATA}.
      */
-    private BlockType blockType;
+    protected BlockType blockType;
 
     /**
      * A stream that we write uncompressed bytes to, which compresses them and
      * writes them to {@link #baosInMemory}.
      */
-    private DataOutputStream userDataStream;
+    protected DataOutputStream userDataStream;
 
     // Size of actual data being written. Not considering the block encoding/compression. This
     // includes the header size also.
-    private int unencodedDataSizeWritten;
+    protected int unencodedDataSizeWritten;
 
     /**
      * Bytes to be written to the file system, including the header. Compressed
      * if compression is turned on. It also includes the checksum data that 
      * immediately follows the block data. (header + data + checksums)
      */
-    private byte[] onDiskBytesWithHeader;
+    protected byte[] onDiskBytesWithHeader;
 
     /**
      * The size of the checksum data on disk. It is used only if data is
@@ -659,7 +659,7 @@ public class HFileBlock implements Cacheable {
      * part of onDiskBytesWithHeader. If data is uncompressed, then this
      * variable stores the checksum data for this block.
      */
-    private byte[] onDiskChecksum;
+    protected byte[] onDiskChecksum;
 
     /**
      * Valid in the READY state. Contains the header and the uncompressed (but
@@ -667,24 +667,24 @@ public class HFileBlock implements Cacheable {
      * {@link #uncompressedSizeWithoutHeader} + {@link org.apache.hadoop.hbase.HConstants#HFILEBLOCK_HEADER_SIZE}.
      * Does not store checksums.
      */
-    private byte[] uncompressedBytesWithHeader;
+    protected byte[] uncompressedBytesWithHeader;
 
     /**
      * Current block's start offset in the {@link HFile}. Set in
      * {@link #writeHeaderAndData(FSDataOutputStream)}.
      */
-    private long startOffset;
+    protected long startOffset;
 
     /**
      * Offset of previous block by block type. Updated when the next block is
      * started.
      */
-    private long[] prevOffsetByType;
+    protected long[] prevOffsetByType;
 
     /** The offset of the previous block of the same type */
-    private long prevOffset;
+    protected long prevOffset;
     /** Meta data that holds information about the hfileblock**/
-    private HFileContext fileContext;
+    protected HFileContext fileContext;
 
     /**
      * @param dataBlockEncoder data block encoding algorithm to use
@@ -787,7 +787,7 @@ public class HFileBlock implements Cacheable {
      * uncompressed stream for caching on write, if applicable. Sets block
      * write state to "block ready".
      */
-    private void finishBlock() throws IOException {
+    protected void finishBlock() throws IOException {
       if (blockType == BlockType.DATA) {
         BufferGrabbingByteArrayOutputStream baosInMemoryCopy = 
             new BufferGrabbingByteArrayOutputStream();
@@ -1008,7 +1008,7 @@ public class HFileBlock implements Cacheable {
       return ByteBuffer.wrap(uncompressedBytesWithHeader);
     }
 
-    private void expectState(State expectedState) {
+    protected void expectState(State expectedState) {
       if (state != expectedState) {
         throw new IllegalStateException("Expected state: " + expectedState +
             ", actual state: " + state);

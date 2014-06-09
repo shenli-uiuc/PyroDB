@@ -1,7 +1,17 @@
 package org.apache.hadoop.hbase.io.pfile;
 
+import java.io.IOException;
 
-import org.apache.hadoop.hbase.io.HFileWriterV2;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FSDataOutputStream;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
+
+import org.apache.hadoop.hbase.KeyValue.KVComparator;
+
+import org.apache.hadoop.hbase.io.hfile.CacheConfig;
+import org.apache.hadoop.hbase.io.hfile.HFileContext;
+import org.apache.hadoop.hbase.io.hfile.HFileWriterV2;
 
 /*
  * PFile format:
@@ -17,13 +27,12 @@ import org.apache.hadoop.hbase.io.HFileWriterV2;
 
 public class PFileWriter extends  HFileWriterV2{
 
-  /*
-   * tell the PFileBlockWriter to flush the current block
-   */
-  @Override
-  private void finishBlock() throws IOException{
-  }
+  public PFileWriter(Configuration conf, CacheConfig cacheConf, FileSystem fs,
+                     Path path, FSDataOutputStream ostream, 
+                     final KVComparator comparator,
+                     final HFileContext fileContext) throws IOException {
+    super(conf, cacheConf, fs, path, ostream, comparator, fileContext);
 
-  
+  }
 
 }

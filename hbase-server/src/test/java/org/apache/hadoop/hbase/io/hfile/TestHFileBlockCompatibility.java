@@ -514,7 +514,7 @@ public class TestHFileBlockCompatibility {
      * uncompressed stream for caching on write, if applicable. Sets block
      * write state to "block ready".
      */
-    void finishBlock() throws IOException {
+    protected void finishBlock() throws IOException {
       if (blockType == BlockType.DATA) {
         this.dataBlockEncoder.endBlockEncoding(dataBlockEncodingCtx, userDataStream,
             baosInMemory.toByteArray(), blockType);
@@ -692,7 +692,7 @@ public class TestHFileBlockCompatibility {
       return uncompressedBytesWithHeader;
     }
 
-    private void expectState(State expectedState) {
+    protected void expectState(State expectedState) {
       if (state != expectedState) {
         throw new IllegalStateException("Expected state: " + expectedState +
             ", actual state: " + state);
