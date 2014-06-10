@@ -806,6 +806,7 @@ public class HFileBlock implements Cacheable {
       // compressed.
       state = State.BLOCK_READY;
       if (blockType == BlockType.DATA || blockType == BlockType.ENCODED_DATA) {
+        // Shen Li: compressAndEncrypt uses dummyHeader to possess header bytes
         onDiskBytesWithHeader = dataBlockEncodingCtx
             .compressAndEncrypt(uncompressedBytesWithHeader);
       } else {

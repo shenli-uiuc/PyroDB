@@ -346,7 +346,7 @@ public class HFile {
     protected InetSocketAddress[] favoredNodes;
     private HFileContext fileContext;
 
-    WriterFactory(Configuration conf, CacheConfig cacheConf) {
+    protected WriterFactory(Configuration conf, CacheConfig cacheConf) {
       this.conf = conf;
       this.cacheConf = cacheConf;
     }
