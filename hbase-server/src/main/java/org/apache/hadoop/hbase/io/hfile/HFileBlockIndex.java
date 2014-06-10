@@ -257,6 +257,8 @@ public class HFileBlockIndex {
             // this also accounts for ENCODED_DATA
             expectedBlockType = BlockType.DATA;
           }
+          // Shen Li: HFileReaderV2 and etc. implement CachingBlockReader 
+          // interface
           block = cachingBlockReader.readBlock(currentOffset,
           currentOnDiskSize, shouldCache, pread, isCompaction, true,
               expectedBlockType, expectedDataBlockEncoding);

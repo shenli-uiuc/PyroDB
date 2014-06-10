@@ -1276,7 +1276,7 @@ public class HFileBlock implements Cacheable {
   }
 
   /** Reads version 2 blocks from the filesystem. */
-  static class FSReaderV2 extends AbstractFSReader {
+  public static class FSReaderV2 extends AbstractFSReader {
     /** The file system stream of the underlying {@link HFile} that 
      * does or doesn't do checksum validations in the filesystem */
     protected FSDataInputStreamWrapper streamWrapper;
