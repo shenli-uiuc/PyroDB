@@ -17,6 +17,7 @@ import org.apache.hadoop.hbase.io.hfile.HFileContext;
 import org.apache.hadoop.hbase.io.hfile.HFileWriterV2;
 import org.apache.hadoop.hbase.io.hfile.HFile.Writer;
 import org.apache.hadoop.hbase.io.hfile.HFile;
+import org.apache.hadoop.hbase.io.hfile.HFileBlockIndex;
 
 /*
  * PFile format:
@@ -34,9 +35,10 @@ public class PFileWriter extends  HFileWriterV2{
 
   private static final Log LOG = LogFactory.getLog(PFileWriter.class);
 
-  static class PWriterFactory extends HFile.WriterFactory {
-    PWriterFactory(Configuration conf, CacheConfig cacheConf) {
+  public static class PWriterFactory extends HFile.WriterFactory {
+    public PWriterFactory(Configuration conf, CacheConfig cacheConf) {
       super(conf, cacheConf);
+      LOG.info("Shen Li: In PWriterFactory");
     }
 
     @Override
@@ -54,14 +56,33 @@ public class PFileWriter extends  HFileWriterV2{
                      final KVComparator comparator,
                      final HFileContext fileContext) throws IOException {
     super(conf, cacheConf, fs, path, ostream, comparator, fileContext);
+    LOG.info("Shen Li: In PFileWriter Constructor");
     if (LOG.isTraceEnabled()) {
       LOG.trace("Writer" + (path != null ? " for " + path : "" +
                 " initialized with cacheConf: " + cacheConf +
                 " comparator: " + comparator.getClass().getSimpleName() +
                 " fileContext: " + fileContext));
     }
+  }
 
-    this.fsBlockWriter = new PFileBlockWriter(blockEncoder, hFileContext);
+  @Override
+  protected void finishInit(final Configuration conf) {
+    if (null != fsBlockWriter)
+      throw new IllegalStateException("finishInit called twice");
+
+    fsBlockWriter = new PFileBlockWriter(blockEncoder, hFileContext);
+
+    boolean cacheIndexesOnWrite = cacheConf.shouldCacheIndexesOnWrite();
+    dataBlockIndexWriter = new HFileBlockIndex.BlockIndexWriter(fsBlockWriter,
+        cacheIndexesOnWrite ? cacheConf.getBlockCache(): null,
+        cacheIndexesOnWrite ? name : null);
+    dataBlockIndexWriter.setMaxChunkSize(
+        HFileBlockIndex.getMaxChunkSize(conf));
+    inlineBlockWriters.add(dataBlockIndexWriter);
+
+    // Meta data block index writer
+    metaBlockIndexWriter = new HFileBlockIndex.BlockIndexWriter();
+    if (LOG.isTraceEnabled()) LOG.trace("Initialized with " + cacheConf);
   }
 
   @Override

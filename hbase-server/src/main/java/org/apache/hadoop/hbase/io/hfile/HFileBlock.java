@@ -28,6 +28,9 @@ import java.nio.ByteBuffer;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FSDataOutputStream;
@@ -604,6 +607,8 @@ public class HFileBlock implements Cacheable {
    */
   public static class Writer {
 
+    static final Log LOG = LogFactory.getLog(Writer.class);
+
     protected enum State {
       INIT,
       WRITING,
@@ -788,6 +793,7 @@ public class HFileBlock implements Cacheable {
      * write state to "block ready".
      */
     protected void finishBlock() throws IOException {
+      LOG.info("Shen Li: in super.finishBlock()");
       if (blockType == BlockType.DATA) {
         BufferGrabbingByteArrayOutputStream baosInMemoryCopy = 
             new BufferGrabbingByteArrayOutputStream();

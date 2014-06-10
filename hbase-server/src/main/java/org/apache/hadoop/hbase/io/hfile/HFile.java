@@ -71,6 +71,9 @@ import org.apache.hadoop.io.Writable;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 
+//Shen Li
+import org.apache.hadoop.hbase.io.pfile.PFileWriter;
+
 /**
  * File format for hbase.
  * A file of sorted key/value pairs. Both keys and values are byte arrays.
@@ -154,7 +157,7 @@ public class HFile {
 
   /** Maximum supported HFile format version
    */
-  public static final int MAX_FORMAT_VERSION = 3;
+  public static final int MAX_FORMAT_VERSION = 4;
 
   /**
    * Minimum HFile format version with support for persisting cell tags
@@ -425,11 +428,14 @@ public class HFile {
   public static final WriterFactory getWriterFactory(Configuration conf,
       CacheConfig cacheConf) {
     int version = getFormatVersion(conf);
+    LOG.info("Shen Li: get writer version " + version);
     switch (version) {
     case 2:
       return new HFileWriterV2.WriterFactoryV2(conf, cacheConf);
     case 3:
       return new HFileWriterV3.WriterFactoryV3(conf, cacheConf);
+    case 4:  //Shen Li: allow set conf to use PFileWriter
+      return new PFileWriter.PWriterFactory(conf, cacheConf);
     default:
       throw new IllegalArgumentException("Cannot create writer for HFile " +
           "format version " + version);
@@ -560,6 +566,8 @@ public class HFile {
         return new HFileReaderV2(path, trailer, fsdis, size, cacheConf, hfs, conf);
       case 3 :
         return new HFileReaderV3(path, trailer, fsdis, size, cacheConf, hfs, conf);
+      case 4: // Shen Li
+        return new PFileReader(path, trailer, fsdis, size, cacheConf, hfs, conf);
       default:
         throw new IllegalArgumentException("Invalid HFile version " + trailer.getMajorVersion());
       }

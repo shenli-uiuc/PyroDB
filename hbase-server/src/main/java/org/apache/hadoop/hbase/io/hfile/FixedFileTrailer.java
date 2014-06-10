@@ -26,6 +26,9 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import com.google.protobuf.HBaseZeroCopyByteString;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.fs.FSDataInputStream;
@@ -50,6 +53,7 @@ import org.apache.hadoop.hbase.util.Bytes;
  */
 @InterfaceAudience.Private
 public class FixedFileTrailer {
+  private static final Log LOG = LogFactory.getLog(FixedFileTrailer.class);
 
   /**
    * We store the comparator class name as a fixed-length field in the trailer.
@@ -128,12 +132,18 @@ public class FixedFileTrailer {
     int versionToSize[] = new int[HFile.MAX_FORMAT_VERSION + 1];
     // We support only 2 major versions now. ie. V2, V3
     versionToSize[2] = 212;
+    LOG.info("Shen Li: FixedSizedTrailer HFile.MAX_FORMAT_VERSION is " 
+        + HFile.MAX_FORMAT_VERSION);
     for (int version = 3; version <= HFile.MAX_FORMAT_VERSION; version++) {
       // Max FFT size for V3 and above is taken as 4KB for future enhancements
       // if any.
       // Unless the trailer size exceeds 4K this can continue
       versionToSize[version] = 1024 * 4;
     }
+    //Shen Li: TODO should I make to to inherit from HFileWriterV2 instead?
+    versionToSize[4] = versionToSize[2];
+    LOG.info("Shen Li: After initialize Trailer, " + versionToSize.length +
+             ", " + versionToSize[versionToSize.length - 1]);
     return versionToSize;
   }
 
@@ -152,10 +162,12 @@ public class FixedFileTrailer {
   private static final int NOT_PB_SIZE = BlockType.MAGIC_LENGTH + Bytes.SIZEOF_INT;
 
   static int getTrailerSize(int version) {
+    LOG.info("Shen Li: TRAILER SIZE 1" + TRAILER_SIZE.length);
     return TRAILER_SIZE[version];
   }
 
   public int getTrailerSize() {
+    LOG.info("Shen Li: TRAILER SIZE " + TRAILER_SIZE.length);
     return getTrailerSize(majorVersion);
   }
 

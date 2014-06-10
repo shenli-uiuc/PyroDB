@@ -7,6 +7,8 @@ import java.io.DataOutput;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import org.apache.hadoop.hbase.io.hfile.HFileBlock;
 import org.apache.hadoop.hbase.io.hfile.HFileDataBlockEncoder;
@@ -22,6 +24,8 @@ import org.apache.hadoop.hbase.io.pfile.PFileDataBlockEncoder;
  */
 
 public class PFileBlockWriter extends HFileBlock.Writer {
+  private static final Log LOG = LogFactory.getLog(PFileBlockWriter.class);
+
   private static final int ARRAY_INIT_SIZE = 512;
   private static final int [] trailingZeroMap = new int [] {
     32, 0, 1, 26, 2, 23, 27, 0, 3, 16, 24, 30, 28, 11, 0, 13, 4,
@@ -45,6 +49,7 @@ public class PFileBlockWriter extends HFileBlock.Writer {
     // this encoder encodes the pointer array by offer apis to encode int 
     // and byte
     this.pDataBlockEncoder = PNoOpDataBlockEncoder.INSTANCE;
+    LOG.info("Shen Li: in PFileBlockWriter constructor");
     //TODO
   }
 
@@ -53,7 +58,8 @@ public class PFileBlockWriter extends HFileBlock.Writer {
    */
   public DataOutputStream startWriting(BlockType newBlockType) 
       throws IOException {
-    this.kvs.clear();
+    if (BlockType.DATA == newBlockType)
+      this.kvs.clear();
     return super.startWriting(newBlockType);  
   }
 
@@ -64,6 +70,8 @@ public class PFileBlockWriter extends HFileBlock.Writer {
    */
   @Override
   public void write(KeyValue kv) throws IOException {
+    LOG.info("Shen Li: in PFileBlockWriter.write, key length" + 
+             kv.getLength());
     expectState(State.WRITING);
     this.unencodedDataSizeWritten += kv.getLength();
     this.unencodedDataSizeWritten += PKeyValue.POINTER_NUM_SIZE;
@@ -72,19 +80,26 @@ public class PFileBlockWriter extends HFileBlock.Writer {
     // the number of bytes written in order to update ancestors forwarding 
     // pointers
     this.unencodedDataSizeWritten += (PKeyValue.POINTER_SIZE * nOfZeros);
+    LOG.info("Shen Li: pointers info, " + nOfZeros + ", " + 
+             PKeyValue.POINTER_NUM_SIZE + ", " + PKeyValue.POINTER_SIZE);
     this.kvs.add(kv);
+    LOG.info("Shen Li: in PFileBlockWriter.write before loop");
     int idx = 0;
     for (int i = 1 ; i <= nOfZeros; ++i) {
       idx = kvsSize - (1 << i);
       if (this.ptrNum[idx] >= MAX_POINTER_NUM) {
-        throw new IllegalStateException("Too many pointers when inserting" +
-            " kv number " + this.kvs.size());
+        LOG.info("Shen Li: in PFileBlockWriter.write throw exception" + 
+            this.ptrNum[idx] + ", " + MAX_POINTER_NUM);
+        throw new IllegalStateException("Shen Li: Too many pointers when" +
+            "inserting kv number " + this.kvs.size());
       }
       ++this.ptrNum[idx];
     }
-    if (kvsSize > this.ptrNum.length) 
+    LOG.info("Shen Li: after loop");
+    if (this.kvs.size() > this.ptrNum.length) 
       this.ptrNum = Arrays.copyOf(this.ptrNum, this.ptrNum.length * 2);
-    this.ptrNum[kvsSize - 1] = 0;
+    this.ptrNum[this.kvs.size() - 1] = 0;
+    LOG.info("Shen Li: PFileBlockWriter.write finish");
   }
 
   /*
@@ -101,6 +116,7 @@ public class PFileBlockWriter extends HFileBlock.Writer {
    */
   @Override
   protected void finishBlock() throws IOException {
+    LOG.info("Shen Li: in PFileBlockWriter.finishBlock()");
     //TODO: below only writes pkvs
     if (this.offsets.length < this.ptrNum.length) {
       // doubling array size

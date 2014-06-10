@@ -725,6 +725,7 @@ public class StoreFile {
         final KVComparator comparator, BloomType bloomType, long maxKeys,
         InetSocketAddress[] favoredNodes, HFileContext fileContext)
             throws IOException {
+      LOG.info("Shen Li: in Writer constructor");
       writer = HFile.getWriterFactory(conf, cacheConf)
           .withPath(fs, path)
           .withComparator(comparator)
