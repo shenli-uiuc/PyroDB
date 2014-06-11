@@ -98,7 +98,8 @@ public class PFileBlockWriter extends HFileBlock.Writer {
     LOG.info("Shen Li: after loop");
     if (this.kvs.size() > this.ptrNum.length) 
       this.ptrNum = Arrays.copyOf(this.ptrNum, this.ptrNum.length * 2);
-    this.ptrNum[this.kvs.size() - 1] = 0;
+    // The first pointer always points to the end of the current pkv
+    this.ptrNum[this.kvs.size() - 1] = 1;
     LOG.info("Shen Li: PFileBlockWriter.write finish");
   }
 
@@ -146,14 +147,27 @@ public class PFileBlockWriter extends HFileBlock.Writer {
           dataBlockEncodingCtx, this.userDataStream);    
 
       // write pointers, this.ptrNum array is 
-      j = 1 << 1;
+      j = 1;
       while (i + j < nOfKvs && this.ptrNum[i] > 0) {
-        this.pDataBlockEncoder.encodeInt(this.offsets[i + j], dataBlockEncodingCtx, this.userDataStream);
+        this.pDataBlockEncoder.encodeInt(
+            this.offsets[i + j] - this.offsets[i], 
+            dataBlockEncodingCtx, this.userDataStream);
         j <<= 1;
         --(this.ptrNum[i]);
       }
       // TODO: this should not be necessary, if above code execute correctly
       this.ptrNum[i] = 0;
+
+      // TODO: remove this and implement the logic for seekBefore if 
+      // evaluations show large space overhead
+      // relative offset to the previous
+      if (0 == i) {
+        this.pDataBlockEncoder.encodeInt(0, 
+            dataBlockEncodingCtx, this.userDataStream);
+      } else {
+        this.pDataBlockEncoder.encodeInt(this.offsets[i-1] - this.offsets[i],
+            dataBlockEncodingCtx, this.userDataStream);
+      }
 
       // write KeyValue
       this.pDataBlockEncoder.encode(this.kvs.get(i), dataBlockEncodingCtx, 

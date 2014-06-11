@@ -37,22 +37,23 @@ import org.apache.hadoop.hbase.util.Bytes;
  * portion?
  */
 
-public class PFileReader extends HFileReaderV2 {
-  private static final Log LOG = LogFactory.getLog(PFileReader.class);
+public class PFileScanner extends HFileReaderV2.ScannerV2 {
+  private static final Log LOG = LogFactory.getLog(PFileScanner.class);
 
   public static final KEY_LEN_SIZE = Bytes.SIZEOF_INT;
 
-  public PFileReader(final Path path, final FixedFileTrailer trailer,
-      final FSDataInputStreamWrapper fsdis, final long size, 
-      final CacheConfig cacheConf, final HFileSystem hfs, 
-      final Configuration conf) throws IOException {
+  public PFileScanner(HFileReaderV2 r, boolean cacheBlocks,
+      final boolean pread, final boolean isCompaction) {
+    super(r, cacheBlocks, pread, isCompaction);
+    this.reader = r;
   }
 
-  @Override
-  public int getMajorVersion() {
-    return 4;
-  }
-
+  /*
+   * TODO: when called, is the blockBuffer.position() placed at the 
+   * beginning of kv or pkv? HAS TO CONFIRM THIS!
+   *
+   * TODO: prev pointer is added, recalculate offsets
+   */
   @Override
   protected int blockSeek(Cell key, boolean seekBefore) {
     int klen, vlen, skipKLen;
@@ -148,7 +149,14 @@ public class PFileReader extends HFileReaderV2 {
 
         comp = reader.getComparator().compareOnlyKeyPortion(key, 
                                                             skipKeyOnlyKv);
+        //TODO: deal with reader.shouldIncludeMemstoreTS() on both readers
+        //and writers.
         if (0 == comp) {
+          //TODO: readKeyValueLen() rewrites currKeyLen/currValueLen
+          //be careful when call readKeyValueLen()
+          currKeyLen = skipKLen;
+          currValueLen = blockBuffer.getInt(skipKvOffset + KEY_LEN_SIZE);
+
           if (seekBefore) {
             if (lastKeyValueSize < 0) {
               KeyValue kv = KeyValueUtil.ensureKeyValue(key);
@@ -160,11 +168,11 @@ public class PFileReader extends HFileReaderV2 {
                   + ", blockOffset = " + block.getOffset() + ", onDiskSize = "
                   + block.getOnDiskSizeWithHeader());
             }
-            readKeyValueLen();
+            // The writer currently do not write memstoreTS field,
+            // hence we do not call readKeyValueLen(); But currKeyLen and 
+            // currValueLen have to be set.
             return 1;
           }
-          currKeyLen = skipKLen;
-          currValueLen = blockBuffer.getInt(skipKvOffset + KEY_LEN_SIZE);
           blockBuffer.position(blockBuffser.position() + pointer);
 
         }
