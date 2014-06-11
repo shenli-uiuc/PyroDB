@@ -98,8 +98,8 @@ public class PFileBlockWriter extends HFileBlock.Writer {
     LOG.info("Shen Li: after loop");
     if (this.kvs.size() > this.ptrNum.length) 
       this.ptrNum = Arrays.copyOf(this.ptrNum, this.ptrNum.length * 2);
-    // The first pointer always points to the end of the current pkv
-    this.ptrNum[this.kvs.size() - 1] = 1;
+    // no pointer points to the next entry
+    this.ptrNum[this.kvs.size() - 1] = 0;
     LOG.info("Shen Li: PFileBlockWriter.write finish");
   }
 
@@ -147,7 +147,7 @@ public class PFileBlockWriter extends HFileBlock.Writer {
           dataBlockEncodingCtx, this.userDataStream);    
 
       // write pointers, this.ptrNum array is 
-      j = 1;
+      j = 2;
       while (i + j < nOfKvs && this.ptrNum[i] > 0) {
         this.pDataBlockEncoder.encodeInt(
             this.offsets[i + j] - this.offsets[i], 
@@ -155,8 +155,10 @@ public class PFileBlockWriter extends HFileBlock.Writer {
         j <<= 1;
         --(this.ptrNum[i]);
       }
-      // TODO: this should not be necessary, if above code execute correctly
-      this.ptrNum[i] = 0;
+      if (0 != this.ptrNum[i]) {
+        throw IllegalStateException("ptrNum of entry " + i + 
+            " should be 0, the real value is " + this.ptrNum[i]);
+      }
 
       // TODO: remove this and implement the logic for seekBefore if 
       // evaluations show large space overhead
