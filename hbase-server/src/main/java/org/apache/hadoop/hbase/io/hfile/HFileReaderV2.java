@@ -747,8 +747,8 @@ public class HFileReaderV2 extends AbstractHFileReader {
   /**
    * Implementation of {@link HFileScanner} interface.
    */
-  protected static class ScannerV2 extends AbstractScannerV2 {
-    private HFileReaderV2 reader;
+  protected class ScannerV2 extends AbstractScannerV2 {
+    protected HFileReaderV2 reader;
 
     public ScannerV2(HFileReaderV2 r, boolean cacheBlocks,
         final boolean pread, final boolean isCompaction) {

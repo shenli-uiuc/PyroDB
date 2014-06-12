@@ -1,6 +1,7 @@
 package org.apache.hadoop.hbase.io.pfile;
 
-import java.io.Exception;
+import java.io.IOException;
+import java.nio.ByteBuffer;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -10,16 +11,19 @@ import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 
+import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.KeyValue.KVComparator;
 import org.apache.hadoop.hbase.Cell;
+import org.apache.hadoop.hbase.HConstants;
 
 import org.apache.hadoop.hbase.io.hfile.HFileReaderV2;
 import org.apache.hadoop.hbase.io.hfile.CacheConfig;
 import org.apache.hadoop.hbase.io.hfile.HFileContext;
 import org.apache.hadoop.hbase.io.hfile.HFile;
+import org.apache.hadoop.hbase.io.hfile.HFileBlock;
 import org.apache.hadoop.hbase.io.hfile.HFile.Writer;
 import org.apache.hadoop.hbase.io.hfile.FixedFileTrailer;
-import org.apache.hadoop.hbase.io.FSInputStreamWrapper;
+import org.apache.hadoop.hbase.io.FSDataInputStreamWrapper;
 import org.apache.hadoop.hbase.fs.HFileSystem;
 import org.apache.hadoop.hbase.util.Bytes;
 
@@ -40,150 +44,344 @@ import org.apache.hadoop.hbase.util.Bytes;
 public class PFileReader extends HFileReaderV2 {
   private static final Log LOG = LogFactory.getLog(PFileReader.class);
 
-  public static final KEY_LEN_SIZE = Bytes.SIZEOF_INT;
 
   public PFileReader(final Path path, final FixedFileTrailer trailer,
-      final FSDataInputStreamWrapper fsdis, final long size, 
-      final CacheConfig cacheConf, final HFileSystem hfs, 
+      final FSDataInputStreamWrapper fsdis, final long size,
+      final CacheConfig cacheConf, final HFileSystem hfs,
       final Configuration conf) throws IOException {
+    super(path, trailer, fsdis, size, cacheConf, hfs, conf);
   }
 
   @Override
-  public int getMajorVersion() {
-    return 4;
-  }
+    public int getMajorVersion() {
+      return 4;
+    }
 
-  @Override
-  protected int blockSeek(Cell key, boolean seekBefore) {
-    int klen, vlen, skipKLen;
-    int kvOffset, skipKvOffset;
-    byte pNum, skipPNum;
-    int pointer, lastPointer;
-    long memstoreTS = 0;
-    int memstoreTSLen = 0;
-    int lastKeyValueSize = -1;
-    int curPos, skipPos;
 
-    KeyValue.KeyOnlyKeyValue keyOnlyKv = new KeyValue.KeyOnlyKeyValue();
-    KeyValue.KeyOnlyKeyValue skipKeyOnlyKv = new KeyValue.KeyOnlyKeyValue();
+  public class PFileScanner extends HFileReaderV2.ScannerV2 {
+    private static final Log LOG = LogFactory.getLog(PFileScanner.class);
+
+    public static final int KEY_LEN_SIZE = Bytes.SIZEOF_INT;
+    public static final int MAX_INT = 2147483647;
+
+    //TODO: take care of the following two variables
+    private int currSkipListEntryLen = 0;
+    private int currPNum = 0;
+
+    public PFileScanner(PFileReader r, boolean cacheBlocks,
+        final boolean pread, final boolean isCompaction) {
+      super(r, cacheBlocks, pread, isCompaction);
+      this.reader = r;
+    }
+
+    private int getKvOffset(int pkvOffset, int pNum) {
+      return pkvOffset + PKeyValue.POINTER_NUM_SIZE +
+        (pNum + 1) * PKeyValue.POINTER_SIZE;
+    }
+
+    @Override
+      public Cell getKeyValue() {
+        if (!isSeeked())
+          return null;
+
+        KeyValue ret = new KeyValue(
+            blockBuffer.array(),
+            blockBuffer.arrayOffset() + blockBuffer.position()
+            + currSkipListEntryLen, getCellBufSize());
+        // TODO: memstoreTS
+        return ret;
+      }
+
+    @Override
+      public ByteBuffer getKey() {
+        assertSeeked();
+        return ByteBuffer.wrap(
+            blockBuffer.array(),
+            blockBuffer.arrayOffset() + blockBuffer.position()
+            + currSkipListEntryLen + KEY_VALUE_LEN_SIZE, 
+            currKeyLen).slice();
+      }
+
+    @Override
+      public ByteBuffer getValue() {
+        assertSeeked();
+        return ByteBuffer.wrap(
+            blockBuffer.array(),
+            blockBuffer.arrayOffset() + blockBuffer.position()
+            + currSkipListEntryLen + KEY_VALUE_LEN_SIZE
+            + currKeyLen, currValueLen).slice();
+      }
+
+    @Override
+      protected void setNonSeekedState() {
+        block = null;
+        blockBuffer = null;
+        currPNum = 0;
+        currSkipListEntryLen = 0;
+        currKeyLen = 0;
+        currValueLen = 0;
+        currMemstoreTS = 0;
+        currMemstoreTSLen = 0;
+      }
+
+    @Override
+      protected void readKeyValueLen() {
+        blockBuffer.mark();
+        currPNum = blockBuffer.get();
+        currSkipListEntryLen =
+          PKeyValue.POINTER_NUM_SIZE + 
+          (currPNum + 1) * PKeyValue.POINTER_SIZE;
+        blockBuffer.position(
+            blockBuffer.position() + currSkipListEntryLen);
+        currKeyLen = blockBuffer.getInt();
+        currValueLen = blockBuffer.getInt();
+        // TODO: think about handling readMvccVersion()
+        if (currPNum < 0 || currKeyLen < 0 || currValueLen < 0
+            || currKeyLen > blockBuffer.limit() 
+            || currValueLen > blockBuffer.limit()
+            || currSkipListEntryLen > blockBuffer.limit()) {
+          throw new IllegalStateException(
+              "Shen Li: Invalid currKeyLen " + currKeyLen
+              + "or currValueLen " + currValueLen 
+              + "or currPNum " + currPNum
+              + "or currSkipListEntryLen" + currSkipListEntryLen
+              + ". Block offset: " + block.getOffset()
+              + ", block length: " + blockBuffer.limit()
+              + ", position: " + blockBuffer.position()
+              + " (without header).");
+        }
+        blockBuffer.reset();
+      }
+
+    @Override
+      protected int getNextCellStartPosition() {
+        //TODO: consider currMemstoreTSLen
+        return blockBuffer.position() + currSkipListEntryLen
+          + KEY_VALUE_LEN_SIZE + currKeyLen + currValueLen;
+      }
+
+    @Override
+      protected ByteBuffer getFirstKeyInBlock(HFileBlock curBlock) {
+        ByteBuffer buffer = curBlock.getBufferWithoutHeader();
+        buffer.rewind();
+        byte pNum = buffer.get();
+        buffer.position(buffer.position() + 
+            (pNum + 1) * PKeyValue.POINTER_SIZE);
+        int klen = buffer.getInt();
+        buffer.getInt();
+        ByteBuffer keyBuff = buffer.slice();
+        keyBuff.limit(klen);
+        keyBuff.rewind();
+        return keyBuff;
+      }
+
+    @Override
+      public String getKeyString() {
+        return Bytes.toStringBinary(
+            blockBuffer.array(),
+            blockBuffer.arrayOffset() + blockBuffer.position() +
+            currSkipListEntryLen + KEY_VALUE_LEN_SIZE, currKeyLen);
+      }
+
+    @Override
+      public String getValueString() {
+        return Bytes.toString(
+            blockBuffer.array(),
+            blockBuffer.arrayOffset() + blockBuffer.position() +
+            currSkipListEntryLen + KEY_VALUE_LEN_SIZE + currKeyLen,
+            currValueLen);
+      }
+
+    // TODO: declare and set currSkipListEntryLen
+    @Override
+      public int compareKey(KVComparator comparator, Cell key) {
+        return comparator.compareOnlyKeyPortion(
+            key,
+            new KeyValue.KeyOnlyKeyValue(
+              blockBuffer.array(), 
+              blockBuffer.arrayOffset() + blockBuffer.position() +
+              currSkipListEntryLen + KEY_VALUE_LEN_SIZE, 
+              currKeyLen));
+      }
 
     /*
-     * Invariant: the current key under do-while has to be smaller than the 
-     * target key. The loop over the current skiplist entry will return if
-     * found an exact match, otherwise set the current key to the largest key
-     * that is smaller than the target key in its skiplist pointers.
+     * Within a loaded block, seek looking for the last key that is 
+     * SMALLER!!! than the given key.
+     * TODO: when called, is the blockBuffer.position() placed at the 
+     * beginning of kv or pkv? HAS TO CONFIRM THIS!
+     *
      */
-    do {
-      //blockBuffer position will be reset before reading the skiplist entries
-      blockBuffer.mark();
-      pNum = blockBuffer.get();
+    @Override
+      protected int blockSeek(Cell key, boolean seekBefore) {
+        int klen, vlen, skipKLen;
+        int kvOffset, skipKvOffset;
+        byte pNum, tmpPNum, skipPNum;
+        int ptr, lastPtr, skipPrevPtr;
+        long memstoreTS = 0;
+        int memstoreTSLen = 0;
+        int lastKeyValueSize = -1;
+        int curOffset, skipOffset, ptrOffset, skipPrevOffset;
 
-      // read klen, vlen, and key
-      kvOffset = blockBuffer.arrayOffset() + blockBuffer.position() + 
-                     pNum * PKeyValue.POINTER_SIZE;
-      klen = blockBuffer.getInt(kvOffset);
-      vlen = blockBuffer.getInt(kvOffset + Bytes.SIZEOF_INT);
-      keyOnlyKv.setKey(blockBuffer.array(), 
-                       kvOffset + KEY_VALUE_LEN_SIZE, klen);
+        KeyValue.KeyOnlyKeyValue keyOnlyKv = new KeyValue.KeyOnlyKeyValue();
+        KeyValue.KeyOnlyKeyValue skipKeyOnlyKv = new KeyValue.KeyOnlyKeyValue();
 
-      int comp = reader.getComparator().compareOnlyKeyPortion(key, keyOnlyKv);
+        // the key of the first pkv has to be smaller than the target
+        // key, otherwise we should not seek this block
+        // TODO: not true, read the doc of original blockSeek
 
-      if (0 == comp) {
-        if (seekBefore) {
-          if (lastKeyValueSize < 0) {
-            KeyValue kv = KeyValueUtil.ensureKeyValue(key);
-            throw new IllegalStateException(
-                "Shen Li: blockSeek with seekBefore " +
-                "at the first key of the block: key = " +
-                Bytes.toStringBinary(kv.getKey(), kv.getKeyOffset(), 
-                                     kv.getKeyLength()) +
-                ", blockOffset = " + block.getOffset() + ", onDiskSize = " +
-                block.getOnDiskSizeWithHeader());
+        curOffset = blockBuffer.position() + blockBuffer.arrayOffset();
+        pNum = blockBuffer.get(curOffset);
+        kvOffset = this.getKvOffset(curOffset, pNum);
+        // key length of that kv
+        klen = blockBuffer.getInt(skipKvOffset);
+        keyOnlyKv.setKey(blockBuffer.array(), 
+            kvOffset + KEY_VALUE_LEN_SIZE, klen);
+
+        int comp = reader.getComparator().compareOnlyKeyPortion(key, 
+            keyOnlyKv);
+
+        if (comp < 0) {
+          // target key smaller than the first key
+          LOG.info("Shen Li: blockSeek called on a larger block");
+          if (blockBuffer.position() == 0 && 
+              this.reader.trailer.getMinorVersion() >=
+              MINOR_VERSION_WITH_FAKED_KEY) {
+            return HConstants.INDEX_KEY_MAGIC;
           }
-          //TODO: the blockBuffer.position() is not the same with the one 
-          //in HFileReaderV2
-          blockBuffer.position(blockBuffer.position() - lastKeyValueSize);
-          //TODO: don't know what is this...
-          readKeyValueLen();
           return 1;
         }
-        currKeyLen = klen;
-        currValueLen = vlen;
-        if (this.reader.shouldIncludeMemstoreTS()) {
-          currMemstoreTS = memstoreTS;
-          currMemstoreTSLen = memstoreTSLen;
+
+        // the target key is within the range of the pointers of the 
+        // current entry
+        boolean found;
+
+        // helps search in the skiplist
+        int maxOffset = this.MAX_INT;
+
+
+        /*
+         * Invariant: the current key under while has to be smaller than the 
+         * target key. The loop over the current skiplist entry will return if
+         * found an exact match, otherwise set the current key to the largest key
+         * that is smaller than the target key in its skiplist pointers.
+         */
+        while(true) {
+          // offset to the largest pointer
+          ptrOffset = curOffset + PKeyValue.POINTER_NUM_SIZE +
+            (pNum - 1) * PKeyValue.POINTER_SIZE;
+
+          found = false;
+          // check pointers of the current entry
+          while (ptrOffset > curOffset) {
+            ptr = blockBuffer.getInt(ptrOffset);
+            // offset to the beginning of the pkv indicated by the pointer
+            skipOffset = curOffset + ptr;
+            if (skipOffset >= maxOffset) {
+              ptrOffset -= PKeyValue.POINTER_SIZE;
+              continue;
+            }
+            // ptr num of that pkv
+            skipPNum = blockBuffer.get(skipOffset);
+            // offset to the beginning of kv of that pkv
+            skipKvOffset = this.getKvOffset(skipOffset, skipPNum);
+            // key length of that kv
+            skipKLen = blockBuffer.getInt(skipKvOffset);
+            skipKeyOnlyKv.setKey(blockBuffer.array(), 
+                skipKvOffset + KEY_VALUE_LEN_SIZE, skipKLen);
+
+            comp = reader.getComparator().compareOnlyKeyPortion(key, 
+                skipKeyOnlyKv);
+            //TODO: deal with reader.shouldIncludeMemstoreTS() on both readers
+            //and writers.
+            if (0 == comp) {
+              //Found exact match
+              //TODO: readKeyValueLen() rewrites currKeyLen/currValueLen
+              //be careful when call readKeyValueLen()
+              return handleExactMatch(key, blockBuffer.position() + ptr, 
+                  skipKvOffset, klen, seekBefore);
+            } else if (comp < 0) {
+              // larger than the target key, try the next smaller pointer
+              ptrOffset -= PKeyValue.POINTER_SIZE;    
+              maxOffset = skipOffset;
+              lastPtr = ptr;
+            } else {
+              // found the largest key that is smaller than the target key, break
+              found = true;
+              break;
+            }
+          }
+
+          if (!found) {
+            // all pointers point to larger keys (or no pointer), 
+            // and the curren tkey is smaller than the target key.
+
+            // check next pkv
+            ptr = PKeyValue.POINTER_NUM_SIZE +
+              (pNum + 1) * PKeyValue.POINTER_SIZE + 
+              KEY_VALUE_LEN_SIZE + klen + vlen;
+            skipOffset = curOffset + ptr;
+            skipPNum = blockBuffer.get(skipOffset);
+            skipKvOffset = getKvOffset(skipOffset, skipPNum);
+            skipKLen = blockBuffer.getInt(skipKvOffset);
+            skipKeyOnlyKv.setKey(blockBuffer.array(), 
+                skipKvOffset + KEY_VALUE_LEN_SIZE, skipKLen);
+            comp = reader.getComparator().compareOnlyKeyPortion(key, 
+                skipKeyOnlyKv);
+            if (0 == comp) {
+              // next pkv matches target key
+              return handleExactMatch(key, blockBuffer.position() + ptr, 
+                  skipKvOffset, skipKLen, seekBefore);
+            } else if (comp < 0) {
+              // target key is larger than current but smaller than the next.
+              // therefore, the current locaiton of blockBuffer is correct
+              return 1;
+            } else {
+              // target key is larger than next but smaller than the next of next
+              // blockBuffer should be placed at the beginning of the next key
+              blockBuffer.position(blockBuffer.position() + ptr);
+              return 1;
+            }
+          } else {
+            // found a valid range, so update the current pkv info
+            blockBuffer.position(blockBuffer.position() + ptr);
+            curOffset = blockBuffer.position() + blockBuffer.arrayOffset();
+            pNum = blockBuffer.get(curOffset);
+          }
         }
-      } else if (comp < 0) {
-        if (lastKeyValueSize > 0) {
-          //TODO: check position is placed correctly
-          blockBuffer.position(blockBuffer.position() - lastKeyValueSize);
+      }
+
+    private int handleExactMatch(Cell key, int destPos, int kvOffset, int klen, boolean seekBefore) {
+      currKeyLen = klen;
+      currValueLen = blockBuffer.getInt(kvOffset + KEY_LEN_SIZE);
+
+      if (seekBefore) {
+        int skipPrevOffset = kvOffset - PKeyValue.POINTER_SIZE;
+        // note that this pointer is negtive value
+        int skipPrevPtr = blockBuffer.getInt(skipPrevOffset);
+
+        if (skipPrevPtr <= 0) {
+          KeyValue kv = KeyValueUtil.ensureKeyValue(key);
+          LOG.info("Shen Li: seekBefore exact match at the first key");
+          throw new IllegalStateException("Shen Li: " +
+              "blockSeek with seekBefore at the first key of the block: "
+              + "key = " + Bytes.toStringBinary(kv.getKey(), 
+                kv.getKeyOffset(), 
+                kv.getKeyLength())
+              + ", blockOffset = " + block.getOffset() + ", onDiskSize = "
+              + block.getOnDiskSizeWithHeader());
         }
-        //TODO: same as above
-        // This method calls readMvccVersion to read mvcc version, which
-        // sets currMemstoreTs and currMemstoreTSLen.
-        // Caution: have to make sure that the position of the blockBuffer
-        // is at the end of the skiplist entry
-        readKeyValueLen();
-        if (-1 == lastKeyValueSize && 0 == blockBuffer.position() &&
-            this.reader.trailer.getMinorVersion() >= 
-              MINOR_VERSION_WITH_FAKED_KEY) {
-          return HConstants.INDEX_KEY_MAGIC;
-        }
+
+        // The writer currently do not write memstoreTS field,
+        // hence we do not call readKeyValueLen(); But currKeyLen and 
+        // currValueLen have to be set.
+
+        // use the prev ptr to reset the position.
+        blockBuffer.position(destPos + skipPrevPtr);
         return 1;
       }
 
-      blockBuffer.reset();
-      curPos = blockBuffer.position();
-
-      for (int i = 0 ; i < pNum; ++i) {
-        pointer = blockBuffer.getInt();
-        skipPos = blockBuffer.arrayOffset() + 
-                       blockBuffer.position() + pointer;
-        skipPNum = blockBuffer.get(skipPos);
-        skipKvOffset = skipPos + PKeyValue.POINTER_NUM_SIZE +
-                       skipPNum * PKeyValue.POINTER_SIZE;
-        skipKLen = blockBuffer.getInt(skipKvOffset);
-        skipKeyOnlyKv.setKey(blockBuffset.array(), 
-                             skipKvOffset + KEY_VALEN_LEN_SIZE, skipKLen);
-
-        comp = reader.getComparator().compareOnlyKeyPortion(key, 
-                                                            skipKeyOnlyKv);
-        if (0 == comp) {
-          if (seekBefore) {
-            if (lastKeyValueSize < 0) {
-              KeyValue kv = KeyValueUtil.ensureKeyValue(key);
-              throw new IllegalStateException(
-                  "blockSeek with seekBefore at the first key of the block: "
-                  + "key = " + Bytes.toStringBinary(kv.getKey(), 
-                                                    kv.getKeyOffset(), 
-                                                    kv.getKeyLength())
-                  + ", blockOffset = " + block.getOffset() + ", onDiskSize = "
-                  + block.getOnDiskSizeWithHeader());
-            }
-            readKeyValueLen();
-            return 1;
-          }
-          currKeyLen = skipKLen;
-          currValueLen = blockBuffer.getInt(skipKvOffset + KEY_LEN_SIZE);
-          blockBuffer.position(blockBuffser.position() + pointer);
-
-        }
-      }
-
-
-      //TODO: finish the skiplist logic, 
-      lastKeyValueSize = klen + vlen + memstoreTSLen + KEY_VALUE_LEN_SIZE;
-      //TODO: has to skip the skiplist entry also
-      blockBuffer.position(blockBuffer.position() + lastKeyValueSize);
-      // TODO: the while condition is no longer right for skiplist cases
-    } while (blockBuffer.remaining() > 0);
-
-    // HFileReaderV2 says below seeks to the last key we successfully read,
-    // when this is the last key/value pair in the file.
-    // TODO: consider if we still need this for skiplist case
-    blockBuffer.position(blockBuffer.position() - lastKeyValueSize);
-    //TODO: same
-    readKeyValueLen();
-    return 1;
+      blockBuffer.position(destPos);
+      return 0;
+    }
   }
 }

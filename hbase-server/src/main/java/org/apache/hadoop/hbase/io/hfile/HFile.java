@@ -73,6 +73,7 @@ import com.google.common.collect.Lists;
 
 //Shen Li
 import org.apache.hadoop.hbase.io.pfile.PFileWriter;
+import org.apache.hadoop.hbase.io.pfile.PFileReader;
 
 /**
  * File format for hbase.

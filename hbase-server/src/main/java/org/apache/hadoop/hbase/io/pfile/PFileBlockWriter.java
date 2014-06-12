@@ -156,7 +156,7 @@ public class PFileBlockWriter extends HFileBlock.Writer {
         --(this.ptrNum[i]);
       }
       if (0 != this.ptrNum[i]) {
-        throw IllegalStateException("ptrNum of entry " + i + 
+        throw new IllegalStateException("ptrNum of entry " + i + 
             " should be 0, the real value is " + this.ptrNum[i]);
       }
 
