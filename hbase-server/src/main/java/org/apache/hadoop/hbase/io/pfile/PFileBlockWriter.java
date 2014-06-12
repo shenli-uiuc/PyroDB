@@ -26,6 +26,7 @@ import org.apache.hadoop.hbase.io.pfile.PFileDataBlockEncoder;
 public class PFileBlockWriter extends HFileBlock.Writer {
   private static final Log LOG = LogFactory.getLog(PFileBlockWriter.class);
 
+  private static final byte BYTE_NEGTIVE_ONE = -1;
   private static final int ARRAY_INIT_SIZE = 512;
   private static final int [] trailingZeroMap = new int [] {
     32, 0, 1, 26, 2, 23, 27, 0, 3, 16, 24, 30, 28, 11, 0, 13, 4,
@@ -54,12 +55,11 @@ public class PFileBlockWriter extends HFileBlock.Writer {
   }
 
   /*
-   *
+   * clear the kvs whenever write a new block
    */
   public DataOutputStream startWriting(BlockType newBlockType) 
       throws IOException {
-    if (BlockType.DATA == newBlockType)
-      this.kvs.clear();
+    this.kvs.clear();
     return super.startWriting(newBlockType);  
   }
 
@@ -78,8 +78,8 @@ public class PFileBlockWriter extends HFileBlock.Writer {
     int kvsSize = this.kvs.size();
     int nOfZeros = kvsSize > 0 ? numberOfTrailingZeros(kvsSize) : 0;
     // the number of bytes written in order to update ancestors forwarding 
-    // pointers
-    this.unencodedDataSizeWritten += (PKeyValue.POINTER_SIZE * nOfZeros);
+    // pointers, plus the prev pointer
+    this.unencodedDataSizeWritten += (PKeyValue.POINTER_SIZE * (nOfZeros + 1));
     LOG.info("Shen Li: pointers info, " + nOfZeros + ", " + 
              PKeyValue.POINTER_NUM_SIZE + ", " + PKeyValue.POINTER_SIZE);
     this.kvs.add(kv);
@@ -134,7 +134,7 @@ public class PFileBlockWriter extends HFileBlock.Writer {
       this.offsets[i] = curOffset;
       curOffset += this.kvs.get(i).getLength();
       curOffset += PKeyValue.POINTER_NUM_SIZE;
-      curOffset += (this.ptrNum[i] * PKeyValue.POINTER_SIZE);
+      curOffset += ((this.ptrNum[i] + 1) * PKeyValue.POINTER_SIZE);
     }
 
     // write PKeyValues
@@ -143,8 +143,15 @@ public class PFileBlockWriter extends HFileBlock.Writer {
       // TODO: implement PFileDataBlockEncoder to account encodeLong, the second
       // parameter indicate the number of lower bytes to encode from the int
       // variable.
-      this.pDataBlockEncoder.encodeByte(this.ptrNum[i], 
+      
+      // The ptrNum of the last pkv equals -1;
+      if (i + 1 >= nOfKvs) {
+        this.pDataBlockEncoder.encodeByte(BYTE_NEGTIVE_ONE,
+          dataBlockEncodingCtx, this.userDataStream);
+      } else {
+        this.pDataBlockEncoder.encodeByte(this.ptrNum[i], 
           dataBlockEncodingCtx, this.userDataStream);    
+      }
 
       // write pointers, this.ptrNum array is 
       j = 2;
@@ -156,7 +163,9 @@ public class PFileBlockWriter extends HFileBlock.Writer {
         --(this.ptrNum[i]);
       }
       if (0 != this.ptrNum[i]) {
-        throw new IllegalStateException("ptrNum of entry " + i + 
+        LOG.info("Shen Li: ptrNum of entry " + i +
+                 " should be 0, the real value is " + this.ptrNum[i]);
+        throw new IllegalStateException("Shen Li: ptrNum of entry " + i + 
             " should be 0, the real value is " + this.ptrNum[i]);
       }
 

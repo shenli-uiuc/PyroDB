@@ -25,6 +25,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.security.SecureRandom;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.hbase.io.TagCompressionContext;
 import org.apache.hadoop.hbase.io.compress.Compression;
@@ -48,6 +51,8 @@ import com.google.common.base.Preconditions;
 @InterfaceAudience.Private
 public class HFileBlockDefaultEncodingContext implements
     HFileBlockEncodingContext {
+  public static final Log LOG = 
+    LogFactory.getLog(HFileBlockDefaultEncodingContext.class);
   private byte[] onDiskBytesWithHeader;
   private BlockType blockType;
   private final DataBlockEncoding encodingAlgo;
@@ -143,6 +148,8 @@ public class HFileBlockDefaultEncodingContext implements
     Encryption.Context cryptoContext = fileContext.getEncryptionContext();
     if (cryptoContext != Encryption.Context.NONE) {
 
+      LOG.info("Shen Li: crypto");
+
       // Encrypted block format:
       // +--------------------------+
       // | byte iv length           |
@@ -205,7 +212,7 @@ public class HFileBlockDefaultEncodingContext implements
       }
 
     } else {
-
+      LOG.info("Shen Li: compress");
       if (this.fileContext.getCompression() != NONE) {
         compressedByteStream.reset();
         compressedByteStream.write(headerBytes);
@@ -217,6 +224,7 @@ public class HFileBlockDefaultEncodingContext implements
         compressionStream.finish();
         onDiskBytesWithHeader = compressedByteStream.toByteArray();
       } else {
+        LOG.info("Shen Li: simple copy");
         onDiskBytesWithHeader = uncompressedBytesWithHeader;
       }
     }

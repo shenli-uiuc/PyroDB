@@ -19,6 +19,9 @@ import org.apache.hadoop.hbase.io.hfile.HFile.Writer;
 import org.apache.hadoop.hbase.io.hfile.HFile;
 import org.apache.hadoop.hbase.io.hfile.HFileBlockIndex;
 
+//TODO: major number indicates the format of HFile, and minor the format
+//inside a block. so we shoul update the minor rather than the major
+
 /*
  * PFile format:
  *    header followed by a series of PKeyValue entries
@@ -30,7 +33,6 @@ import org.apache.hadoop.hbase.io.hfile.HFileBlockIndex;
  *          on demand. (it is better the block writer holds it.)
  *       2. we also need a new encoder
  */
-
 public class PFileWriter extends  HFileWriterV2{
 
   private static final Log LOG = LogFactory.getLog(PFileWriter.class);
@@ -90,9 +92,14 @@ public class PFileWriter extends  HFileWriterV2{
     return 4;
   }
 
-  @Override
-  protected int getMinorVersion() {
-    return 0;
-  }
+  // minor version 0 indicates there is no checksum....
+  // reader and writer has to agree on the version number.
+  //
+  //read the comments in HFileBlock.totalChecksumBytes
+  //
+  //@Override
+  //protected int getMinorVersion() {
+  //  return 0;
+  //}
 
 }

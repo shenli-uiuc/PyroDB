@@ -12,11 +12,13 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 
 import org.apache.hadoop.hbase.KeyValue;
+import org.apache.hadoop.hbase.KeyValueUtil;
 import org.apache.hadoop.hbase.KeyValue.KVComparator;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.HConstants;
 
 import org.apache.hadoop.hbase.io.hfile.HFileReaderV2;
+import org.apache.hadoop.hbase.io.hfile.HFileScanner;
 import org.apache.hadoop.hbase.io.hfile.CacheConfig;
 import org.apache.hadoop.hbase.io.hfile.HFileContext;
 import org.apache.hadoop.hbase.io.hfile.HFile;
@@ -53,12 +55,21 @@ public class PFileReader extends HFileReaderV2 {
   }
 
   @Override
-    public int getMajorVersion() {
-      return 4;
+  public int getMajorVersion() {
+    return 4;
+  }
+
+  @Override
+  public HFileScanner getScanner(boolean cacheBlocks, final boolean pread,
+                        final boolean isCompaction) {
+    if (dataBlockEncoder.useEncodedScanner()) {
+      throw new IllegalStateException("Shen Li: PFileScanner does "
+          + " not support encoded scanner for now");
     }
+    return new PFileScanner(this, cacheBlocks, pread, isCompaction);
+  }
 
-
-  public class PFileScanner extends HFileReaderV2.ScannerV2 {
+  public static class PFileScanner extends HFileReaderV2.ScannerV2 {
     private static final Log LOG = LogFactory.getLog(PFileScanner.class);
 
     public static final int KEY_LEN_SIZE = Bytes.SIZEOF_INT;
@@ -132,7 +143,8 @@ public class PFileReader extends HFileReaderV2 {
           PKeyValue.POINTER_NUM_SIZE + 
           (currPNum + 1) * PKeyValue.POINTER_SIZE;
         blockBuffer.position(
-            blockBuffer.position() + currSkipListEntryLen);
+            blockBuffer.position() + currSkipListEntryLen
+            - PKeyValue.POINTER_NUM_SIZE);
         currKeyLen = blockBuffer.getInt();
         currValueLen = blockBuffer.getInt();
         // TODO: think about handling readMvccVersion()
@@ -223,17 +235,15 @@ public class PFileReader extends HFileReaderV2 {
         int curOffset, skipOffset, ptrOffset, skipPrevOffset;
 
         KeyValue.KeyOnlyKeyValue keyOnlyKv = new KeyValue.KeyOnlyKeyValue();
-        KeyValue.KeyOnlyKeyValue skipKeyOnlyKv = new KeyValue.KeyOnlyKeyValue();
 
-        // the key of the first pkv has to be smaller than the target
-        // key, otherwise we should not seek this block
-        // TODO: not true, read the doc of original blockSeek
+        // If the target key is smaller than the first pkv in the
+        // current block, return -2 (HConstants.INDEX_KEY_MAGIC)
 
         curOffset = blockBuffer.position() + blockBuffer.arrayOffset();
         pNum = blockBuffer.get(curOffset);
         kvOffset = this.getKvOffset(curOffset, pNum);
         // key length of that kv
-        klen = blockBuffer.getInt(skipKvOffset);
+        klen = blockBuffer.getInt(kvOffset);
         keyOnlyKv.setKey(blockBuffer.array(), 
             kvOffset + KEY_VALUE_LEN_SIZE, klen);
 
@@ -244,7 +254,7 @@ public class PFileReader extends HFileReaderV2 {
           // target key smaller than the first key
           LOG.info("Shen Li: blockSeek called on a larger block");
           if (blockBuffer.position() == 0 && 
-              this.reader.trailer.getMinorVersion() >=
+              this.reader.getTrailer().getMinorVersion() >=
               MINOR_VERSION_WITH_FAKED_KEY) {
             return HConstants.INDEX_KEY_MAGIC;
           }
@@ -258,6 +268,11 @@ public class PFileReader extends HFileReaderV2 {
         // helps search in the skiplist
         int maxOffset = this.MAX_INT;
 
+        // initialize variables in case the block contains a single
+        // pkv, whose key is smaller than the target key. 
+        skipOffset = curOffset;
+        ptr = 0;
+        skipKLen = klen;
 
         /*
          * Invariant: the current key under while has to be smaller than the 
@@ -266,6 +281,12 @@ public class PFileReader extends HFileReaderV2 {
          * that is smaller than the target key in its skiplist pointers.
          */
         while(true) {
+
+          if (pNum < 0) {
+            // this is last pkv, return at the current position.
+            return 1;
+          }
+
           // offset to the largest pointer
           ptrOffset = curOffset + PKeyValue.POINTER_NUM_SIZE +
             (pNum - 1) * PKeyValue.POINTER_SIZE;
@@ -286,11 +307,11 @@ public class PFileReader extends HFileReaderV2 {
             skipKvOffset = this.getKvOffset(skipOffset, skipPNum);
             // key length of that kv
             skipKLen = blockBuffer.getInt(skipKvOffset);
-            skipKeyOnlyKv.setKey(blockBuffer.array(), 
+            keyOnlyKv.setKey(blockBuffer.array(), 
                 skipKvOffset + KEY_VALUE_LEN_SIZE, skipKLen);
 
             comp = reader.getComparator().compareOnlyKeyPortion(key, 
-                skipKeyOnlyKv);
+                keyOnlyKv);
             //TODO: deal with reader.shouldIncludeMemstoreTS() on both readers
             //and writers.
             if (0 == comp) {
@@ -305,15 +326,21 @@ public class PFileReader extends HFileReaderV2 {
               maxOffset = skipOffset;
               lastPtr = ptr;
             } else {
-              // found the largest key that is smaller than the target key, break
+              // found the largest key that is smaller than the target key 
+              // known by the current pkv, break
               found = true;
               break;
             }
           }
 
+          //TODO: handle the last block
+
           if (!found) {
             // all pointers point to larger keys (or no pointer), 
             // and the curren tkey is smaller than the target key.
+
+            //read vlen of the current key
+            vlen = blockBuffer.get(kvOffset + KEY_LEN_SIZE);
 
             // check next pkv
             ptr = PKeyValue.POINTER_NUM_SIZE +
@@ -323,10 +350,10 @@ public class PFileReader extends HFileReaderV2 {
             skipPNum = blockBuffer.get(skipOffset);
             skipKvOffset = getKvOffset(skipOffset, skipPNum);
             skipKLen = blockBuffer.getInt(skipKvOffset);
-            skipKeyOnlyKv.setKey(blockBuffer.array(), 
+            keyOnlyKv.setKey(blockBuffer.array(), 
                 skipKvOffset + KEY_VALUE_LEN_SIZE, skipKLen);
             comp = reader.getComparator().compareOnlyKeyPortion(key, 
-                skipKeyOnlyKv);
+                keyOnlyKv);
             if (0 == comp) {
               // next pkv matches target key
               return handleExactMatch(key, blockBuffer.position() + ptr, 
@@ -344,8 +371,9 @@ public class PFileReader extends HFileReaderV2 {
           } else {
             // found a valid range, so update the current pkv info
             blockBuffer.position(blockBuffer.position() + ptr);
-            curOffset = blockBuffer.position() + blockBuffer.arrayOffset();
+            curOffset = skipOffset;
             pNum = blockBuffer.get(curOffset);
+            klen = skipKLen;
           }
         }
       }

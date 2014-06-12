@@ -102,7 +102,7 @@ public class HFileReaderV2 extends AbstractHFileReader {
   static final int MAX_MINOR_VERSION = 3;
 
   /** Minor versions starting with this number have faked index key */
-  static final int MINOR_VERSION_WITH_FAKED_KEY = 3;
+  protected static final int MINOR_VERSION_WITH_FAKED_KEY = 3;
 
   protected HFileContext hfileContext;
 
@@ -747,7 +747,7 @@ public class HFileReaderV2 extends AbstractHFileReader {
   /**
    * Implementation of {@link HFileScanner} interface.
    */
-  protected class ScannerV2 extends AbstractScannerV2 {
+  protected static class ScannerV2 extends AbstractScannerV2 {
     protected HFileReaderV2 reader;
 
     public ScannerV2(HFileReaderV2 r, boolean cacheBlocks,
