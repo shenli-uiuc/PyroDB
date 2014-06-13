@@ -117,7 +117,10 @@ public class PFileBlockWriter extends HFileBlock.Writer {
    */
   @Override
   protected void finishBlock() throws IOException {
-    LOG.info("Shen Li: in PFileBlockWriter.finishBlock()");
+    // for texting
+    int blockSizeWithoutHeader = this.userDataStream.size();
+    LOG.info("Shen Li: in PFileBlockWriter.finishBlock(), "
+             + "initial blockSizeWithoutHeader = " + blockSizeWithoutHeader);
     //TODO: below only writes pkvs
     if (this.offsets.length < this.ptrNum.length) {
       // doubling array size
@@ -140,25 +143,29 @@ public class PFileBlockWriter extends HFileBlock.Writer {
     // write PKeyValues
     for (i = 0; i < nOfKvs; ++i) {
       // write pointer number
-      // TODO: implement PFileDataBlockEncoder to account encodeLong, the second
-      // parameter indicate the number of lower bytes to encode from the int
-      // variable.
+      // TODO: implement PFileDataBlockEncoder to account encodeLong, the 
+      // second parameter indicate the number of lower bytes to encode from 
+      // the int variable.
       
       // The ptrNum of the last pkv equals -1;
-      if (i + 1 >= nOfKvs) {
-        this.pDataBlockEncoder.encodeByte(BYTE_NEGTIVE_ONE,
-          dataBlockEncodingCtx, this.userDataStream);
-      } else {
+      //  if (i + 1 >= nOfKvs) {
+      //  this.pDataBlockEncoder.encodeByte(BYTE_NEGTIVE_ONE,
+      //    dataBlockEncodingCtx, this.userDataStream);
+      //} else {
+      blockSizeWithoutHeader += 
         this.pDataBlockEncoder.encodeByte(this.ptrNum[i], 
           dataBlockEncodingCtx, this.userDataStream);    
-      }
-
+      LOG.info("Shen Li: pnum " + blockSizeWithoutHeader);
+      //}
+      
       // write pointers, this.ptrNum array is 
       j = 2;
       while (i + j < nOfKvs && this.ptrNum[i] > 0) {
-        this.pDataBlockEncoder.encodeInt(
+        blockSizeWithoutHeader += 
+          this.pDataBlockEncoder.encodeInt(
             this.offsets[i + j] - this.offsets[i], 
             dataBlockEncodingCtx, this.userDataStream);
+        LOG.info("Shen Li: pointer " + blockSizeWithoutHeader);
         j <<= 1;
         --(this.ptrNum[i]);
       }
@@ -173,17 +180,26 @@ public class PFileBlockWriter extends HFileBlock.Writer {
       // evaluations show large space overhead
       // relative offset to the previous
       if (0 == i) {
-        this.pDataBlockEncoder.encodeInt(0, 
+        blockSizeWithoutHeader += 
+          this.pDataBlockEncoder.encodeInt(0, 
             dataBlockEncodingCtx, this.userDataStream);
+        LOG.info("Shen Li: prev " + blockSizeWithoutHeader);
       } else {
-        this.pDataBlockEncoder.encodeInt(this.offsets[i-1] - this.offsets[i],
+        blockSizeWithoutHeader += 
+          this.pDataBlockEncoder.encodeInt(this.offsets[i-1] - this.offsets[i],
             dataBlockEncodingCtx, this.userDataStream);
+        LOG.info("Shen Li: prev " + blockSizeWithoutHeader);
       }
 
       // write KeyValue
-      this.pDataBlockEncoder.encode(this.kvs.get(i), dataBlockEncodingCtx, 
+      blockSizeWithoutHeader += 
+        this.pDataBlockEncoder.encode(this.kvs.get(i), dataBlockEncodingCtx, 
           this.userDataStream);
+      LOG.info("Shen Li: kv " + blockSizeWithoutHeader);
     }
+
+    LOG.info("Shen Li: in PFileBlockWriter.finishBlock(), final blockSize "
+             + blockSizeWithoutHeader);
 
     super.finishBlock();
   }

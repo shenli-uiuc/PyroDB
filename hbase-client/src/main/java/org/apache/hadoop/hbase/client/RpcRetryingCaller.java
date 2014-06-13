@@ -98,9 +98,17 @@ public class RpcRetryingCaller<T> {
     for (int tries = 0;; tries++) {
       long expectedSleep;
       try {
+        LOG.info("Shen Li: retrying number " + tries);
         callable.prepare(tries != 0); // if called with false, check table status on ZK
         return callable.call(getRemainingTime(callTimeout));
       } catch (Throwable t) {
+        LOG.info("Shen Li: retry calling get Exception at tries = " + tries
+                 + ", " + retries + ", retryTime = " 
+                 + (EnvironmentEdgeManager.currentTimeMillis() 
+                   - this.globalStartTime)
+                 + ", callTimeout = " + callTimeout
+                 + ", Message = " + t.getMessage());
+        LOG.info("Shen Li:\n" + t.getStackTrace());
         ExceptionUtil.rethrowIfInterrupt(t);
         if (LOG.isTraceEnabled()) {
           LOG.trace("Call exception, tries=" + tries + ", retries=" + retries + ", retryTime=" +

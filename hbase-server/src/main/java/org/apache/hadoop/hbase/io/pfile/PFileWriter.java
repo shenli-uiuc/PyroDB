@@ -48,6 +48,7 @@ public class PFileWriter extends  HFileWriterV2{
                                FSDataOutputStream ostream,
                                final KVComparator comparator,
                                HFileContext fileContext) throws IOException {
+      fileContext.setIncludesTags(false);
       return new PFileWriter(conf, cacheConf, fs, path, ostream,
                              comparator, fileContext);
     }

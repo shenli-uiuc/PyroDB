@@ -6,6 +6,7 @@ import java.nio.ByteBuffer;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.apache.hadoop.io.WritableUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileSystem;
@@ -78,6 +79,10 @@ public class PFileReader extends HFileReaderV2 {
     //TODO: take care of the following two variables
     private int currSkipListEntryLen = 0;
     private int currPNum = 0;
+    private long tmpMemstoreTS = 0;
+    private int tmpMemstoreTSLen = 0;
+
+    protected PFileReader reader = null;
 
     public PFileScanner(PFileReader r, boolean cacheBlocks,
         final boolean pread, final boolean isCompaction) {
@@ -99,14 +104,13 @@ public class PFileReader extends HFileReaderV2 {
           blockBuffer.array(),
           blockBuffer.arrayOffset() + blockBuffer.position()
           + currSkipListEntryLen, getCellBufSize());
-      // TODO: memstoreTS
       return ret;
     }
 
     @Override
     protected int getCellBufSize() {
       return currSkipListEntryLen + KEY_VALUE_LEN_SIZE
-             + currKeyLen + currValueLen;
+             + currKeyLen + currValueLen + currMemstoreTSLen;
     }
 
     @Override
@@ -139,11 +143,20 @@ public class PFileReader extends HFileReaderV2 {
       currValueLen = 0;
       currMemstoreTS = 0;
       currMemstoreTSLen = 0;
+      tmpMemstoreTS = 0;
+      tmpMemstoreTSLen = 0;
     }
 
     @Override
       protected void readKeyValueLen() {
         blockBuffer.mark();
+        LOG.info("Shen Li: blockBuffer position = " + blockBuffer.position()
+                 + ", limit = " + blockBuffer.limit()
+                 + ", arrayOffset = " + blockBuffer.arrayOffset()
+                 + ", lastSkipListEntryLen = " + currSkipListEntryLen
+                 + ", lastKeyLen = " + currKeyLen
+                 + ", lastValueLen = " + currValueLen
+                 + ", remaining = " + blockBuffer.remaining());
         currPNum = blockBuffer.get();
         currSkipListEntryLen =
           PKeyValue.POINTER_NUM_SIZE + 
@@ -162,9 +175,9 @@ public class PFileReader extends HFileReaderV2 {
             || currSkipListEntryLen > blockBuffer.limit()) {
           throw new IllegalStateException(
               "Shen Li: Invalid currKeyLen " + currKeyLen
-              + "or currValueLen " + currValueLen 
-              + "or currPNum " + currPNum
-              + "or currSkipListEntryLen" + currSkipListEntryLen
+              + " or currValueLen " + currValueLen 
+              + " or currPNum " + currPNum
+              + " or currSkipListEntryLen " + currSkipListEntryLen
               + ". Block offset: " + block.getOffset()
               + ", block length: " + blockBuffer.limit()
               + ", position: " + blockBuffer.position()
@@ -235,11 +248,38 @@ public class PFileReader extends HFileReaderV2 {
           currKeyLen);
     }
 
+    private void readMemstoreTS(int offset) {
+      if (this.reader.shouldIncludeMemstoreTS()) {
+        if (this.reader.decodeMemstoreTS) {
+          try {
+            tmpMemstoreTS = Bytes.readVLong(
+                blockBuffer.array(), offset);
+            tmpMemstoreTSLen = 
+              WritableUtils.getVIntSize(tmpMemstoreTS);
+          } catch (Exception e) {
+            throw new RuntimeException(
+                "Error reading memstore timestamp", e);
+          }
+        } else {
+          tmpMemstoreTS = 0;
+          tmpMemstoreTSLen = 1;
+        }
+      }
+    }
+
+    private void setCurrStates(byte pNum, int skipListEntryLen,
+        int klen, int vlen, long memstoreTS, int memstoreTSLen) {
+      currPNum = pNum;
+      currSkipListEntryLen = skipListEntryLen;
+      currKeyLen = klen;
+      currValueLen = vlen;
+      currMemstoreTS = memstoreTS;
+      currMemstoreTSLen = memstoreTSLen;
+    }
+
     /*
      * Within a loaded block, seek looking for the last key that is 
      * SMALLER!!! than the given key.
-     * TODO: when called, is the blockBuffer.position() placed at the 
-     * beginning of kv or pkv? HAS TO CONFIRM THIS!
      *
      */
     @Override
@@ -247,11 +287,23 @@ public class PFileReader extends HFileReaderV2 {
         int klen, vlen, skipKLen;
         int kvOffset, skipKvOffset;
         byte pNum, tmpPNum, skipPNum;
-        int ptr, lastPtr, skipPrevPtr;
-        long memstoreTS = 0;
-        int memstoreTSLen = 0;
+        int ptr, skipPrevPtr;
         int lastKeyValueSize = -1;
         int curOffset, skipOffset, ptrOffset, skipPrevOffset;
+
+        LOG.info("Shen Li: call trace");
+        for (StackTraceElement ste : Thread.currentThread().getStackTrace()) {
+              LOG.info("Shen Li: " + ste);
+        }
+
+
+        // for testing
+        KeyValue tmpKey = new KeyValue(key);
+        LOG.info("Shen Li: in blockSeek, key = " + tmpKey.getKeyString() 
+                 + ", seekBefore = " + seekBefore);
+
+        tmpMemstoreTS = 0;
+        tmpMemstoreTSLen = 0;
 
         KeyValue.KeyOnlyKeyValue keyOnlyKv = new KeyValue.KeyOnlyKeyValue();
 
@@ -263,8 +315,8 @@ public class PFileReader extends HFileReaderV2 {
         kvOffset = this.getKvOffset(curOffset, pNum);
         // key length of that kv
         klen = blockBuffer.getInt(kvOffset);
-        keyOnlyKv.setKey(blockBuffer.array(), 
-            kvOffset + KEY_VALUE_LEN_SIZE, klen);
+        keyOnlyKv.setKey(
+            blockBuffer.array(), kvOffset + KEY_VALUE_LEN_SIZE, klen);
 
         int comp = reader.getComparator().compareOnlyKeyPortion(key, 
             keyOnlyKv);
@@ -272,12 +324,8 @@ public class PFileReader extends HFileReaderV2 {
         if (comp < 0) {
           // target key smaller than the first key
           LOG.info("Shen Li: blockSeek called on a larger block");
-          if (blockBuffer.position() == 0 && 
-              this.reader.getTrailer().getMinorVersion() >=
-              MINOR_VERSION_WITH_FAKED_KEY) {
-            return HConstants.INDEX_KEY_MAGIC;
-          }
-          return 1;
+          readKeyValueLen();
+          return HConstants.INDEX_KEY_MAGIC;
         }
 
         // the target key is within the range of the pointers of the 
@@ -292,6 +340,7 @@ public class PFileReader extends HFileReaderV2 {
         skipOffset = curOffset;
         ptr = 0;
         skipKLen = klen;
+        skipKvOffset = 0;
 
         /*
          * Invariant: the current key under while has to be smaller than the 
@@ -300,11 +349,6 @@ public class PFileReader extends HFileReaderV2 {
          * that is smaller than the target key in its skiplist pointers.
          */
         while(true) {
-
-          if (pNum < 0) {
-            // this is last pkv, return at the current position.
-            return 1;
-          }
 
           // offset to the largest pointer
           ptrOffset = curOffset + PKeyValue.POINTER_NUM_SIZE +
@@ -331,19 +375,15 @@ public class PFileReader extends HFileReaderV2 {
 
             comp = reader.getComparator().compareOnlyKeyPortion(key, 
                 keyOnlyKv);
-            //TODO: deal with reader.shouldIncludeMemstoreTS() on both readers
             //and writers.
             if (0 == comp) {
               //Found exact match
-              //TODO: readKeyValueLen() rewrites currKeyLen/currValueLen
-              //be careful when call readKeyValueLen()
               return handleExactMatch(key, blockBuffer.position() + ptr, 
-                  skipKvOffset, klen, seekBefore);
+                  skipKvOffset, seekBefore);
             } else if (comp < 0) {
               // larger than the target key, try the next smaller pointer
               ptrOffset -= PKeyValue.POINTER_SIZE;    
               maxOffset = skipOffset;
-              lastPtr = ptr;
             } else {
               // found the largest key that is smaller than the target key 
               // known by the current pkv, break
@@ -361,10 +401,24 @@ public class PFileReader extends HFileReaderV2 {
             //read vlen of the current key
             vlen = blockBuffer.get(kvOffset + KEY_LEN_SIZE);
 
+            //read memstoreTS
+            readMemstoreTS(kvOffset + KEY_VALUE_LEN_SIZE
+                           + klen + vlen);
             // check next pkv
             ptr = PKeyValue.POINTER_NUM_SIZE +
               (pNum + 1) * PKeyValue.POINTER_SIZE + 
-              KEY_VALUE_LEN_SIZE + klen + vlen;
+              KEY_VALUE_LEN_SIZE + klen + vlen + tmpMemstoreTSLen;
+            LOG.info("Shen Li: position = " + blockBuffer.position() 
+                     + ", pointer = " + ptr 
+                     + ", limit = " + blockBuffer.limit());
+            if (blockBuffer.position() + ptr >= blockBuffer.limit()) {
+              // the current pkv is the last pkv in this block
+              LOG.info("Shen Li: got last pkv");
+              setCurrStates(pNum, 
+                  PKeyValue.POINTER_NUM_SIZE + PKeyValue.POINTER_SIZE,
+                  klen, vlen, tmpMemstoreTS, tmpMemstoreTSLen);
+              return 1;
+            }
             skipOffset = curOffset + ptr;
             skipPNum = blockBuffer.get(skipOffset);
             skipKvOffset = getKvOffset(skipOffset, skipPNum);
@@ -376,15 +430,19 @@ public class PFileReader extends HFileReaderV2 {
             if (0 == comp) {
               // next pkv matches target key
               return handleExactMatch(key, blockBuffer.position() + ptr, 
-                  skipKvOffset, skipKLen, seekBefore);
+                  skipKvOffset, seekBefore);
             } else if (comp < 0) {
               // target key is larger than current but smaller than the next.
               // therefore, the current locaiton of blockBuffer is correct
+              setCurrStates(pNum, 
+                  PKeyValue.POINTER_NUM_SIZE + PKeyValue.POINTER_SIZE,
+                  klen, vlen, tmpMemstoreTS, tmpMemstoreTSLen);
               return 1;
             } else {
               // target key is larger than next but smaller than the next of next
               // blockBuffer should be placed at the beginning of the next key
               blockBuffer.position(blockBuffer.position() + ptr);
+              readKeyValueLen();
               return 1;
             }
           } else {
@@ -393,14 +451,12 @@ public class PFileReader extends HFileReaderV2 {
             curOffset = skipOffset;
             pNum = blockBuffer.get(curOffset);
             klen = skipKLen;
+            kvOffset = skipKvOffset;
           }
         }
       }
 
-    private int handleExactMatch(Cell key, int destPos, int kvOffset, int klen, boolean seekBefore) {
-      currKeyLen = klen;
-      currValueLen = blockBuffer.getInt(kvOffset + KEY_LEN_SIZE);
-
+    private int handleExactMatch(Cell key, int destPos, int kvOffset, boolean seekBefore) {
       if (seekBefore) {
         int skipPrevOffset = kvOffset - PKeyValue.POINTER_SIZE;
         // note that this pointer is negtive value
@@ -418,16 +474,14 @@ public class PFileReader extends HFileReaderV2 {
               + block.getOnDiskSizeWithHeader());
         }
 
-        // The writer currently do not write memstoreTS field,
-        // hence we do not call readKeyValueLen(); But currKeyLen and 
-        // currValueLen have to be set.
-
         // use the prev ptr to reset the position.
         blockBuffer.position(destPos + skipPrevPtr);
+        readKeyValueLen();
         return 1;
       }
 
       blockBuffer.position(destPos);
+      readKeyValueLen();
       return 0;
     }
   }
