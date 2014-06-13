@@ -1,2 +1,1 @@
-1. finish PFileWriter.java
-2. HFile.java creates WriterFactory on line 425. modify this to apply the PFileWriter
+1. trace org.apache.hadoop.hbase.client.ClientScanner.next(ClientScanner.java:398), to see why two call seq number does not match

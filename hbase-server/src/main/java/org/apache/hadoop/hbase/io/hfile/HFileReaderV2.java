@@ -904,7 +904,10 @@ public class HFileReaderV2 extends AbstractHFileReader {
 
       // Update the nextIndexedKey
       this.nextIndexedKey = nextIndexedKey;
-      return blockSeek(key, seekBefore);
+      LOG.info("Shen Li: Before BlockSeek ====================");
+      int res =  blockSeek(key, seekBefore);
+      LOG.info("Shen Li: After BlockkSeek ====================");
+      return res;
     }
 
     /**

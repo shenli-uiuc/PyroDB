@@ -91,49 +91,55 @@ public class PFileReader extends HFileReaderV2 {
     }
 
     @Override
-      public Cell getKeyValue() {
-        if (!isSeeked())
-          return null;
-
-        KeyValue ret = new KeyValue(
-            blockBuffer.array(),
-            blockBuffer.arrayOffset() + blockBuffer.position()
-            + currSkipListEntryLen, getCellBufSize());
-        // TODO: memstoreTS
-        return ret;
-      }
-
-    @Override
-      public ByteBuffer getKey() {
-        assertSeeked();
-        return ByteBuffer.wrap(
-            blockBuffer.array(),
-            blockBuffer.arrayOffset() + blockBuffer.position()
-            + currSkipListEntryLen + KEY_VALUE_LEN_SIZE, 
-            currKeyLen).slice();
-      }
+    public Cell getKeyValue() {
+      if (!isSeeked())
+        return null;
+      
+      KeyValue ret = new KeyValue(
+          blockBuffer.array(),
+          blockBuffer.arrayOffset() + blockBuffer.position()
+          + currSkipListEntryLen, getCellBufSize());
+      // TODO: memstoreTS
+      return ret;
+    }
 
     @Override
-      public ByteBuffer getValue() {
-        assertSeeked();
-        return ByteBuffer.wrap(
-            blockBuffer.array(),
-            blockBuffer.arrayOffset() + blockBuffer.position()
-            + currSkipListEntryLen + KEY_VALUE_LEN_SIZE
-            + currKeyLen, currValueLen).slice();
-      }
+    protected int getCellBufSize() {
+      return currSkipListEntryLen + KEY_VALUE_LEN_SIZE
+             + currKeyLen + currValueLen;
+    }
 
     @Override
-      protected void setNonSeekedState() {
-        block = null;
-        blockBuffer = null;
-        currPNum = 0;
-        currSkipListEntryLen = 0;
-        currKeyLen = 0;
-        currValueLen = 0;
-        currMemstoreTS = 0;
-        currMemstoreTSLen = 0;
-      }
+    public ByteBuffer getKey() {
+      assertSeeked();
+      return ByteBuffer.wrap(
+          blockBuffer.array(),
+          blockBuffer.arrayOffset() + blockBuffer.position()
+          + currSkipListEntryLen + KEY_VALUE_LEN_SIZE, 
+          currKeyLen).slice();
+    }
+
+    @Override
+    public ByteBuffer getValue() {
+      assertSeeked();
+      return ByteBuffer.wrap(
+          blockBuffer.array(),
+          blockBuffer.arrayOffset() + blockBuffer.position()
+          + currSkipListEntryLen + KEY_VALUE_LEN_SIZE
+          + currKeyLen, currValueLen).slice();
+    }
+
+    @Override
+    protected void setNonSeekedState() {
+      block = null;
+      blockBuffer = null;
+      currPNum = 0;
+      currSkipListEntryLen = 0;
+      currKeyLen = 0;
+      currValueLen = 0;
+      currMemstoreTS = 0;
+      currMemstoreTSLen = 0;
+    }
 
     @Override
       protected void readKeyValueLen() {
@@ -147,7 +153,9 @@ public class PFileReader extends HFileReaderV2 {
             - PKeyValue.POINTER_NUM_SIZE);
         currKeyLen = blockBuffer.getInt();
         currValueLen = blockBuffer.getInt();
-        // TODO: think about handling readMvccVersion()
+
+        readMvccVersion();
+
         if (currPNum < 0 || currKeyLen < 0 || currValueLen < 0
             || currKeyLen > blockBuffer.limit() 
             || currValueLen > blockBuffer.limit()
@@ -167,9 +175,8 @@ public class PFileReader extends HFileReaderV2 {
 
     @Override
       protected int getNextCellStartPosition() {
-        //TODO: consider currMemstoreTSLen
         return blockBuffer.position() + currSkipListEntryLen
-          + KEY_VALUE_LEN_SIZE + currKeyLen + currValueLen;
+          + KEY_VALUE_LEN_SIZE + currKeyLen + currValueLen + currMemstoreTSLen;
       }
 
     @Override
@@ -196,25 +203,37 @@ public class PFileReader extends HFileReaderV2 {
       }
 
     @Override
-      public String getValueString() {
-        return Bytes.toString(
-            blockBuffer.array(),
-            blockBuffer.arrayOffset() + blockBuffer.position() +
-            currSkipListEntryLen + KEY_VALUE_LEN_SIZE + currKeyLen,
-            currValueLen);
-      }
+    public String getValueString() {
+      return Bytes.toString(
+          blockBuffer.array(),
+          blockBuffer.arrayOffset() + blockBuffer.position() +
+          currSkipListEntryLen + KEY_VALUE_LEN_SIZE + currKeyLen,
+          currValueLen);
+    }
 
     // TODO: declare and set currSkipListEntryLen
     @Override
-      public int compareKey(KVComparator comparator, Cell key) {
-        return comparator.compareOnlyKeyPortion(
-            key,
-            new KeyValue.KeyOnlyKeyValue(
-              blockBuffer.array(), 
-              blockBuffer.arrayOffset() + blockBuffer.position() +
-              currSkipListEntryLen + KEY_VALUE_LEN_SIZE, 
-              currKeyLen));
-      }
+    public int compareKey(KVComparator comparator, Cell key) {
+      return comparator.compareOnlyKeyPortion(
+          key,
+          new KeyValue.KeyOnlyKeyValue(
+            blockBuffer.array(), 
+            blockBuffer.arrayOffset() + blockBuffer.position() +
+            currSkipListEntryLen + KEY_VALUE_LEN_SIZE, 
+            currKeyLen));
+    }
+
+
+    @Override
+    public int compareKey(KVComparator comparator, byte[] key, 
+                          int offset, int length) {
+      return comparator.compareFlatKey(
+          key, offset, length,
+          blockBuffer.array(), 
+          blockBuffer.arrayOffset() + blockBuffer.position()
+          + currSkipListEntryLen + KEY_VALUE_LEN_SIZE,
+          currKeyLen);
+    }
 
     /*
      * Within a loaded block, seek looking for the last key that is 

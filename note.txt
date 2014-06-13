@@ -120,9 +120,9 @@ Call Traces:
                                   StoreScanner or ReversedStoreScanner to
                                   KeyValueHeap during construction. 
   HStore.java             1778    getScanner()
-  StoreScanner.java       445     next()
-  StoreFileScanner.java   
-  HFileScanner.java
+  StoreScanner.java       445     next() calls current.next()
+  StoreFileScanner.java   139   
+  HFileScanner.java   
   AbstractHFileReader.java        see 7 seek key.
 
 2. scan request
