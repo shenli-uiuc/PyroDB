@@ -815,10 +815,15 @@ public class HFileReaderV2 extends AbstractHFileReader {
      */
     @Override
     public boolean next() throws IOException {
+      LOG.info("Shen Li: in next()");
       assertSeeked();
 
+      LOG.info("Shen Li: next() is called");
+
       try {
+        LOG.info("Shen Li: current block position " + blockBuffer.position());
         blockBuffer.position(getNextCellStartPosition());
+        LOG.info("Shen Li: end block position " + blockBuffer.position());
       } catch (IllegalArgumentException e) {
         LOG.error("Current pos = " + blockBuffer.position()
             + "; currKeyLen = " + currKeyLen + "; currValLen = "

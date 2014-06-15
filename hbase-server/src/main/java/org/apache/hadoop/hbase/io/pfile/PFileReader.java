@@ -104,12 +104,21 @@ public class PFileReader extends HFileReaderV2 {
           blockBuffer.array(),
           blockBuffer.arrayOffset() + blockBuffer.position()
           + currSkipListEntryLen, getCellBufSize());
+      
+      if (this.reader.shouldIncludeMemstoreTS()) {
+        ret.setMvccVersion(currMemstoreTS);
+      }
+
+      LOG.info("Shen Li: key value read! " + ret.getKeyString());
+
       return ret;
     }
 
     @Override
     protected int getCellBufSize() {
-      return currSkipListEntryLen + KEY_VALUE_LEN_SIZE
+      // should not include currSkipListEntryLen here as this is called
+      // when reading a KeyValue rather than a PKeyValue
+      return KEY_VALUE_LEN_SIZE
              + currKeyLen + currValueLen + currMemstoreTSLen;
     }
 
@@ -292,15 +301,19 @@ public class PFileReader extends HFileReaderV2 {
         int curOffset, skipOffset, ptrOffset, skipPrevOffset;
 
         LOG.info("Shen Li: call trace");
+        String curTrace = "";
         for (StackTraceElement ste : Thread.currentThread().getStackTrace()) {
-              LOG.info("Shen Li: " + ste);
+              curTrace += (ste + "\n");
         }
+        LOG.info(curTrace);
 
 
         // for testing
         KeyValue tmpKey = new KeyValue(key);
         LOG.info("Shen Li: in blockSeek, key = " + tmpKey.getKeyString() 
-                 + ", seekBefore = " + seekBefore);
+                 + ", seekBefore = " + seekBefore 
+                 + ", offset = " + blockBuffer.arrayOffset()
+                 + ", position = " + blockBuffer.position());
 
         tmpMemstoreTS = 0;
         tmpMemstoreTSLen = 0;
@@ -323,9 +336,15 @@ public class PFileReader extends HFileReaderV2 {
 
         if (comp < 0) {
           // target key smaller than the first key
-          LOG.info("Shen Li: blockSeek called on a larger block");
+          LOG.info("Shen Li: blockSeek called on a larger block. "
+                   + "getMinorVersion() = " 
+                   + this.reader.trailer.getMinorVersion());
           readKeyValueLen();
-          return HConstants.INDEX_KEY_MAGIC;
+          if (this.reader.trailer.getMinorVersion() 
+              >= MINOR_VERSION_WITH_FAKED_KEY) {
+            return HConstants.INDEX_KEY_MAGIC;
+          }
+          return 1;
         }
 
         // the target key is within the range of the pointers of the 
