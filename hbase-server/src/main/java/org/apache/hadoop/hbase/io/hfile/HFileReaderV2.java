@@ -661,22 +661,26 @@ public class HFileReaderV2 extends AbstractHFileReader {
 
     @Override
     public boolean seekBefore(Cell key) throws IOException {
+      HFile.LOG.info("Shen Li: seekBefore called");
       HFileBlock seekToBlock = reader.getDataBlockIndexReader().seekToDataBlock(key, block,
           cacheBlocks, pread, isCompaction,
           ((HFileReaderV2) reader).getEffectiveEncodingInCache(isCompaction));
       if (seekToBlock == null) {
         return false;
       }
+      HFile.LOG.info("Shen Li: before called getFirstKeyInBlock in AbstractHFileReader");
       ByteBuffer firstKey = getFirstKeyInBlock(seekToBlock);
 
       if (reader.getComparator()
           .compareOnlyKeyPortion(
               new KeyValue.KeyOnlyKeyValue(firstKey.array(), firstKey.arrayOffset(),
                   firstKey.limit()), key) >= 0) {
+        HFile.LOG.info("Shen Li: first key is larger than key");
         long previousBlockOffset = seekToBlock.getPrevBlockOffset();
         // The key we are interested in
         if (previousBlockOffset == -1) {
           // we have a 'problem', the key we want is the first of the file.
+          HFile.LOG.info("Shen Li: realized the key is smaller than the first");
           return false;
         }
 
@@ -689,6 +693,7 @@ public class HFileReaderV2 extends AbstractHFileReader {
         // TODO shortcut: seek forward in this block to the last key of the
         // block.
       }
+      HFile.LOG.info("Shen Li: HFileReaderV2.seekBefore() thinks the target key is larger than the first key");
       byte[] firstKeyInCurrentBlock = Bytes.getBytes(firstKey);
       loadBlockAndSeekToKey(seekToBlock, firstKeyInCurrentBlock, true, key, true);
       return true;

@@ -121,6 +121,7 @@ public class ReversedKeyValueHeap extends KeyValueHeap {
       if (!scanner.backwardSeek(seekKey)) {
         scanner.close();
       } else {
+        HRegion.LOG.info("Shen Li: ReversedKeyValueHeap add scanner back");
         heap.add(scanner);
       }
     }

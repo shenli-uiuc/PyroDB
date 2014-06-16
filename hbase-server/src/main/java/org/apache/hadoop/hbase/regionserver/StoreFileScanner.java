@@ -156,7 +156,7 @@ public class StoreFileScanner implements KeyValueScanner {
           close();
           return false;
         }
-
+        LOG.info("Shen Li: before hfs.getKeyValue in StoreFileScanner");
         cur = hfs.getKeyValue();
 
         return !hasMVCCInfo ? true : skipKVsNewerThanReadpoint();
@@ -240,6 +240,7 @@ public class StoreFileScanner implements KeyValueScanner {
     int result = s.seekTo(k);
     if(result < 0) {
       if (result == HConstants.INDEX_KEY_MAGIC) {
+        LOG.info("Shen Li: INDEX_KEY_MAGIC returned");
         // using faked key
         return true;
       }
@@ -410,6 +411,7 @@ public class StoreFileScanner implements KeyValueScanner {
   @Override
   @SuppressWarnings("deprecation")
   public boolean seekToPreviousRow(Cell key) throws IOException {
+    LOG.info("Shen Li: StoreFileScanner.seekToPreviousRow");
     try {
       try {
         KeyValue seekKey = KeyValueUtil.createFirstOnRow(key.getRowArray(), key.getRowOffset(),
@@ -429,6 +431,7 @@ public class StoreFileScanner implements KeyValueScanner {
           return false;
         }
 
+        LOG.info("Shen Li: StoreFileScanner hfs.getKeyValue()");
         cur = hfs.getKeyValue();
         this.stopSkippingKVsIfNextRow = true;
         boolean resultOfSkipKVs;
@@ -469,6 +472,7 @@ public class StoreFileScanner implements KeyValueScanner {
   @Override
   public boolean backwardSeek(Cell key) throws IOException {
     seek(key);
+    LOG.info("Shen Li: StoreFileScanner.backwardSeek(), cur == null ? " + (cur == null));
     if (cur == null
         || getComparator().compareRows(cur.getRowArray(), cur.getRowOffset(),
             cur.getRowLength(), key.getRowArray(), key.getRowOffset(),

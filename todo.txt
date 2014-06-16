@@ -1,1 +1,2 @@
-1. trace org.apache.hadoop.hbase.client.ClientScanner.next(ClientScanner.java:398), to see why two call seq number does not match
+1. check the index out of bound exception
+2. StoreFileScanner.cur is initilized in seek(), so StoreFeilScanner.backwardSeek() should return true. which will add the scanner back to the heap. It seems to be the right logic, what went wrong? fix the index out of bound exception first. Add a static variable to indicate whether we have seen a index out of bound exception

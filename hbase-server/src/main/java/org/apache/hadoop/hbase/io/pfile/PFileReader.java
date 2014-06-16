@@ -206,6 +206,7 @@ public class PFileReader extends HFileReaderV2 {
         ByteBuffer buffer = curBlock.getBufferWithoutHeader();
         buffer.rewind();
         byte pNum = buffer.get();
+        LOG.info("Shen Li: PFileScanner.getFirstKeyInBlock called, pNum is " + pNum);
         buffer.position(buffer.position() + 
             (pNum + 1) * PKeyValue.POINTER_SIZE);
         int klen = buffer.getInt();
@@ -383,6 +384,9 @@ public class PFileReader extends HFileReaderV2 {
               ptrOffset -= PKeyValue.POINTER_SIZE;
               continue;
             }
+            LOG.info("Shen Li: blockBuffer limit " + blockBuffer.limit()
+                     + ", curOffset " + curOffset + ", ptr " + ptr
+                     + ", skipOffset " + skipOffset);
             // ptr num of that pkv
             skipPNum = blockBuffer.get(skipOffset);
             // offset to the beginning of kv of that pkv
