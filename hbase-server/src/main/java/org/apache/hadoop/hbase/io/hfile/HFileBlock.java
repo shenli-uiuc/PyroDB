@@ -246,10 +246,10 @@ public class HFileBlock implements Cacheable {
     uncompressedSizeWithoutHeader = b.getInt();
     prevBlockOffset = b.getLong();
 
-    HFile.LOG.info("Shen Li: got blockType " + blockType 
-                   + ", onDiskSizeWithoutHeader " + onDiskSizeWithoutHeader
-                   + ", uncompressedSizeWithoutHeader " + uncompressedSizeWithoutHeader
-                   + ", prevBlockOffset " + prevBlockOffset);
+    //HFile.LOG.info("Shen Li: got blockType " + blockType 
+    //               + ", onDiskSizeWithoutHeader " + onDiskSizeWithoutHeader
+    //               + ", uncompressedSizeWithoutHeader " + uncompressedSizeWithoutHeader
+    //               + ", prevBlockOffset " + prevBlockOffset);
 
     HFileContextBuilder contextBuilder = new HFileContextBuilder();
     contextBuilder.withHBaseCheckSum(usesHBaseChecksum);
@@ -800,7 +800,7 @@ public class HFileBlock implements Cacheable {
      * write state to "block ready".
      */
     protected void finishBlock() throws IOException {
-      LOG.info("Shen Li: in super.finishBlock()");
+      //LOG.info("Shen Li: in super.finishBlock()");
       if (blockType == BlockType.DATA) {
         BufferGrabbingByteArrayOutputStream baosInMemoryCopy = 
             new BufferGrabbingByteArrayOutputStream();
@@ -831,14 +831,14 @@ public class HFileBlock implements Cacheable {
           onDiskBytesWithHeader.length,
           fileContext.getBytesPerChecksum());
 
-      LOG.info("Shen Li **** : onDiskBytesWithHeader.length and " 
-               + "uncompressedBytesWithHeader.length are : "
-               + onDiskBytesWithHeader.length + ", " 
-               + uncompressedBytesWithHeader.length + ", "
-               + numBytes + ". " 
-               + "same object ? "
-               + (onDiskBytesWithHeader == uncompressedBytesWithHeader)
-               + ", blockType = " + blockType);
+      //LOG.info("Shen Li **** : onDiskBytesWithHeader.length and " 
+      //         + "uncompressedBytesWithHeader.length are : "
+      //         + onDiskBytesWithHeader.length + ", " 
+      //         + uncompressedBytesWithHeader.length + ", "
+      //         + numBytes + ". " 
+      //         + "same object ? "
+      //         + (onDiskBytesWithHeader == uncompressedBytesWithHeader)
+      //         + ", blockType = " + blockType);
 
       // put the header for on disk bytes
       putHeader(onDiskBytesWithHeader, 0,
@@ -882,13 +882,13 @@ public class HFileBlock implements Cacheable {
       offset = Bytes.putInt(dest, offset, onDiskSize - HConstants.HFILEBLOCK_HEADER_SIZE);
       offset = Bytes.putInt(dest, offset, uncompressedSize - HConstants.HFILEBLOCK_HEADER_SIZE);
 
-      HFile.LOG.info("Shen Li: write header, blockType = " + blockType
-                     + ", onDiskSizeWithoutHeader " 
-                     + (onDiskSize - HConstants.HFILEBLOCK_HEADER_SIZE)
-                     + ", uncompressedSizeWihtoutHeader " 
-                     + (uncompressedSize - HConstants.HFILEBLOCK_HEADER_SIZE)
-                     + ", prevOffset " + prevOffset
-                     + ", header Size " + HConstants.HFILEBLOCK_HEADER_SIZE);
+      //HFile.LOG.info("Shen Li: write header, blockType = " + blockType
+      //               + ", onDiskSizeWithoutHeader " 
+      //               + (onDiskSize - HConstants.HFILEBLOCK_HEADER_SIZE)
+      //               + ", uncompressedSizeWihtoutHeader " 
+      //               + (uncompressedSize - HConstants.HFILEBLOCK_HEADER_SIZE)
+      //               + ", prevOffset " + prevOffset
+      //               + ", header Size " + HConstants.HFILEBLOCK_HEADER_SIZE);
 
       offset = Bytes.putLong(dest, offset, prevOffset);
       offset = Bytes.putByte(dest, offset, fileContext.getChecksumType().getCode());
@@ -1525,7 +1525,7 @@ public class HFileBlock implements Cacheable {
         // Unfortunately, we still have to do a separate read operation to
         // read the header.
         if (headerBuf == null) {
-          HFile.LOG.info("Shen Li: null headerBuf");
+          //HFile.LOG.info("Shen Li: null headerBuf");
           // From the header, determine the on-disk size of the given hfile
           // block, and read the remaining data, thereby incurring two read
           // operations. This might happen when we are doing the first read
@@ -1545,7 +1545,7 @@ public class HFileBlock implements Cacheable {
         onDiskSizeWithHeader = b.onDiskSizeWithoutHeader + hdrSize;
 
         //Shen Li
-        HFile.LOG.info("Shen Li: block type is " + b.getBlockType());
+        //HFile.LOG.info("Shen Li: block type is " + b.getBlockType());
       }
 
       Algorithm compressAlgo = fileContext.getCompression();

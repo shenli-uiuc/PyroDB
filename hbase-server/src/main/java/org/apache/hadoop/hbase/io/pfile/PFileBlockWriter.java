@@ -7,6 +7,7 @@ import java.io.DataOutput;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
+import org.apache.hadoop.io.WritableUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -50,7 +51,7 @@ public class PFileBlockWriter extends HFileBlock.Writer {
     // this encoder encodes the pointer array by offer apis to encode int 
     // and byte
     this.pDataBlockEncoder = PNoOpDataBlockEncoder.INSTANCE;
-    LOG.info("Shen Li: in PFileBlockWriter constructor");
+    //LOG.info("Shen Li: in PFileBlockWriter constructor");
     //TODO
   }
 
@@ -70,8 +71,8 @@ public class PFileBlockWriter extends HFileBlock.Writer {
    */
   @Override
   public void write(KeyValue kv) throws IOException {
-    LOG.info("Shen Li: in PFileBlockWriter.write, key length" + 
-             kv.getLength());
+    //LOG.info("Shen Li: in PFileBlockWriter.write, key length" + 
+    //         kv.getLength());
     expectState(State.WRITING);
     this.unencodedDataSizeWritten += kv.getLength();
     this.unencodedDataSizeWritten += PKeyValue.POINTER_NUM_SIZE;
@@ -80,27 +81,27 @@ public class PFileBlockWriter extends HFileBlock.Writer {
     // the number of bytes written in order to update ancestors forwarding 
     // pointers, plus the prev pointer
     this.unencodedDataSizeWritten += (PKeyValue.POINTER_SIZE * (nOfZeros + 1));
-    LOG.info("Shen Li: pointers info, " + nOfZeros + ", " + 
-             PKeyValue.POINTER_NUM_SIZE + ", " + PKeyValue.POINTER_SIZE);
+    //LOG.info("Shen Li: pointers info, " + nOfZeros + ", " + 
+    //         PKeyValue.POINTER_NUM_SIZE + ", " + PKeyValue.POINTER_SIZE);
     this.kvs.add(kv);
-    LOG.info("Shen Li: in PFileBlockWriter.write before loop");
+    //LOG.info("Shen Li: in PFileBlockWriter.write before loop");
     int idx = 0;
     for (int i = 1 ; i <= nOfZeros; ++i) {
       idx = kvsSize - (1 << i);
       if (this.ptrNum[idx] >= MAX_POINTER_NUM) {
-        LOG.info("Shen Li: in PFileBlockWriter.write throw exception" + 
-            this.ptrNum[idx] + ", " + MAX_POINTER_NUM);
+        //LOG.info("Shen Li: in PFileBlockWriter.write throw exception" + 
+        //    this.ptrNum[idx] + ", " + MAX_POINTER_NUM);
         throw new IllegalStateException("Shen Li: Too many pointers when" +
             "inserting kv number " + this.kvs.size());
       }
       ++this.ptrNum[idx];
     }
-    LOG.info("Shen Li: after loop");
+    //LOG.info("Shen Li: after loop");
     if (this.kvs.size() > this.ptrNum.length) 
       this.ptrNum = Arrays.copyOf(this.ptrNum, this.ptrNum.length * 2);
     // no pointer points to the next entry
     this.ptrNum[this.kvs.size() - 1] = 0;
-    LOG.info("Shen Li: PFileBlockWriter.write finish");
+    //LOG.info("Shen Li: PFileBlockWriter.write finish");
   }
 
   /*
@@ -119,8 +120,8 @@ public class PFileBlockWriter extends HFileBlock.Writer {
   protected void finishBlock() throws IOException {
     // for texting
     int blockSizeWithoutHeader = this.userDataStream.size();
-    LOG.info("Shen Li: in PFileBlockWriter.finishBlock(), "
-             + "initial blockSizeWithoutHeader = " + blockSizeWithoutHeader);
+    //LOG.info("Shen Li: in PFileBlockWriter.finishBlock(), "
+    //         + "initial blockSizeWithoutHeader = " + blockSizeWithoutHeader);
     //TODO: below only writes pkvs
     if (this.offsets.length < this.ptrNum.length) {
       // doubling array size
@@ -133,15 +134,23 @@ public class PFileBlockWriter extends HFileBlock.Writer {
     int j = 1, i = 0;
 
     // initializting offsets array
+    //String strOffsets = "";
     for (i = 0; i < nOfKvs; ++i) {
       this.offsets[i] = curOffset;
+      //strOffsets += (curOffset + ", ");
       curOffset += this.kvs.get(i).getLength();
       curOffset += PKeyValue.POINTER_NUM_SIZE;
       curOffset += ((this.ptrNum[i] + 1) * PKeyValue.POINTER_SIZE);
+      if (fileContext.isIncludesMvcc()) {
+        curOffset += 
+          WritableUtils.getVIntSize(this.kvs.get(i).getMvccVersion());
+      }
     }
 
+    //String strBlockSizes = "";
     // write PKeyValues
     for (i = 0; i < nOfKvs; ++i) {
+      //strBlockSizes += (blockSizeWithoutHeader + ", ");
       // write pointer number
       // TODO: implement PFileDataBlockEncoder to account encodeLong, the 
       // second parameter indicate the number of lower bytes to encode from 
@@ -155,7 +164,7 @@ public class PFileBlockWriter extends HFileBlock.Writer {
       blockSizeWithoutHeader += 
         this.pDataBlockEncoder.encodeByte(this.ptrNum[i], 
           dataBlockEncodingCtx, this.userDataStream);    
-      LOG.info("Shen Li: pnum " + blockSizeWithoutHeader);
+      //LOG.info("Shen Li: pnum " + blockSizeWithoutHeader);
       //}
       
       // write pointers, this.ptrNum array is 
@@ -165,13 +174,13 @@ public class PFileBlockWriter extends HFileBlock.Writer {
           this.pDataBlockEncoder.encodeInt(
             this.offsets[i + j] - this.offsets[i], 
             dataBlockEncodingCtx, this.userDataStream);
-        LOG.info("Shen Li: pointer " + blockSizeWithoutHeader);
+        //LOG.info("Shen Li: pointer " + blockSizeWithoutHeader);
         j <<= 1;
         --(this.ptrNum[i]);
       }
       if (0 != this.ptrNum[i]) {
-        LOG.info("Shen Li: ptrNum of entry " + i +
-                 " should be 0, the real value is " + this.ptrNum[i]);
+        //LOG.info("Shen Li: ptrNum of entry " + i +
+        //         " should be 0, the real value is " + this.ptrNum[i]);
         throw new IllegalStateException("Shen Li: ptrNum of entry " + i + 
             " should be 0, the real value is " + this.ptrNum[i]);
       }
@@ -183,23 +192,27 @@ public class PFileBlockWriter extends HFileBlock.Writer {
         blockSizeWithoutHeader += 
           this.pDataBlockEncoder.encodeInt(0, 
             dataBlockEncodingCtx, this.userDataStream);
-        LOG.info("Shen Li: prev " + blockSizeWithoutHeader);
+        //LOG.info("Shen Li: prev " + blockSizeWithoutHeader);
       } else {
         blockSizeWithoutHeader += 
           this.pDataBlockEncoder.encodeInt(this.offsets[i-1] - this.offsets[i],
             dataBlockEncodingCtx, this.userDataStream);
-        LOG.info("Shen Li: prev " + blockSizeWithoutHeader);
+        //LOG.info("Shen Li: prev " + blockSizeWithoutHeader);
       }
 
       // write KeyValue
+      int tmpBlockSize = blockSizeWithoutHeader;
       blockSizeWithoutHeader += 
         this.pDataBlockEncoder.encode(this.kvs.get(i), dataBlockEncodingCtx, 
           this.userDataStream);
-      LOG.info("Shen Li: kv " + blockSizeWithoutHeader);
+      //LOG.info("Shen Li: kv written " + (blockSizeWithoutHeader - tmpBlockSize)
+      //    + ", len = " + this.kvs.get(i).getLength());
     }
 
-    LOG.info("Shen Li: in PFileBlockWriter.finishBlock(), final blockSize "
-             + blockSizeWithoutHeader);
+    //LOG.info("Shen Li: in PFileBlockWriter.finishBlock(), final blockSize "
+    //         + blockSizeWithoutHeader);
+    //LOG.info("Shen Li: all offsets " + strOffsets);
+    //LOG.info("Shen Li: all blockSizes " + strBlockSizes);
 
     super.finishBlock();
   }

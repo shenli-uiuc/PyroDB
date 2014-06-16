@@ -443,7 +443,7 @@ public class StoreScanner extends NonReversedNonLazyKeyValueScanner
    */
   @Override
   public boolean next(List<Cell> outResult, int limit) throws IOException {
-    LOG.info("Shen Li: StoreScanner.next()");
+    //LOG.info("Shen Li: StoreScanner.next()");
     lock.lock();
     try {
     if (checkReseek()) {
@@ -484,7 +484,7 @@ public class StoreScanner extends NonReversedNonLazyKeyValueScanner
     long totalBytesRead = 0;
 
     LOOP: while((cell = this.heap.peek()) != null) {
-      LOG.info("Shen Li: StoreScanner.next() while!");
+      //LOG.info("Shen Li: StoreScanner.next() while!");
       if (prevCell != cell) ++kvsScanned; // Do object compare - we set prevKV from the same heap.
       checkScanOrder(prevCell, cell, comparator);
       prevCell = cell;
@@ -558,7 +558,7 @@ public class StoreScanner extends NonReversedNonLazyKeyValueScanner
           break;
 
         case SEEK_NEXT_COL:
-          LOG.info("Shen Li before seekAsDirection");
+          //LOG.info("Shen Li before seekAsDirection");
           seekAsDirection(matcher.getKeyForNextColumn(cell));
           break;
 

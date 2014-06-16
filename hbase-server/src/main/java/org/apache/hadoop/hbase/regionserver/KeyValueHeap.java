@@ -132,7 +132,7 @@ public class KeyValueHeap extends NonReversedNonLazyKeyValueScanner
    * @return true if there are more keys, false if all scanners are done
    */
   public boolean next(List<Cell> result, int limit) throws IOException {
-    HRegion.LOG.info("Shen Li: KeyValueHeap.next()");
+    //HRegion.LOG.info("Shen Li: KeyValueHeap.next()");
     if (this.current == null) {
       return false;
     }

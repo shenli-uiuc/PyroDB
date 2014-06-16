@@ -165,8 +165,8 @@ public class ScannerCallable extends RegionServerCallable<Result[]> {
         ScanRequest request = null;
         try {
           incRPCcallsMetrics();
-          LOG.info("Shen Li: calling scannerId = " + scannerId
-                   + ", nextCallSeq = " + nextCallSeq);
+          //LOG.info("Shen Li: calling scannerId = " + scannerId
+          //         + ", nextCallSeq = " + nextCallSeq);
           request = RequestConverter.buildScanRequest(scannerId, caching, false, nextCallSeq);
           ScanResponse response = null;
           PayloadCarryingRpcController controller = rpcFactory.newController();

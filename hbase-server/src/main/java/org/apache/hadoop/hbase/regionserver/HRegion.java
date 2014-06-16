@@ -3894,7 +3894,7 @@ public class HRegion implements HeapSize { // , Writable{
       Cell nextKv;
       do {
         heap.next(results, limit - results.size());
-        LOG.info("Shen Li: in Populate results, " + results.size());
+        //LOG.info("Shen Li: in Populate results, " + results.size());
         if (limit > 0 && results.size() == limit) {
           return KV_LIMIT;
         }

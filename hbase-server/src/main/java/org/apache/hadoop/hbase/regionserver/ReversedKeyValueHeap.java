@@ -100,7 +100,7 @@ public class ReversedKeyValueHeap extends KeyValueHeap {
   @Override
   public boolean backwardSeek(Cell seekKey) throws IOException {
 
-    HRegion.LOG.info("Shen Li: in ReversedKeyValueHeap.backwardSeek()");
+    //HRegion.LOG.info("Shen Li: in ReversedKeyValueHeap.backwardSeek()");
     if (current == null) {
       return false;
     }
@@ -109,7 +109,7 @@ public class ReversedKeyValueHeap extends KeyValueHeap {
 
     KeyValueScanner scanner;
     while ((scanner = heap.poll()) != null) {
-      HRegion.LOG.info("Shen Li: ReversedKeyValueHeap.backwardSeek() whil! 111");
+      //HRegion.LOG.info("Shen Li: ReversedKeyValueHeap.backwardSeek() whil! 111");
       Cell topKey = scanner.peek();
       if ((CellUtil.matchingRow(seekKey, topKey) && comparator
           .getComparator().compare(seekKey, topKey) <= 0)
@@ -121,7 +121,7 @@ public class ReversedKeyValueHeap extends KeyValueHeap {
       if (!scanner.backwardSeek(seekKey)) {
         scanner.close();
       } else {
-        HRegion.LOG.info("Shen Li: ReversedKeyValueHeap add scanner back");
+        //HRegion.LOG.info("Shen Li: ReversedKeyValueHeap add scanner back");
         heap.add(scanner);
       }
     }

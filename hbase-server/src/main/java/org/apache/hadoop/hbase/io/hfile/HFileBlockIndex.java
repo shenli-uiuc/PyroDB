@@ -893,9 +893,9 @@ public class HFileBlockIndex {
       totalBlockUncompressedSize +=
           blockWriter.getUncompressedSizeWithoutHeader();
 
-      LOG.info("Shen Li: check index block totalBlockOnDiskSize and "
-               + "totalBlockUncompressedSize are : " 
-               + totalBlockOnDiskSize + ", " + totalBlockUncompressedSize);
+      //LOG.info("Shen Li: check index block totalBlockOnDiskSize and "
+      //         + "totalBlockUncompressedSize are : " 
+      //         + totalBlockOnDiskSize + ", " + totalBlockUncompressedSize);
 
       if (LOG.isTraceEnabled()) {
         LOG.trace("Wrote a " + numLevels + "-level index with root level at pos "

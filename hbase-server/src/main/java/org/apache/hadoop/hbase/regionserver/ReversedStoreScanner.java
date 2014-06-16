@@ -136,7 +136,7 @@ class ReversedStoreScanner extends StoreScanner implements KeyValueScanner {
   
   @Override
   public boolean backwardSeek(Cell key) throws IOException {
-    HRegion.LOG.info("Shen Li: ReversedStoreScanner.backwardSeek() 139");
+    //HRegion.LOG.info("Shen Li: ReversedStoreScanner.backwardSeek() 139");
     lock.lock();
     try {
       checkReseek();

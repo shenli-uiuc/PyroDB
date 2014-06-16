@@ -148,7 +148,7 @@ public class HFileBlockDefaultEncodingContext implements
     Encryption.Context cryptoContext = fileContext.getEncryptionContext();
     if (cryptoContext != Encryption.Context.NONE) {
 
-      LOG.info("Shen Li: crypto");
+      //LOG.info("Shen Li: crypto");
 
       // Encrypted block format:
       // +--------------------------+
@@ -212,7 +212,7 @@ public class HFileBlockDefaultEncodingContext implements
       }
 
     } else {
-      LOG.info("Shen Li: compress");
+      //LOG.info("Shen Li: compress");
       if (this.fileContext.getCompression() != NONE) {
         compressedByteStream.reset();
         compressedByteStream.write(headerBytes);
@@ -224,7 +224,7 @@ public class HFileBlockDefaultEncodingContext implements
         compressionStream.finish();
         onDiskBytesWithHeader = compressedByteStream.toByteArray();
       } else {
-        LOG.info("Shen Li: simple copy");
+        //LOG.info("Shen Li: simple copy");
         onDiskBytesWithHeader = uncompressedBytesWithHeader;
       }
     }

@@ -40,7 +40,7 @@ public class PFileWriter extends  HFileWriterV2{
   public static class PWriterFactory extends HFile.WriterFactory {
     public PWriterFactory(Configuration conf, CacheConfig cacheConf) {
       super(conf, cacheConf);
-      LOG.info("Shen Li: In PWriterFactory");
+      //LOG.info("Shen Li: In PWriterFactory");
     }
 
     @Override
@@ -59,7 +59,7 @@ public class PFileWriter extends  HFileWriterV2{
                      final KVComparator comparator,
                      final HFileContext fileContext) throws IOException {
     super(conf, cacheConf, fs, path, ostream, comparator, fileContext);
-    LOG.info("Shen Li: In PFileWriter Constructor");
+    //LOG.info("Shen Li: In PFileWriter Constructor");
     if (LOG.isTraceEnabled()) {
       LOG.trace("Writer" + (path != null ? " for " + path : "" +
                 " initialized with cacheConf: " + cacheConf +

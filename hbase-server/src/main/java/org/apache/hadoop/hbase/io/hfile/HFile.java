@@ -429,7 +429,7 @@ public class HFile {
   public static final WriterFactory getWriterFactory(Configuration conf,
       CacheConfig cacheConf) {
     int version = getFormatVersion(conf);
-    LOG.info("Shen Li: get writer version " + version);
+    //LOG.info("Shen Li: get writer version " + version);
     switch (version) {
     case 2:
       return new HFileWriterV2.WriterFactoryV2(conf, cacheConf);

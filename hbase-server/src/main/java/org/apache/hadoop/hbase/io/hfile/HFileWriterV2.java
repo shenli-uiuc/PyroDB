@@ -135,13 +135,13 @@ public class HFileWriterV2 extends AbstractHFileWriter {
    * @throws IOException
    */
   protected void checkBlockBoundary() throws IOException {
-    LOG.info("Shen Li: block size written and block size: " + 
-             fsBlockWriter.blockSizeWritten() + ", "  + 
-             hFileContext.getBlocksize());
+    //LOG.info("Shen Li: block size written and block size: " + 
+    //         fsBlockWriter.blockSizeWritten() + ", "  + 
+    //         hFileContext.getBlocksize());
     if (fsBlockWriter.blockSizeWritten() < hFileContext.getBlocksize())
       return;
 
-    LOG.info("Shen Li: checkBlockBoundary did not return");
+    //LOG.info("Shen Li: checkBlockBoundary did not return");
 
     finishBlock();
     writeInlineBlocks(false);
@@ -150,8 +150,8 @@ public class HFileWriterV2 extends AbstractHFileWriter {
 
   /** Clean up the current block */
   private void finishBlock() throws IOException {
-    LOG.info("Shen Li: in finishBloc() of HFileWriterV2, " + 
-        fsBlockWriter.getClass().getName());
+    //LOG.info("Shen Li: in finishBloc() of HFileWriterV2, " + 
+    //    fsBlockWriter.getClass().getName());
     if (!fsBlockWriter.isWriting() || fsBlockWriter.blockSizeWritten() == 0)
       return;
 
@@ -162,9 +162,9 @@ public class HFileWriterV2 extends AbstractHFileWriter {
     }
     // Update the last data block offset
     lastDataBlockOffset = outputStream.getPos();
-    LOG.info("Shen Li: before writeHeaderAndData call in HFileWriterV2");
+    //LOG.info("Shen Li: before writeHeaderAndData call in HFileWriterV2");
     fsBlockWriter.writeHeaderAndData(outputStream);
-    LOG.info("Shen Li: after writeHeaderAndData call in HFileWriterV2");
+    //LOG.info("Shen Li: after writeHeaderAndData call in HFileWriterV2");
     int onDiskSize = fsBlockWriter.getOnDiskSizeWithHeader();
 
     byte[] indexKey = comparator.calcIndexKey(lastKeyOfPreviousBlock, firstKeyInBlock);
@@ -259,7 +259,7 @@ public class HFileWriterV2 extends AbstractHFileWriter {
    */
   @Override
   public void append(final KeyValue kv) throws IOException {
-    LOG.info("Shen Li: in append");
+    //LOG.info("Shen Li: in append");
     byte[] key = kv.getBuffer();
     int koffset = kv.getKeyOffset();
     int klength = kv.getKeyLength();
@@ -272,10 +272,10 @@ public class HFileWriterV2 extends AbstractHFileWriter {
       checkBlockBoundary();
     }
 
-    LOG.info("Shen Li: out checkBlockBoundary");
+    //LOG.info("Shen Li: out checkBlockBoundary");
 
     if (!fsBlockWriter.isWriting()) {
-      LOG.info("Shen Li: fsBlockWriter is not writing");
+      //LOG.info("Shen Li: fsBlockWriter is not writing");
       newBlock();
     }
 
@@ -284,11 +284,11 @@ public class HFileWriterV2 extends AbstractHFileWriter {
     totalKeyLength += klength;
     totalValueLength += vlength;
 
-    LOG.info("Shen Li: out first key");
+    //LOG.info("Shen Li: out first key");
     // Are we the first key in this block?
     if (firstKeyInBlock == null) {
       // Copy the key.
-      LOG.info("Shen Li: in first key");
+      //LOG.info("Shen Li: in first key");
       firstKeyInBlock = new byte[klength];
       System.arraycopy(key, koffset, firstKeyInBlock, 0, klength);
     }
@@ -333,12 +333,12 @@ public class HFileWriterV2 extends AbstractHFileWriter {
     // followed by fileinfo, data block index and meta block index.
 
     finishBlock();
-    LOG.info("Shen Li: HFileWriterV2.finishBlock() returns correctly");
+    //LOG.info("Shen Li: HFileWriterV2.finishBlock() returns correctly");
     writeInlineBlocks(true);
 
     FixedFileTrailer trailer = new FixedFileTrailer(getMajorVersion(), getMinorVersion());
 
-    LOG.info("Shen Li: before write out meta");
+    //LOG.info("Shen Li: before write out meta");
 
     // Write out the metadata blocks if any.
     if (!metaNames.isEmpty()) {
@@ -358,7 +358,7 @@ public class HFileWriterV2 extends AbstractHFileWriter {
       }
     }
 
-    LOG.info("Shen Li: after write out meta");
+    //LOG.info("Shen Li: after write out meta");
 
     // Load-on-open section.
 
@@ -370,10 +370,10 @@ public class HFileWriterV2 extends AbstractHFileWriter {
     // index.
 
     long rootIndexOffset = dataBlockIndexWriter.writeIndexBlocks(outputStream);
-    LOG.info("Shen Li: after write out rootIndex");
+    //LOG.info("Shen Li: after write out rootIndex");
     trailer.setLoadOnOpenOffset(rootIndexOffset);
 
-    LOG.info("Shen Li: before writeSingleLevelIndex");
+    //LOG.info("Shen Li: before writeSingleLevelIndex");
     // Meta block index.
     metaBlockIndexWriter.writeSingleLevelIndex(fsBlockWriter.startWriting(
         BlockType.ROOT_INDEX), "meta");
@@ -385,13 +385,13 @@ public class HFileWriterV2 extends AbstractHFileWriter {
       appendFileInfo(KEY_VALUE_VERSION, Bytes.toBytes(KEY_VALUE_VER_WITH_MEMSTORE));
     }
 
-    LOG.info("Shen Li: before writeFileInfo");
+    //LOG.info("Shen Li: before writeFileInfo");
     // File info
     writeFileInfo(trailer, fsBlockWriter.startWriting(BlockType.FILE_INFO));
     fsBlockWriter.writeHeaderAndData(outputStream);
     totalUncompressedBytes += fsBlockWriter.getUncompressedSizeWithHeader();
 
-    LOG.info("Shen Li: before loop on additionalLoadOnOpenData");
+    //LOG.info("Shen Li: before loop on additionalLoadOnOpenData");
 
     // Load-on-open data supplied by higher levels, e.g. Bloom filters.
     for (BlockWritable w : additionalLoadOnOpenData){
@@ -408,7 +408,7 @@ public class HFileWriterV2 extends AbstractHFileWriter {
     trailer.setComparatorClass(comparator.getClass());
     trailer.setDataIndexCount(dataBlockIndexWriter.getNumRootEntries());
 
-    LOG.info("Shen Li: before finishClose()");
+    //LOG.info("Shen Li: before finishClose()");
 
     finishClose(trailer);
 

@@ -661,26 +661,26 @@ public class HFileReaderV2 extends AbstractHFileReader {
 
     @Override
     public boolean seekBefore(Cell key) throws IOException {
-      HFile.LOG.info("Shen Li: seekBefore called");
+      //HFile.LOG.info("Shen Li: seekBefore called");
       HFileBlock seekToBlock = reader.getDataBlockIndexReader().seekToDataBlock(key, block,
           cacheBlocks, pread, isCompaction,
           ((HFileReaderV2) reader).getEffectiveEncodingInCache(isCompaction));
       if (seekToBlock == null) {
         return false;
       }
-      HFile.LOG.info("Shen Li: before called getFirstKeyInBlock in AbstractHFileReader");
+      //HFile.LOG.info("Shen Li: before called getFirstKeyInBlock in AbstractHFileReader");
       ByteBuffer firstKey = getFirstKeyInBlock(seekToBlock);
 
       if (reader.getComparator()
           .compareOnlyKeyPortion(
               new KeyValue.KeyOnlyKeyValue(firstKey.array(), firstKey.arrayOffset(),
                   firstKey.limit()), key) >= 0) {
-        HFile.LOG.info("Shen Li: first key is larger than key");
+        //HFile.LOG.info("Shen Li: first key is larger than key");
         long previousBlockOffset = seekToBlock.getPrevBlockOffset();
         // The key we are interested in
         if (previousBlockOffset == -1) {
           // we have a 'problem', the key we want is the first of the file.
-          HFile.LOG.info("Shen Li: realized the key is smaller than the first");
+          //HFile.LOG.info("Shen Li: realized the key is smaller than the first");
           return false;
         }
 
@@ -693,7 +693,7 @@ public class HFileReaderV2 extends AbstractHFileReader {
         // TODO shortcut: seek forward in this block to the last key of the
         // block.
       }
-      HFile.LOG.info("Shen Li: HFileReaderV2.seekBefore() thinks the target key is larger than the first key");
+      //HFile.LOG.info("Shen Li: HFileReaderV2.seekBefore() thinks the target key is larger than the first key");
       byte[] firstKeyInCurrentBlock = Bytes.getBytes(firstKey);
       loadBlockAndSeekToKey(seekToBlock, firstKeyInCurrentBlock, true, key, true);
       return true;
@@ -820,15 +820,15 @@ public class HFileReaderV2 extends AbstractHFileReader {
      */
     @Override
     public boolean next() throws IOException {
-      LOG.info("Shen Li: in next()");
+      //LOG.info("Shen Li: in next()");
       assertSeeked();
 
-      LOG.info("Shen Li: next() is called");
+      //LOG.info("Shen Li: next() is called");
 
       try {
-        LOG.info("Shen Li: current block position " + blockBuffer.position());
+        //LOG.info("Shen Li: current block position " + blockBuffer.position());
         blockBuffer.position(getNextCellStartPosition());
-        LOG.info("Shen Li: end block position " + blockBuffer.position());
+        //LOG.info("Shen Li: end block position " + blockBuffer.position());
       } catch (IllegalArgumentException e) {
         LOG.error("Current pos = " + blockBuffer.position()
             + "; currKeyLen = " + currKeyLen + "; currValLen = "
@@ -914,9 +914,9 @@ public class HFileReaderV2 extends AbstractHFileReader {
 
       // Update the nextIndexedKey
       this.nextIndexedKey = nextIndexedKey;
-      LOG.info("Shen Li: Before BlockSeek ====================");
+      //LOG.info("Shen Li: Before BlockSeek ====================");
       int res =  blockSeek(key, seekBefore);
-      LOG.info("Shen Li: After BlockkSeek ====================");
+      //LOG.info("Shen Li: After BlockkSeek ====================");
       return res;
     }
 
