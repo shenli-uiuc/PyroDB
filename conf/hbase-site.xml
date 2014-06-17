@@ -23,10 +23,14 @@
 <configuration>
 <property>
   <name>hfile.format.version</name>
-  <value>4</value>
+  <value>2</value>
   <description>The HFile format version to use for new files.
     Version 3 adds support for tags in hfiles (See http://hbase.apache.org/book.html#hbase.tags).
     Distributed Log Replay requires that tags are enabled.
   </description>
+</property>       
+<property>
+  <name>hbase.regionserver.global.memstore.size.lower.limit</name>
+  <value>0.1</value>
 </property>       
 </configuration>

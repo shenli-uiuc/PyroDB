@@ -6,6 +6,8 @@ import java.util.Arrays;
 import java.io.DataOutput;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
 
 import org.apache.hadoop.io.WritableUtils;
 import org.apache.commons.logging.Log;
@@ -40,6 +42,7 @@ public class PFileBlockWriter extends HFileBlock.Writer {
   private byte [] ptrNum = null;
   private List<KeyValue> kvs = null;
   private PFileDataBlockEncoder pDataBlockEncoder = null;
+  private ByteArrayOutputStream tmpBaosInMemory;
 
   //TODO
   public PFileBlockWriter(HFileDataBlockEncoder dataBlockEncoder, 
@@ -51,6 +54,9 @@ public class PFileBlockWriter extends HFileBlock.Writer {
     // this encoder encodes the pointer array by offer apis to encode int 
     // and byte
     this.pDataBlockEncoder = PNoOpDataBlockEncoder.INSTANCE;
+    //TODO: the following two variables are for offset calculation, figure
+    //out more efficient ways to avoid another cache
+    this.tmpBaosInMemory = new ByteArrayOutputStream();
     //LOG.info("Shen Li: in PFileBlockWriter constructor");
     //TODO
   }
@@ -118,6 +124,9 @@ public class PFileBlockWriter extends HFileBlock.Writer {
    */
   @Override
   protected void finishBlock() throws IOException {
+    this.tmpBaosInMemory.reset();
+    DataOutputStream tmpUserDataStream = 
+      new DataOutputStream(tmpBaosInMemory);
     // for texting
     int blockSizeWithoutHeader = this.userDataStream.size();
     //LOG.info("Shen Li: in PFileBlockWriter.finishBlock(), "
@@ -133,23 +142,40 @@ public class PFileBlockWriter extends HFileBlock.Writer {
     int maxPtrNum = 0;
     int j = 1, i = 0;
 
-    // initializting offsets array
     //String strOffsets = "";
     for (i = 0; i < nOfKvs; ++i) {
-      this.offsets[i] = curOffset;
       //strOffsets += (curOffset + ", ");
+      this.offsets[i] = curOffset;
+
+      curOffset += PKeyValue.POINTER_NUM_SIZE;
+      curOffset += ((this.ptrNum[i] + 1) * PKeyValue.POINTER_SIZE);
+      curOffset += this.pDataBlockEncoder.encode(this.kvs.get(i), 
+          dataBlockEncodingCtx, tmpUserDataStream);
+    }
+
+
+    /*
+    // initializting offsets array
+    String strOffsets = "";
+    for (i = 0; i < nOfKvs; ++i) {
+      this.offsets[i] = curOffset;
+      strOffsets += (curOffset + ", ");
       curOffset += this.kvs.get(i).getLength();
       curOffset += PKeyValue.POINTER_NUM_SIZE;
       curOffset += ((this.ptrNum[i] + 1) * PKeyValue.POINTER_SIZE);
-      if (fileContext.isIncludesMvcc()) {
+      if (dataBlockEncodingCtx.getHFileContext().isIncludesMvcc()) {
         curOffset += 
           WritableUtils.getVIntSize(this.kvs.get(i).getMvccVersion());
       }
     }
+    */
 
     //String strBlockSizes = "";
+    //String strKvLens = "";
     // write PKeyValues
     for (i = 0; i < nOfKvs; ++i) {
+      if (maxPtrNum < this.ptrNum[i])
+        maxPtrNum = ptrNum[i];
       //strBlockSizes += (blockSizeWithoutHeader + ", ");
       // write pointer number
       // TODO: implement PFileDataBlockEncoder to account encodeLong, the 
@@ -201,10 +227,12 @@ public class PFileBlockWriter extends HFileBlock.Writer {
       }
 
       // write KeyValue
-      int tmpBlockSize = blockSizeWithoutHeader;
+      //int tmpBlockSize = blockSizeWithoutHeader;
       blockSizeWithoutHeader += 
         this.pDataBlockEncoder.encode(this.kvs.get(i), dataBlockEncodingCtx, 
           this.userDataStream);
+      //strKvLens += (this.kvs.get(i).getLength() + ", " 
+      //    + (blockSizeWithoutHeader - tmpBlockSize + ", "));
       //LOG.info("Shen Li: kv written " + (blockSizeWithoutHeader - tmpBlockSize)
       //    + ", len = " + this.kvs.get(i).getLength());
     }
@@ -213,7 +241,8 @@ public class PFileBlockWriter extends HFileBlock.Writer {
     //         + blockSizeWithoutHeader);
     //LOG.info("Shen Li: all offsets " + strOffsets);
     //LOG.info("Shen Li: all blockSizes " + strBlockSizes);
-
+    //LOG.info("Shen Li: kv lengths " + strKvLens);
+    //LOG.info("Shen Li: max pointer number = " + maxPtrNum);
     super.finishBlock();
   }
 

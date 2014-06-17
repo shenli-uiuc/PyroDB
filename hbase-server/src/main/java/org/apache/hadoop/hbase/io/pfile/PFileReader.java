@@ -321,7 +321,7 @@ public class PFileReader extends HFileReaderV2 {
         pNum = blockBuffer.get(curPos);
         kvPos = this.getKvPos(curPos, pNum);
         // key length of that kv
-        LOG.info("Shen Li: klen set by first keey in seek");
+        //LOG.info("Shen Li: klen set by first keey in seek");
         klen = blockBuffer.getInt(kvPos);
         keyOnlyKv.setKey(blockBuffer.array(), 
             blockBuffer.arrayOffset() + kvPos + KEY_VALUE_LEN_SIZE, klen);
@@ -329,7 +329,7 @@ public class PFileReader extends HFileReaderV2 {
         int comp = reader.getComparator().compareOnlyKeyPortion(key, 
             keyOnlyKv);
       
-        LOG.info("Shen Li: comp " + comp);
+        //LOG.info("Shen Li: comp " + comp);
 
         if (comp < 0) {
           // target key smaller than the first key
@@ -355,7 +355,7 @@ public class PFileReader extends HFileReaderV2 {
         // pkv, whose key is smaller than the target key. 
         skipPos = curPos;
         ptr = 0;
-        LOG.info("Shen Li: skipKLen set by klen");
+        //LOG.info("Shen Li: skipKLen set by klen");
         skipKLen = klen;
         skipKvPos = 0;
 
@@ -386,14 +386,14 @@ public class PFileReader extends HFileReaderV2 {
             // offset to the beginning of kv of that pkv
             skipKvPos = this.getKvPos(skipPos, skipPNum);
 
-            LOG.info("Shen Li: blockBuffer limit " + blockBuffer.limit()
-                     + ", arrayOffset " + blockBuffer.arrayOffset()
-                     + ", curPos " + curPos + ", ptr " + ptr
-                     + ", skipPos " + skipPos
-                     + ", skipPNum " + skipPNum
-                     + ", skipKvPos " + skipKvPos);
+            //LOG.info("Shen Li: blockBuffer limit " + blockBuffer.limit()
+            //         + ", arrayOffset " + blockBuffer.arrayOffset()
+            //         + ", curPos " + curPos + ", ptr " + ptr
+            //         + ", skipPos " + skipPos
+            //         + ", skipPNum " + skipPNum
+            //         + ", skipKvPos " + skipKvPos);
             // key length of that kv
-            LOG.info("Shen Li: skipKLen set by test skipList entry");
+            //LOG.info("Shen Li: skipKLen set by test skipList entry");
             skipKLen = blockBuffer.getInt(skipKvPos);
             keyOnlyKv.setKey(blockBuffer.array(), blockBuffer.arrayOffset() 
                 + skipKvPos + KEY_VALUE_LEN_SIZE, skipKLen);
@@ -436,13 +436,13 @@ public class PFileReader extends HFileReaderV2 {
             ptr = PKeyValue.POINTER_NUM_SIZE +
               (pNum + 1) * PKeyValue.POINTER_SIZE + 
               KEY_VALUE_LEN_SIZE + klen + vlen + tmpMemstoreTSLen;
-            LOG.info("Shen Li: position = " + blockBuffer.position()
-                     + ", curPos = " + curPos
-                     + ", pointer = " + ptr 
-                     + ", limit = " + blockBuffer.limit()
-                     + ", pNum = " + pNum
-                     + ", klen = " + klen + ", vlen = " + vlen
-                     + ", tmpMemstoreTSLen = " + tmpMemstoreTSLen);
+            //LOG.info("Shen Li: position = " + blockBuffer.position()
+            //         + ", curPos = " + curPos
+            //         + ", pointer = " + ptr 
+            //         + ", limit = " + blockBuffer.limit()
+            //         + ", pNum = " + pNum
+            //         + ", klen = " + klen + ", vlen = " + vlen
+            //         + ", tmpMemstoreTSLen = " + tmpMemstoreTSLen);
             if (blockBuffer.position() + ptr >= blockBuffer.limit()) {
               // the current pkv is the last pkv in this block
               //LOG.info("Shen Li: got last pkv");
@@ -454,7 +454,7 @@ public class PFileReader extends HFileReaderV2 {
             skipPos = curPos + ptr;
             skipPNum = blockBuffer.get(skipPos);
             skipKvPos = getKvPos(skipPos, skipPNum);
-            LOG.info("Shen Li: skipKLen set by test next kv");
+            //LOG.info("Shen Li: skipKLen set by test next kv");
             skipKLen = blockBuffer.getInt(skipKvPos);
             keyOnlyKv.setKey(blockBuffer.array(), blockBuffer.arrayOffset()
                 + skipKvPos + KEY_VALUE_LEN_SIZE, skipKLen);
@@ -487,7 +487,7 @@ public class PFileReader extends HFileReaderV2 {
             blockBuffer.position(blockBuffer.position() + ptr);
             curPos = skipPos;
             pNum = blockBuffer.get(curPos);
-            LOG.info("klen set by skipKLen");
+            //LOG.info("klen set by skipKLen");
             klen = skipKLen;
             kvPos = skipKvPos;
           }
