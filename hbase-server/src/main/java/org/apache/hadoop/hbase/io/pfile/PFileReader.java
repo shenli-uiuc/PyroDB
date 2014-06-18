@@ -99,6 +99,12 @@ public class PFileReader extends HFileReaderV2 {
 
     @Override
     public Cell getKeyValue() {
+      //LOG.info("Shen Li: PFile getKeyValue");
+      //String curTrace = "";
+      //for (StackTraceElement ste : Thread.currentThread().getStackTrace()) {
+      //  curTrace += (ste + "\n");
+      //}
+      //LOG.info(curTrace);
       if (!isSeeked())
         return null;
       
@@ -301,6 +307,11 @@ public class PFileReader extends HFileReaderV2 {
         int lastKeyValueSize = -1;
         int curPos, skipPos, ptrPos, skipPrevPos;
 
+
+        //for testing
+
+        //int nKcmp = 0;
+
         //LOG.info("Shen Li: call trace");
         //String curTrace = "";
         //for (StackTraceElement ste : Thread.currentThread().getStackTrace()) {
@@ -328,7 +339,8 @@ public class PFileReader extends HFileReaderV2 {
 
         int comp = reader.getComparator().compareOnlyKeyPortion(key, 
             keyOnlyKv);
-      
+        //++nKcmp;
+
         //LOG.info("Shen Li: comp " + comp);
 
         if (comp < 0) {
@@ -400,9 +412,11 @@ public class PFileReader extends HFileReaderV2 {
 
             comp = reader.getComparator().compareOnlyKeyPortion(key, 
                 keyOnlyKv);
+            //++nKcmp;
             //and writers.
             if (0 == comp) {
               //Found exact match
+              //LOG.info("Shen Li: PFile nKcmp = " + nKcmp);
               return handleExactMatch(key, blockBuffer.position() + ptr, 
                   skipKvPos, seekBefore);
             } else if (comp < 0) {
@@ -462,11 +476,13 @@ public class PFileReader extends HFileReaderV2 {
                 keyOnlyKv);
             if (0 == comp) {
               // next pkv matches target key
+              //LOG.info("Shen Li: 1 PFile nKcmp = " + nKcmp);
               return handleExactMatch(key, blockBuffer.position() + ptr, 
                   skipKvPos, seekBefore);
             } else if (comp < 0) {
               // target key is larger than current but smaller than the next.
               // therefore, the current locaiton of blockBuffer is correct
+              //LOG.info("Shen Li: 2 PFile nKcmp = " + nKcmp);
               setCurrStates(pNum, 
                   PKeyValue.POINTER_NUM_SIZE + (pNum + 1) * PKeyValue.POINTER_SIZE,
                   klen, vlen, tmpMemstoreTS, tmpMemstoreTSLen);
@@ -480,6 +496,7 @@ public class PFileReader extends HFileReaderV2 {
               //       + ", limit = " + blockBuffer.limit());
               blockBuffer.position(blockBuffer.position() + ptr);
               readKeyValueLen();
+              //LOG.info("Shen Li: 3 PFile nKcmp = " + nKcmp);
               return 1;
             }
           } else {

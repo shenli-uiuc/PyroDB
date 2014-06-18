@@ -1,3 +1,5 @@
+org.apache.hadoop.hbase.PerformanceEvaluation
+
 TODO:
 2. continue to learn HFileBlockIndex, think about how we should generate the
    index for the moore files.
@@ -128,6 +130,14 @@ Call Traces:
 2. scan request
   RPC SERVER SIDE:
   RSRpcService.java       1798    scan(). 
+
+  How scan seeks to the first:
+  RSRpcServices.java      1872    region.getScanner()
+  HRegion.RegionScannerImpl.java            
+                          3764    store.getScanner()
+  HStore.java             1778    getScanner()
+  StoreScanner.java       185     seekScanners()
+
 
 3. put request
   Surprisingly, the put request is done IN BATCH on the client side.

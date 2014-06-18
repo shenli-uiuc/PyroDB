@@ -113,9 +113,10 @@ public class PerformanceEvaluation extends Configured implements Tool {
   public static final String TABLE_NAME = "TestTable";
   public static final byte[] FAMILY_NAME = Bytes.toBytes("info");
   public static final byte[] QUALIFIER_NAME = Bytes.toBytes("data");
-  public static final int VALUE_LENGTH = 1000;
-  public static final int ROW_LENGTH = 26;
+  public static final int VALUE_LENGTH = 128;
+  public static final int ROW_LENGTH = 50;
 
+  private static final int MAX_RANDOM_RANGE = 2;
   private static final int ONE_GB = 1024 * 1024 * 1000;
   private static final int ROWS_PER_GB = ONE_GB / VALUE_LENGTH;
   // TODO : should we make this configurable
@@ -127,6 +128,7 @@ public class PerformanceEvaluation extends Configured implements Tool {
   private static final TestOptions DEFAULT_OPTS = new TestOptions();
 
   protected Map<String, CmdDescriptor> commands = new TreeMap<String, CmdDescriptor>();
+
 
   private static final Path PERF_EVAL_DIR = new Path("performance_evaluation");
 
@@ -152,6 +154,9 @@ public class PerformanceEvaluation extends Configured implements Tool {
         "Run random read test");
     addCommandDescriptor(RandomSeekScanTest.class, "randomSeekScan",
         "Run random seek and scan 100 test");
+    addCommandDescriptor(RandomScanWithRandomRangeTest.class,
+        "scanRandomRange",
+        "Run random seek scan with random range");
     addCommandDescriptor(RandomScanWithRange10Test.class, "scanRange10",
         "Run random seek scan with both start and stop row (max 10 rows)");
     addCommandDescriptor(RandomScanWithRange100Test.class, "scanRange100",
@@ -166,6 +171,10 @@ public class PerformanceEvaluation extends Configured implements Tool {
         "Run sequential read test");
     addCommandDescriptor(SequentialWriteTest.class, "sequentialWrite",
         "Run sequential write test");
+    addCommandDescriptor(VersionedSequentialWriteTest.class, 
+        "versionedSequentialWrite", "Run versioned sequential write test");
+    addCommandDescriptor(SkipWriteTest.class, "skipWrite",
+        "write with skip rows");
     addCommandDescriptor(ScanTest.class, "scan",
         "Run scan test (read every row)");
     addCommandDescriptor(FilteredScanTest.class, "filterScan",
@@ -290,6 +299,9 @@ public class PerformanceEvaluation extends Configured implements Tool {
   protected static HTableDescriptor getTableDescriptor(TestOptions opts) {
     HTableDescriptor desc = new HTableDescriptor(TableName.valueOf(opts.tableName));
     HColumnDescriptor family = new HColumnDescriptor(FAMILY_NAME);
+    //Shen Li
+    if (opts.maxVersion > 0)
+      family.setMaxVersions(opts.maxVersion);
     family.setDataBlockEncoding(opts.blockEncoding);
     family.setCompressionType(opts.compression);
     if (opts.inMemoryCF) {
@@ -509,6 +521,9 @@ public class PerformanceEvaluation extends Configured implements Tool {
       this.compression = that.compression;
       this.blockEncoding = that.blockEncoding;
       this.filterAll = that.filterAll;
+
+      this.maxVersion = that.maxVersion;
+      this.maxSkip = that.maxSkip;
     }
 
     public boolean nomapred = false;
@@ -532,6 +547,9 @@ public class PerformanceEvaluation extends Configured implements Tool {
     public int presplitRegions = 0;
     public Compression.Algorithm compression = Compression.Algorithm.NONE;
     public DataBlockEncoding blockEncoding = DataBlockEncoding.NONE;
+
+    public int maxVersion = 0;
+    public int maxSkip = 0;
   }
 
   /*
@@ -771,6 +789,20 @@ public class PerformanceEvaluation extends Configured implements Tool {
     }
   }
 
+  static class RandomScanWithRandomRangeTest extends RandomScanWithRangeTest {
+    RandomScanWithRandomRangeTest(Configuration conf, 
+        TestOptions options, Status status) {
+      super(conf, options, status);
+    }
+
+    @Override
+    protected Pair<byte[], byte[]> getStartAndStopRow() {
+      int curRange = 1;
+        //this.rand.nextInt(Integer.MAX_VALUE) % MAX_RANDOM_RANGE + 1;
+      return generateStartAndStopRows(curRange);
+    }
+  }
+
   static class RandomScanWithRange10Test extends RandomScanWithRangeTest {
     RandomScanWithRange10Test(Configuration conf, TestOptions options, Status status) {
       super(conf, options, status);
@@ -966,6 +998,58 @@ public class PerformanceEvaluation extends Configured implements Tool {
     }
   }
 
+
+  static class SkipWriteTest extends SequentialWriteTest {
+    private int rowSkip;
+    SkipWriteTest(Configuration conf, TestOptions options, Status status) {
+      super(conf, options, status);
+      rowSkip = 0;
+    }
+
+    @Override
+    void testRow(final int i) throws IOException {
+      rowSkip += 
+        (this.rand.nextInt(Integer.MAX_VALUE) % this.opts.maxSkip);
+      super.testRow(i + rowSkip);
+    }
+  }
+
+  static class VersionedSequentialWriteTest extends Test {
+    VersionedSequentialWriteTest(Configuration conf, 
+        TestOptions options, Status status) {
+      super(conf, options, status);
+    }
+
+    @Override
+    void testRow(final int i) throws IOException {
+      for (long j = opts.maxVersion; j >=0; --j) {
+        testVersionedRow(i, j);
+      }
+    }
+
+    void testVersionedRow(final int i, 
+        final long ts) throws IOException {
+      byte[] row = format(i);
+      Put put = new Put(row);
+      byte[] value = generateData(this.rand, VALUE_LENGTH);
+      if (opts.useTags) {
+        byte[] tag = generateData(this.rand, TAG_LENGTH);
+        Tag[] tags = new Tag[opts.noOfTags];
+        for (int n = 0; n < opts.noOfTags; n++) {
+          Tag t = new Tag((byte) n, tag);
+          tags[n] = t;
+        }
+        KeyValue kv = new KeyValue(row, FAMILY_NAME, QUALIFIER_NAME, ts,
+            value, tags);
+        put.add(kv);
+      } else {
+        put.add(FAMILY_NAME, QUALIFIER_NAME, ts, value);
+      }
+      put.setDurability(opts.writeToWAL ? Durability.SYNC_WAL : Durability.SKIP_WAL);
+      table.put(put);
+    }
+  }
+
   static class FilteredScanTest extends Test {
     protected static final Log LOG = LogFactory.getLog(FilteredScanTest.class.getName());
 
@@ -1151,6 +1235,8 @@ public class PerformanceEvaluation extends Configured implements Tool {
     System.err.println(" compress        Compression type to use (GZ, LZO, ...). Default: 'NONE'");
     System.err.println(" flushCommits    Used to determine if the test should flush the table. " +
       "Default: false");
+    System.err.println(" maxVersion      maxVersion the table keeps");
+    System.err.println(" maxSkip         max skip for SkipWrite");
     System.err.println(" writeToWAL      Set writeToWAL on puts. Default: True");
     System.err.println(" autoFlush       Set autoFlush on htable. Default: False");
     System.err.println(" presplit        Create presplit table. Recommended for accurate perf " +
@@ -1329,6 +1415,20 @@ public class PerformanceEvaluation extends Configured implements Tool {
         final String size = "--size=";
         if (cmd.startsWith(size)) {
           opts.size = Float.parseFloat(cmd.substring(size.length()));
+          continue;
+        }
+
+        final String maxVersion = "--maxVersion=";
+        if (cmd.startsWith(maxVersion)) {
+          opts.maxVersion = 
+            Integer.parseInt(cmd.substring(maxVersion.length()));
+          continue;
+        }
+
+        final String maxSkip = "--maxSkip=";
+        if (cmd.startsWith(maxSkip)) {
+          opts.maxSkip =
+            Integer.parseInt(cmd.substring(maxSkip.length()));
           continue;
         }
 

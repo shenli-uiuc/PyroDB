@@ -763,6 +763,13 @@ public class HFileReaderV2 extends AbstractHFileReader {
 
     @Override
     public Cell getKeyValue() {
+
+      //LOG.info("Shen Li: HFile getKeyValue");
+      //String curTrace = "";
+      //for (StackTraceElement ste : Thread.currentThread().getStackTrace()) {
+      //  curTrace += (ste + "\n");
+      //}
+      //LOG.info(curTrace);
       if (!isSeeked())
         return null;
 
@@ -1002,6 +1009,10 @@ public class HFileReaderV2 extends AbstractHFileReader {
       long memstoreTS = 0;
       int memstoreTSLen = 0;
       int lastKeyValueSize = -1;
+
+      //Shen Li: for testing
+      //int nKcmp = 0;
+
       KeyValue.KeyOnlyKeyValue keyOnlykv = new KeyValue.KeyOnlyKeyValue();
       do {
         blockBuffer.mark();
@@ -1027,8 +1038,9 @@ public class HFileReaderV2 extends AbstractHFileReader {
         int keyOffset = blockBuffer.arrayOffset() + blockBuffer.position() + KEY_VALUE_LEN_SIZE;
         keyOnlykv.setKey(blockBuffer.array(), keyOffset, klen);
         int comp = reader.getComparator().compareOnlyKeyPortion(key, keyOnlykv);
-
+        //++nKcmp;
         if (comp == 0) {
+          //LOG.info("Shen Li: 1 HFile nKcmp = " + nKcmp);
           if (seekBefore) {
             if (lastKeyValueSize < 0) {
               KeyValue kv = KeyValueUtil.ensureKeyValue(key);
@@ -1057,6 +1069,13 @@ public class HFileReaderV2 extends AbstractHFileReader {
               && this.reader.trailer.getMinorVersion() >= MINOR_VERSION_WITH_FAKED_KEY) {
             return HConstants.INDEX_KEY_MAGIC;
           }
+        
+          //String curTrace = "";
+          //for (StackTraceElement ste : Thread.currentThread().getStackTrace()) {
+          //  curTrace += (ste + "\n");
+          //}
+          //LOG.info(curTrace);
+          //LOG.info("Shen Li: 2 HFile nKcmp = " + nKcmp);
           return 1;
         }
 
