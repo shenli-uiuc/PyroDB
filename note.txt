@@ -1,5 +1,21 @@
 org.apache.hadoop.hbase.PerformanceEvaluation
 
+IMPORTANT:
+Moore curve helps to reduce the amount of scans. However, since hfile blocks 
+does not respect Moore curve block (quad-tree block) boundaries. we may end
+up fetching/scan a considerable amount of unnecessary hfile blocks. This is
+less a issue in 1D applications, as they only fetch 2 more hfile block, which
+is small enough when compared to a considerable scan range (n). However, in
+2D (3D) applications, a geoScan may end up in many small scans with each
+fetching (n+2)^2 - n^2 more hfile blocks.
+
+  solution: 
+  allow hfile blocks to respect moore cuve blocks. When flushing memstore into
+  disk, it determines whether a quad-tree square needs to be split into 4 
+  smaller ones, wich each form an separate hfile block.
+  aloow scan to fetch multiple consequentive hfile blocks.
+
+
 TODO:
 2. continue to learn HFileBlockIndex, think about how we should generate the
    index for the moore files.
