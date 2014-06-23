@@ -1,19 +1,20 @@
 
-public class Moore {
+public class Moore extends SpaceFillingCurve {
   private static final long [] R1_MAP = {0, 3, 
                                         1, 2};
   private static final long [] R2_MAP = { 1,  0, 15, 14,
                                          2,  3, 12, 13,
                                          5,  4, 11, 10,
                                          6,  7,  8,  9};
-
+  
   private static long catLowerBits(long x, long y, long r) {
     long mask = (1 << r) - 1;
 
     return (x & mask) | ((y & mask) << r);
   }
 
-  public static long encode(long x, long y, long r) {
+  @Override
+  public long encode(long x, long y, long r) {
     if (r <= 1) {
       return R1_MAP[(int)catLowerBits(x, y, 1)];
     }
@@ -79,27 +80,13 @@ public class Moore {
     return interleaveBits(hodd, heven, r) & (mask | (mask << r));
   }
 
-  private static long interleaveBits(long odd, long even, long r) {
-    long h = 0;
-    long mask = 1;
-    odd <<= 1;
-    while (r > 0) {
-      --r;
-      h |= (even & mask);
-      mask <<= 1;
-      even <<= 1;
-      h |= (odd & mask);
-      mask <<= 1;
-      odd <<= 1;
-    }
-    return h;
-  }
-
+  
   public static void main(String args[]) {
+    Moore moore = new Moore();
     for (int r = 1; r < 5; ++r) {
       for (long i = 0 ; i < (1 << r); ++i) {
         for (long j = 0 ; j < (1 << r); ++j) {
-          System.out.print("\t" + encode(j, i, r) + ",");
+          System.out.print("\t" + moore.encode(j, i, r) + ",");
           //System.out.print("\t" + encodeLowerBits(j, i, r, 0, 0) +  ", ");
           //System.out.println();
         }
