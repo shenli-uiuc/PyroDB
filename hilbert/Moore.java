@@ -1,73 +1,111 @@
 
 public class Moore {
+  private static final long [] R1_MAP = {0, 3, 
+                                        1, 2};
+  private static final long [] R2_MAP = { 1,  0, 15, 14,
+                                         2,  3, 12, 13,
+                                         5,  4, 11, 10,
+                                         6,  7,  8,  9};
 
-  public static int encode(int x, int y, int r) {
-    if (r <= 2) {
-      //retrieve higher 2 bits from x and y respectively
+  private static long catLowerBits(long x, long y, long r) {
+    long mask = (1 << r) - 1;
+
+    return (x & mask) | ((y & mask) << r);
+  }
+
+  public static long encode(long x, long y, long r) {
+    if (r <= 1) {
+      return R1_MAP[(int)catLowerBits(x, y, 1)];
     }
+    
+    long first4Bits = 
+      R2_MAP[(int)catLowerBits(x >>> (r - 2), y >>> (r - 2), 2)];
+
+    if (r <= 2) {
+      return first4Bits;
+    }
+    /* 0: -----
+     *    |   |
+     *    |   |
+     *
+     * 1: -----
+     *    |
+     *    -----
+     *
+     * 2: |   |
+     *    |   |
+     *    -----
+     *
+     * 3: -----
+     *        |
+     *    -----
+     */
+    //calculate d0 and d1 for r = 2;
+    long firstBitMask = 1 << (r - 1);
+    // set d0 to 1, using firstBitMask to avoid 
+    // another 2 arithmetic operations
+    long d0 = firstBitMask >>> 1;
+    long d1 = ((~x) & firstBitMask) >>> 1;
+    
     // d0 and d1 represent the direction indicated by the higher 2 bits
     // from x and y
-    return encodeLowerBits(int x, int y, int r - 2, int d0, int d1);
+    return (first4Bits << ((r - 2) << 1)) | 
+      encodeLowerBits(x, y, r - 2, d0, d1);
   }
 
-  public static int encodeLowerBits(int x, int y, int r, int d0, int d1) {
-  }
-
-  /**
-   * Find the Hilbert order (=vertex index) for the given grid cell 
-   * coordinates.
-   * @param x cell column (from 0)
-   * @param y cell row (from 0)
-   * @param r resolution of Hilbert curve (grid will have Math.pow(2,r) 
-   * rows and cols)
-   * @return Hilbert order 
+  /*
+   * d0 and d1 are already set for the r + 1 bit from right;
    */
-  public static int encode(int x, int y, int r) {
+  public static long encodeLowerBits(long x, long y, long r, 
+                                    long pd0, long pd1) {
+    long mask = (1L << (r + 1)) - 1;
+    long hodd = 0;
+    long notx = ~x;
+    long noty = ~y;
+    long heven = notx ^ y;
+    long xorxy = x ^ y;
 
-    int mask = (1 << r) - 1;
-    int hodd = 0;
-    int heven = x ^ y;
-    int notx = ~x & mask;
-    int noty = ~y & mask;
-    int temp = notx ^ y;
-
-    int v0 = 0, v1 = 0;
-    for (int k = 1; k < r; k++) {
-      v1 = ((v1 & heven) | ((v0 ^ noty) & temp)) >> 1;
-      v0 = ((v0 & (v1 ^ notx)) | (~v0 & (v1 ^ noty))) >> 1;
+    long d0 = pd0;
+    long d1 = pd1;
+    for (int k = 0; k < r; ++k) {
+      // heven equals to notx ^ y
+      d1 = (((d1 & heven) | (xorxy & (d0 ^ x))) >>> 1) & mask | pd1;
+      d0 = (((~d0 & (d1 ^ noty)) | (d0 & (d1 ^ x))) >>> 1) & mask | pd0;
     }
-    hodd = (~v0 & (v1 ^ x)) | (v0 & (v1 ^ noty));
 
-    return interleaveBits(hodd, heven);
+    hodd = ((~d0 & (d1 ^ notx)) | (d0 & (d1 ^ noty))) & mask;
+
+
+    return interleaveBits(hodd, heven, r) & (mask | (mask << r));
   }
 
-  /**
-   * Interleave the bits from two input integer values
-   * @param odd integer holding bit values for odd bit positions
-   * @param even integer holding bit values for even bit positions
-   * @return the integer that results from interleaving the input bits
-   *
-   * @todo: I'm sure there's a more elegant way of doing this !
-   */
-  private static int interleaveBits(int odd, int even) {
-    int val = 0;
-    // Replaced this line with the improved code provided by Tuska
-    // int n = Math.max(Integer.highestOneBit(odd), Integer.highestOneBit(even));
-    int max = Math.max(odd, even);
-    int n = 0;
-    while (max > 0) {
-      n++;
-      max >>= 1;
+  private static long interleaveBits(long odd, long even, long r) {
+    long h = 0;
+    long mask = 1;
+    odd <<= 1;
+    while (r > 0) {
+      --r;
+      h |= (even & mask);
+      mask <<= 1;
+      even <<= 1;
+      h |= (odd & mask);
+      mask <<= 1;
+      odd <<= 1;
     }
+    return h;
+  }
 
-    for (int i = 0; i < n; i++) {
-      int bitMask = 1 << i;
-      int a = (even & bitMask) > 0 ? (1 << (2*i)) : 0;
-      int b = (odd & bitMask) > 0 ? (1 << (2*i+1)) : 0;
-      val += a + b;
+  public static void main(String args[]) {
+    for (int r = 1; r < 5; ++r) {
+      for (long i = 0 ; i < (1 << r); ++i) {
+        for (long j = 0 ; j < (1 << r); ++j) {
+          System.out.print("\t" + encode(j, i, r) + ",");
+          //System.out.print("\t" + encodeLowerBits(j, i, r, 0, 0) +  ", ");
+          //System.out.println();
+        }
+        System.out.println();
+      }
     }
-
-    return val;
   }
 }
 
