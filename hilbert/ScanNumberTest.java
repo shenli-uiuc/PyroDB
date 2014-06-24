@@ -44,42 +44,78 @@ public class ScanNumberTest {
 
   public static void main(String args[]) {
 
-    long maxX = 1000;
-    long maxY = 1000;
+    // size of earth in meters
+    long maxX = 40000000L;
+    long maxY = 40000000L;
     long resolution = 10;
 
     long seed = 0;
     long testNum = 50;
-    long radius = 30;
+    long radius = 5000;
 
     try {
-    PrintWriter writer = new PrintWriter("fix_radius_" + radius + ".txt", "UTF-8");
-    
-    for (resolution = 5; resolution < 15; ++resolution) {
-      GeoContext gc = new GeoContext(resolution, maxX, maxY);
-      //GeoEncoding ge = new MooreGeoEncoding(gc);
-      GeoEncoding zge = new ZGeoEncoding(gc);
-      GeoEncoding mge = new MooreGeoEncoding(gc);
-      GeoEncoding sge = new StripGeoEncoding(gc);
+      // fixed radius test
+      PrintWriter writer = new PrintWriter("fix_radius_" + radius + ".txt", "UTF-8");
 
-      GeoRequestParser zgrp = new QuadTreeGeoRequestParser(zge);
-      GeoRequestParser mgrp = new QuadTreeGeoRequestParser(mge);
-      GeoRequestParser sgrp = new QuadTreeGeoRequestParser(sge);
+      for (resolution = 10; resolution <= 25; ++resolution) {
+        GeoContext gc = new GeoContext(resolution, maxX, maxY);
+        //GeoEncoding ge = new MooreGeoEncoding(gc);
+        GeoEncoding zge = new ZGeoEncoding(gc);
+        GeoEncoding mge = new MooreGeoEncoding(gc);
+        GeoEncoding sge = new StripGeoEncoding(gc);
 
-      ArrayList<Long> zRes = testFixedRadius(zgrp, radius, testNum, seed);
-      ArrayList<Long> mRes = testFixedRadius(mgrp, radius, testNum, seed);
-      ArrayList<Long> sRes = testFixedRadius(sgrp, radius, testNum, seed);
+        GeoRequestParser zgrp = new QuadTreeGeoRequestParser(zge);
+        GeoRequestParser mgrp = new QuadTreeGeoRequestParser(mge);
+        GeoRequestParser sgrp = new QuadTreeGeoRequestParser(sge);
 
-      //write res to file
-      for (int i = 0 ; i < testNum; ++i) {
-        writer.println(resolution + ", " 
-            + (((double)zRes.get(i)) / (1 << (resolution << 1))) + ", " 
-            + (((double)mRes.get(i)) / (1 << (resolution << 1))) + ", "
-            + (((double)sRes.get(i)) / (1 << (resolution << 1)))); 
+        ArrayList<Long> zRes = testFixedRadius(zgrp, radius, testNum, seed);
+        ArrayList<Long> mRes = testFixedRadius(mgrp, radius, testNum, seed);
+        ArrayList<Long> sRes = testFixedRadius(sgrp, radius, testNum, seed);
+
+        //write res to file
+        for (int i = 0 ; i < testNum; ++i) {
+          writer.println(resolution + ", " 
+              + zRes.get(i) + ", " 
+              + mRes.get(i) + ", "
+              + sRes.get(i)); 
+        }
       }
-    }
 
-    writer.close();
+      writer.close();
+
+      // fixed radius test
+
+      resolution = 25;
+      writer = new PrintWriter("fix_resolution_" 
+          + resolution + ".txt", "UTF-8");
+
+      long step = 200;
+      long maxRadius = 10000;
+      for (radius = step; radius <= maxRadius; radius += step) {
+        GeoContext gc = new GeoContext(resolution, maxX, maxY);
+        //GeoEncoding ge = new MooreGeoEncoding(gc);
+        GeoEncoding zge = new ZGeoEncoding(gc);
+        GeoEncoding mge = new MooreGeoEncoding(gc);
+        GeoEncoding sge = new StripGeoEncoding(gc);
+
+        GeoRequestParser zgrp = new QuadTreeGeoRequestParser(zge);
+        GeoRequestParser mgrp = new QuadTreeGeoRequestParser(mge);
+        GeoRequestParser sgrp = new QuadTreeGeoRequestParser(sge);
+
+        ArrayList<Long> zRes = testFixedRadius(zgrp, radius, testNum, seed);
+        ArrayList<Long> mRes = testFixedRadius(mgrp, radius, testNum, seed);
+        ArrayList<Long> sRes = testFixedRadius(sgrp, radius, testNum, seed);
+
+        //write res to file
+        for (int i = 0 ; i < testNum; ++i) {
+          writer.println(resolution + ", " 
+              + zRes.get(i) + ", " 
+              + mRes.get(i) + ", "
+              + sRes.get(i)); 
+        }
+      }
+
+      writer.close();
     } catch (Exception ex) {
       System.out.println("Exception: " + ex.getMessage());
       ex.printStackTrace();
