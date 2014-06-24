@@ -1,4 +1,4 @@
-public class Zcurve extends SpaceFillingCurve {
+public class ZCurve extends SpaceFillingCurve {
   
   @Override
   public long encode(long x, long y, long r) {

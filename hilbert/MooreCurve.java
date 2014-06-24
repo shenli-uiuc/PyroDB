@@ -1,5 +1,5 @@
 
-public class Moore extends SpaceFillingCurve {
+public class MooreCurve extends SpaceFillingCurve {
   private static final long [] R1_MAP = {0, 3, 
                                         1, 2};
   private static final long [] R2_MAP = { 1,  0, 15, 14,
@@ -15,6 +15,10 @@ public class Moore extends SpaceFillingCurve {
 
   @Override
   public long encode(long x, long y, long r) {
+    return staticEncode(x, y, r);
+  }
+
+  public static long staticEncode(long x, long y, long r) {
     if (r <= 1) {
       return R1_MAP[(int)catLowerBits(x, y, 1)];
     }
@@ -82,7 +86,7 @@ public class Moore extends SpaceFillingCurve {
 
   
   public static void main(String args[]) {
-    Moore moore = new Moore();
+    MooreCurve moore = new MooreCurve();
     for (int r = 1; r < 5; ++r) {
       for (long i = 0 ; i < (1 << r); ++i) {
         for (long j = 0 ; j < (1 << r); ++j) {

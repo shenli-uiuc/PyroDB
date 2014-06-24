@@ -54,10 +54,10 @@ public class SpaceFillingCurveDrawer{
     Graphics2D ig2 = im.createGraphics();
 
     SpaceFillingCurve sfc = null;
-    if (curveName.matches("Moore")) {
-      sfc = new Moore();
-    } else if (curveName.matches("Zcurve")) {
-      sfc = new Zcurve();
+    if (curveName.matches("MooreCurve")) {
+      sfc = new MooreCurve();
+    } else if (curveName.matches("ZCurve")) {
+      sfc = new ZCurve();
     } else {
       System.out.println("Unrecgonized curve");
       return;
