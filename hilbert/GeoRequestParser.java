@@ -6,6 +6,18 @@ import java.util.LinkedList;
  */
 public abstract class GeoRequestParser {
 
+  protected GeoEncoding ge;
+  protected GeoContext gc;
+
+  public GeoRequestParser (GeoEncoding ge) {
+    this.ge = ge;
+    this.gc = ge.getGeoContext();
+  }
+
+  public GeoEncoding getGeoEncoding() {
+    return this.ge;
+  }
+
   //TODO: handle the required resolution in GeoRequest
 
   /**

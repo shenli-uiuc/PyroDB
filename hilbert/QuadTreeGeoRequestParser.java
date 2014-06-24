@@ -6,9 +6,6 @@ import java.util.ArrayList;
  */
 public class QuadTreeGeoRequestParser extends GeoRequestParser{
 
-  private GeoEncoding ge;
-  private GeoContext gc;
-
   private long maxResolution;
   private double maxXTileLen;
   private double maxYTileLen;
@@ -16,8 +13,7 @@ public class QuadTreeGeoRequestParser extends GeoRequestParser{
   private double minYTileLen;
 
   public QuadTreeGeoRequestParser(GeoEncoding ge) {
-    this.ge = ge;
-    this.gc = ge.getGeoContext();
+    super(ge);
     this.maxResolution = this.gc.getMaxResolution();
     this.maxXTileLen = gc.getMaxX();
     this.maxYTileLen = gc.getMaxY();
