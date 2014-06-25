@@ -12,6 +12,10 @@ public class QuadTreeGeoRequestParser extends GeoRequestParser{
   private double minXTileLen;
   private double minYTileLen;
 
+
+  // TODO: QuadTree only applies to a subset of GeoEncoding
+  // algorithms. StripGeoEncoding is a counter example.
+  // Apply checks during construction.
   public QuadTreeGeoRequestParser(GeoEncoding ge) {
     super(ge);
     this.maxResolution = this.gc.getMaxResolution();
