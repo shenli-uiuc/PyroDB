@@ -16,6 +16,11 @@ public class DiskGeoRequest extends GeoRequest {
   }
 
   @Override
+  public String getName() {
+    return "disk";
+  }
+
+  @Override
   public int isCovered(double x, double y) {
     double xDiff = x - this.cx;
     double yDiff = y - this.cy;

@@ -32,6 +32,7 @@ public class ScanNumberTest {
       cx = grp.getGeoEncoding().getGeoContext().getMaxX() * rand.nextDouble();
       cy = grp.getGeoEncoding().getGeoContext().getMaxY() * rand.nextDouble();
       gr = new DiskGeoRequest(cx, cy, radius);
+
       ranges = grp.getScanRanges(gr);
       if (null == ranges) {
         res.add(0L);

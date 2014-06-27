@@ -2,8 +2,8 @@
  *  a helper class to hold the information for an edge
  */
 public class Edge {
-  private Point a;
-  private Point b;
+  public Point a;
+  public Point b;
 
   public double xx = 0;
   public double yy = 0;
@@ -25,12 +25,7 @@ public class Edge {
    * right (out side of a rectangular, if the edges follow 
    * the counter-clockwise order);
    */
-  public int isOnRight(Point c) {
-    double cross = xx * (c.y - a.y) - yy * (c.x - a.x);
-    if (cross >= 0) {
-      return 1;
-    } else {
-      return 0;
-    }
+  public boolean isOnRight(Point c) {
+    return xx * (c.y - a.y) - yy * (c.x - a.x) >= 0;
   }
 }

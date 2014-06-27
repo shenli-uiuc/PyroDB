@@ -4,6 +4,8 @@ public abstract class GeoRequest {
   public static final int PARTIAL_COVER = 1;
   public static final int FULL_COVER = 2;
 
+  public abstract String getName();
+
   /**
    *  Test if the given point is covered by this GeoRequest
    */ 
