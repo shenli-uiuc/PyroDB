@@ -22,10 +22,22 @@ public class ZGeoEncoding extends GeoEncoding {
     }
 
     long nZeros = this.maxResolution - r;
-    long mask = (1 << nZeros) - 1;
+    long mask = (1L << nZeros) - 1;
     LinkedList<Range> res = new LinkedList<Range>();
     res.add(new Range(encode(x, y, this.maxResolution), 
                       encode(x | mask, y | mask, this.maxResolution))); 
     return res;
+  }
+
+  /**
+   * For testing
+   */
+  @Override
+  public Pair<Long, Long> getNextTile(long x, long y, long r) {
+    long nZeros = this.maxResolution - r;
+    long unit = 1L << nZeros;
+    long h = encode(x, y, r) + unit;
+
+    return  ZCurve.staticDecode(h, r);
   }
 }

@@ -8,7 +8,7 @@ public class MooreCurve extends SpaceFillingCurve {
                                          6,  7,  8,  9};
   
   private static long catLowerBits(long x, long y, long r) {
-    long mask = (1 << r) - 1;
+    long mask = (1L << r) - 1;
 
     return (x & mask) | ((y & mask) << r);
   }
@@ -46,7 +46,7 @@ public class MooreCurve extends SpaceFillingCurve {
      *    -----
      */
     //calculate d0 and d1 for r = 2;
-    long firstBitMask = 1 << (r - 1);
+    long firstBitMask = 1L << (r - 1);
     // set d0 to 1, using firstBitMask to avoid 
     // another 2 arithmetic operations
     long d0 = firstBitMask >>> 1;
@@ -88,8 +88,8 @@ public class MooreCurve extends SpaceFillingCurve {
   public static void main(String args[]) {
     MooreCurve moore = new MooreCurve();
     for (int r = 1; r < 5; ++r) {
-      for (long i = 0 ; i < (1 << r); ++i) {
-        for (long j = 0 ; j < (1 << r); ++j) {
+      for (long i = 0 ; i < (1L << r); ++i) {
+        for (long j = 0 ; j < (1L << r); ++j) {
           System.out.print("\t" + moore.encode(j, i, r) + ",");
           //System.out.print("\t" + encodeLowerBits(j, i, r, 0, 0) +  ", ");
           //System.out.println();

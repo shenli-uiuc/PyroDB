@@ -83,8 +83,8 @@ public class RectangleScanNumberTest {
       double requestArea = setXX * setYY;
 
       for (resolution = 10; resolution <= maxResolution; ++resolution) {
-        double tileXLen = maxX / ((double)(1 << resolution));
-        double tileYLen = maxY / ((double)(1 << resolution));
+        double tileXLen = maxX / ((double)(1L << resolution));
+        double tileYLen = maxY / ((double)(1L << resolution));
         GeoContext gc = new GeoContext(resolution, maxX, maxY);
         //GeoEncoding ge = new MooreGeoEncoding(gc);
         GeoEncoding zge = new ZGeoEncoding(gc);

@@ -1,5 +1,9 @@
 import java.util.LinkedList;
 
+/**
+ * TODO: It is better to have both encode and decode functions
+ * for all GeoEncoding subclasses.
+ */
 public abstract class GeoEncoding {
   protected GeoContext gc;
 
@@ -21,5 +25,5 @@ public abstract class GeoEncoding {
    * For testing purpose.
    * get the next x and y index given the current x, y and resolution.
    */
-  public abstract Point getNextTile(long x, long y, long r);
+  public abstract Pair<Long, Long> getNextTile(long x, long y, long r);
 }

@@ -79,9 +79,9 @@ public class DiskScanNumberTest {
 
       for (resolution = 10; resolution <= 25; ++resolution) {
         long stripRangeNum = 
-          (long)Math.ceil(radius / (maxY / ((double)(1 << resolution))));
-        double tileXLen = maxX / ((double)(1 << resolution));
-        double tileYLen = maxY / ((double)(1 << resolution));
+          (long)Math.ceil(radius / (maxY / ((double)(1L << resolution))));
+        double tileXLen = maxX / ((double)(1L << resolution));
+        double tileYLen = maxY / ((double)(1L << resolution));
         GeoContext gc = new GeoContext(resolution, maxX, maxY);
         //GeoEncoding ge = new MooreGeoEncoding(gc);
         GeoEncoding zge = new ZGeoEncoding(gc);
@@ -129,9 +129,9 @@ public class DiskScanNumberTest {
       long maxRadius = 10000;
       for (radius = step; radius <= maxRadius; radius += step) {
         long stripRangeNum = 
-          (long) Math.ceil(radius / (maxY / ((double)(1 << resolution))));
-        double tileXLen = maxX / ((double)(1 << resolution));
-        double tileYLen = maxY / ((double)(1 << resolution));
+          (long) Math.ceil(radius / (maxY / ((double)(1L << resolution))));
+        double tileXLen = maxX / ((double)(1L << resolution));
+        double tileYLen = maxY / ((double)(1L << resolution));
         diskArea = radius * radius * PI;
         GeoContext gc = new GeoContext(resolution, maxX, maxY);
         //GeoEncoding ge = new MooreGeoEncoding(gc);

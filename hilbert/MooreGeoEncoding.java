@@ -22,7 +22,7 @@ public class MooreGeoEncoding extends GeoEncoding {
     }
 
     long nZeros = this.maxResolution - r;
-    long mask = (1 << nZeros) - 1;
+    long mask = (1L << nZeros) - 1;
     long [] tmp = 
       new long [] { encode(x, y, this.maxResolution),
                 encode(x | mask, y, this.maxResolution),
@@ -47,22 +47,23 @@ public class MooreGeoEncoding extends GeoEncoding {
   /**
    * for testing
    *
-   * @retrurn   null    if it is the last tile
    */
   @Override
-  public Point getNextTile(long x, long y, long r) {
+  public Pair<Long, Long> getNextTile(long x, long y, long r) {
     long nZeros = this.maxResolution - r;
-    long unit = 1 << nZeros;
+    long unit = 1L << nZeros;
     long curMooreIndex = encode(x, y, r);
-    long nextMooreIndex = curMooreIndex + (1 << (nZeros << 1));
+    long nextMooreIndex = curMooreIndex + (1L << (nZeros << 1));
     if (nextMooreIndex == encodeWithCheck(x + unit, y, r))
-      return new Point(x + unit, y);
+      return new Pair<Long, Long>(x + unit, y);
     if (nextMooreIndex == encodeWithCheck(x, y + unit, r))
-      return new Point(x, y + unit);
+      return new Pair<Long, Long>(x, y + unit);
     if (nextMooreIndex == encodeWithCheck(x - unit, y, r))
-      return new Point(x - unit, y);
+      return new Pair<Long, Long>(x - unit, y);
     if (nextMooreIndex == encodeWithCheck(x, y - unit, r))
-      return new Point(x, y - unit);
-    return null;
+      return new Pair<Long, Long>(x, y - unit);
+
+    // back to the first tile
+    return new Pair<Long, Long>(x - unit, y);
   }
 }

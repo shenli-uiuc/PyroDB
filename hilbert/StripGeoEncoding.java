@@ -22,7 +22,7 @@ public class StripGeoEncoding extends GeoEncoding {
     }
 
     long nZeros = this.maxResolution - r;
-    long rows = 1 << nZeros;
+    long rows = 1L << nZeros;
     long mask = rows - 1;
     LinkedList<Range> res = new LinkedList<Range> ();
     for (int i = 0 ; i < rows; ++i) {
@@ -30,5 +30,14 @@ public class StripGeoEncoding extends GeoEncoding {
                         encode(x | mask, y | i, this.maxResolution)));
     }
     return res;
+  }
+
+  @Override
+  public Pair<Long, Long> getNextTile(long x, long y, long r) {
+    long nZeros = this.maxResolution - r;
+    long unit = 1L << nZeros;
+    long h = encode(x, y, r) + unit;
+   
+     return  StripCurve.staticDecode(h, r);
   }
 }

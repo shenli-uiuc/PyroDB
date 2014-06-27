@@ -22,9 +22,9 @@ public class QuadTreeGeoRequestParser extends GeoRequestParser{
     this.maxXTileLen = gc.getMaxX();
     this.maxYTileLen = gc.getMaxY();
     this.minXTileLen = 
-      this.maxXTileLen / (1 << this.maxResolution);
+      this.maxXTileLen / (1L << this.maxResolution);
     this.minYTileLen = 
-      this.maxYTileLen / (1 << this.maxResolution);
+      this.maxYTileLen / (1L << this.maxResolution);
   }
 
   @Override
@@ -60,7 +60,7 @@ public class QuadTreeGeoRequestParser extends GeoRequestParser{
     double halfXLen = xTileLen / 2;
     double halfYLen = yTileLen / 2;
     long nextResolution = curResolution + 1;
-    long mask = 1 << (this.maxResolution - nextResolution); 
+    long mask = 1L << (this.maxResolution - nextResolution); 
 
 
     LinkedList<Range> nw = internalGetScanRanges(gr,
