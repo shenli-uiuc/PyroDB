@@ -26,6 +26,10 @@ public class Edge {
    * the counter-clockwise order);
    */
   public boolean isOnRight(Point c) {
-    return xx * (c.y - a.y) - yy * (c.x - a.x) >= 0;
+    return xx * (c.y - a.y) - yy * (c.x - a.x) <= 0;
+  }
+
+  public String toString() {
+    return a.toString() + " --> " + b.toString();
   }
 }

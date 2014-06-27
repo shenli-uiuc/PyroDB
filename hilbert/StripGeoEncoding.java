@@ -1,4 +1,5 @@
 import java.util.Arrays;
+import java.util.LinkedList;
 
 public class StripGeoEncoding extends GeoEncoding {
 
@@ -14,15 +15,20 @@ public class StripGeoEncoding extends GeoEncoding {
   }
 
   @Override
-  public Range getTileRange(long x, long y, long r) {
+  public LinkedList<Range> getTileRange(long x, long y, long r) {
     if (this.maxResolution < r) {
       throw new IllegalStateException("Max allowed resolution is " 
           + this.maxResolution + ", got resolution " + r);
     }
 
     long nZeros = this.maxResolution - r;
-    long mask = (1 << nZeros) - 1;
-    return new Range(encode(x, y, this.maxResolution), 
-                     encode(x | mask, y | mask, this.maxResolution)); 
+    long rows = 1 << nZeros;
+    long mask = rows - 1;
+    LinkedList<Range> res = new LinkedList<Range> ();
+    for (int i = 0 ; i < rows; ++i) {
+      res.add(new Range(encode(x, y | i, this.maxResolution),
+                        encode(x | mask, y | i, this.maxResolution)));
+    }
+    return res;
   }
 }

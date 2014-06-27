@@ -46,14 +46,14 @@ public class QuadTreeGeoRequestParser extends GeoRequestParser{
     } else if (GeoRequest.FULL_COVER == isCovered) {
       // full cover
       LinkedList<Range> res = new LinkedList<Range>();
-      res.add(this.ge.getTileRange(xTile, yTile, curResolution));
+      res.addAll(this.ge.getTileRange(xTile, yTile, curResolution));
       return res;
     }
 
     // max resolution reached.
     if (curResolution >= this.maxResolution) {
       LinkedList<Range> res = new LinkedList<Range>();
-      res.add(this.ge.getTileRange(xTile, yTile, curResolution));
+      res.addAll(this.ge.getTileRange(xTile, yTile, curResolution));
       return res;
     }
 
@@ -118,7 +118,7 @@ public class QuadTreeGeoRequestParser extends GeoRequestParser{
         res.getLast().spanTo(ranges[i].getFirst());
         ranges[i].remove(0);
       }
-      res.addAll(res.size(), ranges[i]);
+      res.addAll(ranges[i]);
 
     }
     return res;

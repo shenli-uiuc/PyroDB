@@ -3,7 +3,7 @@ import java.util.ArrayList;
 import java.util.Random;
 import java.io.PrintWriter;
 
-public class ScanNumberTest {
+public class DiskScanNumberTest {
   public static final double PI = 3.1415926535;
   private static Random rand = new Random();;
 
