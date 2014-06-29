@@ -10,6 +10,11 @@ public class ZGeoEncoding extends GeoEncoding {
     this.maxResolution = gc.getMaxResolution();
   }
 
+  @Override
+  public long encode(long x, long y) {
+    return encode(x, y, maxResolution);
+  }
+
   public long encode(long x, long y, long r) {
     return ZCurve.staticEncode(x, y, r);
   }

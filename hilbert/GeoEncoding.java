@@ -16,6 +16,16 @@ public abstract class GeoEncoding {
   }
 
   /**
+   *  TODO: for now, this method simply cast double into long.
+   *  later we may need to add a nonce to the end.
+   */
+  public long encode(double x, double y) {
+    return encode((long)x, (long)y);
+  }
+
+  public abstract long encode(long x, long y);
+
+  /**
    *  @param  r   resolution of encoding, only the last r bits of
    *              x and y are considered
    */

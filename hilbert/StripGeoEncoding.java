@@ -10,6 +10,11 @@ public class StripGeoEncoding extends GeoEncoding {
     this.maxResolution = gc.getMaxResolution();
   }
 
+  @Override
+  public long encode(long x, long y) {
+    return encode(x, y, maxResolution);
+  }
+
   public long encode(long x, long y, long r) {
     return StripCurve.staticEncode(x, y, r);
   }
@@ -38,6 +43,6 @@ public class StripGeoEncoding extends GeoEncoding {
     long unit = 1L << nZeros;
     long h = encode(x, y, r) + unit;
    
-     return  StripCurve.staticDecode(h, r);
+    return  StripCurve.staticDecode(h, r);
   }
 }

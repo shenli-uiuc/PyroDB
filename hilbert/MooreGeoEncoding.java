@@ -10,6 +10,11 @@ public class MooreGeoEncoding extends GeoEncoding {
     this.maxResolution = gc.getMaxResolution();
   }
 
+  @Override
+  public long encode(long x, long y) {
+    return encode(x, y, maxResolution);
+  }
+
   public long encode(long x, long y, long r) {
     return MooreCurve.staticEncode(x, y, r);
   }
