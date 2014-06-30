@@ -11,6 +11,18 @@ public class Block {
     blockSize = 0;
   }
 
+  public long getFirstKey() {
+    if (null == data || data.size() <= 0) 
+      return -1;
+    return data.get(0).first;
+  }
+
+  public long getLastKey() {
+    if (null == data || data.size() <= 0)
+      return -1;
+    return data.get(data.size() - 1).first;
+  }
+
   public long write(long key, long kvLen) {
     data.add(new Pair<Long, Long>(key, kvLen));
     blockSize += kvLen;
