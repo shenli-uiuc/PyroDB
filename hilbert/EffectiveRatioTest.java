@@ -1,4 +1,6 @@
 import java.util.LinkedList;
+import java.io.PrintWriter;
+
 /**
  * This class tests 
  * 1. a cdf of how many scan requests fall into the same block
@@ -14,7 +16,9 @@ public class EffectiveRatioTest {
   }
 
   public static long hitKeyNum(Block block, Range range) {
-    if (block.getLastKey() < range.first)
+    System.out.println(block.getFirstKey() + ", " + block.getLastKey()
+        + ", " + range.getStart() + ", " + range.getEnd());
+    if (block.getLastKey() < range.getStart())
       return 0;
 
     long cnt = 0;
@@ -35,14 +39,14 @@ public class EffectiveRatioTest {
     long blockHitCnt = 0;
     long keyHitCnt = 0;
     long tmpKeyHitCnt = 0;
-    long blockInd = 0;
-    long rangeInd = 0;
+    int blockInd = 0;
+    int rangeInd = 0;
     Block curBlock = null;
     Range curRange = null;
     while (blockInd < blocks.size() && rangeInd < ranges.size()) {
       curBlock = blocks.get(blockInd);
       curRange = ranges.get(rangeInd);
-      tmpKeyHitCnt = hitKeyNum(curBlock, currange);
+      tmpKeyHitCnt = hitKeyNum(curBlock, curRange);
       if (tmpKeyHitCnt > 0) {
         keyHitCnt += tmpKeyHitCnt;
         ++blockHitCnt;
@@ -64,14 +68,17 @@ public class EffectiveRatioTest {
    */
   public static double testOne(GeoContext gc, 
       GeoEncoding ge, GeoRequestParser grp, 
-      long kvNum, long reqNum, long xx, long yy, 
+      long kvNum, long reqNum, double xx, double yy, 
       LinkedList<Long> blockCdf) {
+    System.out.println("In testOne " + reqNum);
     MockDataStore server = new MockDataStore(ge);
     MockClient client = new MockClient(gc, grp);
     client.connect(server);
 
     client.insertMultiRandKv(kvNum);
     server.flushAll();
+
+    System.out.println("After Insertion");
 
     LinkedList<Block> blocks = null;
     RectangleGeoRequest rgr = null;
@@ -80,17 +87,21 @@ public class EffectiveRatioTest {
     LinkedList<Long> keyHitCnts = null;
     long totalKey = 0;
     long effectKey = 0;
+
+    System.out.println("Before loop");
     for (int i = 0 ; i < reqNum; ++i) {
+      System.out.println("In Loop");
       rgr = client.genRandRectGeoReq(xx, yy);
       ranges = grp.getScanRanges(rgr);
-      blocks = fetchAll(ranges);
+      blocks = client.fetchAll(ranges);
+      MockClient.printBlocksAndRanges(blocks, ranges);
       blockHitCnts = new LinkedList<Long> ();
       keyHitCnts = new LinkedList<Long> ();
       getStat(blocks, ranges, blockHitCnts, keyHitCnts);
 
       blockCdf.addAll(blockHitCnts);
       for (Block block : blocks)
-        totalKey += block.size();
+        totalKey += block.data.size();
 
       for (Long keyHitCnt : keyHitCnts)
         effectKey += keyHitCnt;
@@ -107,11 +118,14 @@ public class EffectiveRatioTest {
     long kvNum = Long.parseLong(args[3]);
     long reqNum = Long.parseLong(args[4]);
 
-    long maxX = 100000;
-    long maxY = 100000;
+    long maxX = 1000;
+    long maxY = 1000;
 
     try {
-      for (resolution = 10; resolution <= maxResolution; ++resolution) {
+      PrintWriter effectWriter = 
+        new PrintWriter("rect_effect_" + kvNum + ".txt");
+
+      for (long resolution = 12; resolution <= maxResolution; ++resolution) {
         GeoContext gc = new GeoContext(resolution, maxX, maxY);
 
         GeoEncoding zge = new ZGeoEncoding(gc);
@@ -121,12 +135,27 @@ public class EffectiveRatioTest {
         MockClient zClient = new MockClient(gc, grp);
         zClient.connect(zServer);
 
-        LinkedList<Long> blockCdf = new LinkedList<Long> ();
-        double effectRatio = 
-          testOne(gc, zge, grp, kvNum, reqNum, setXX, setYY, blockCdf);
+        LinkedList<Long> zCdf = new LinkedList<Long> ();
+        LinkedList<Long> tmpZCdf = new LinkedList<Long> ();
+        double zRatio = 
+          testOne(gc, zge, grp, kvNum, reqNum, setXX, setYY, tmpZCdf);
+        zCdf.addAll(tmpZCdf);
 
-        //write to file
+        //write effective ratio
+        effectWriter.write(resolution + ", " + setXX + ", " + setYY + ", "
+            + zRatio + "\n");
+
+
+        //Write cdf
+        PrintWriter zCdfWriter = 
+          new PrintWriter("rect_stat_zcdf_" + kvNum + "_" + resolution + ".txt");
+        for (Long cnt : zCdf) {
+          zCdfWriter.write(cnt + "\n");
+        }
+        zCdfWriter.close();
+
       }
+      effectWriter.close();
     } catch (Exception ex) {
     }
 

@@ -10,6 +10,7 @@ public class MockDataStore {
 
   private long maxBlockSize = 0;
 
+  //TODO: add a cache
   private ArrayList<Block> blocks = null;
   private Block curBlock = null;
 
@@ -33,7 +34,9 @@ public class MockDataStore {
   }
 
   public void add(double x, double y, long kvlen) {
-    curBlock.write(ge.encode(x, y), kvlen); 
+    curBlock.write(ge.encode(x, y), kvlen);
+    if (curBlock.size() >= maxBlockSize) 
+      flushBlock();
   }
 
   public void flushAll() {
@@ -45,6 +48,7 @@ public class MockDataStore {
     for (int i = 0; i < blocks.size(); ++i) {
       curKey = blocks.get(i).data.get(0).first; 
       if (curKey < prevKey) {
+        System.out.println("flushAll exception");
         throw new IllegalStateException("Current key " + curKey
             + " is smaller than previous key " + prevKey);
       }

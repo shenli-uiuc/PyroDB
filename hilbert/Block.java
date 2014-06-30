@@ -29,6 +29,10 @@ public class Block {
     return kvLen;
   }
 
+  public long size() {
+    return blockSize;
+  }
+
   /**
    *  @return the number of keys hit in the scan query
    */
