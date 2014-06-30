@@ -9,7 +9,8 @@ public class DiskGeoRequest extends GeoRequest {
    *  @param  y       y coordinate of its center
    *  @param  radius  radius of the request disk
    */
-  public DiskGeoRequest(double x, double y, double radius) {
+  public DiskGeoRequest(double x, double y, double radius, long reqResolution) {
+    super(reqResolution);
     this.cx = x;
     this.cy = y;
     this.radius = radius;

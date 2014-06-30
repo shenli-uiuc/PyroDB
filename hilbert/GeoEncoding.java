@@ -6,9 +6,14 @@ import java.util.LinkedList;
  */
 public abstract class GeoEncoding {
   protected GeoContext gc;
+  // the length of the smallest tile
+  protected double unitX;
+  protected double unitY;
 
   public GeoEncoding(GeoContext gc) {
     this.gc = gc;
+    this.unitX = gc.getMaxX() / (1L << gc.getMaxResolution());
+    this.unitY = gc.getMaxY() / (1L << gc.getMaxResolution());
   }
 
   public GeoContext getGeoContext() {
@@ -20,7 +25,8 @@ public abstract class GeoEncoding {
    *  later we may need to add a nonce to the end.
    */
   public long encode(double x, double y) {
-    return encode((long)x, (long)y);
+    // translate location into tile
+    return encode((long)(x / unitX), (long)(y / unitY));
   }
 
   public abstract long encode(long x, long y);

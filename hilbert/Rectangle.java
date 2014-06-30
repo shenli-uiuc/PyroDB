@@ -142,5 +142,13 @@ public class Rectangle {
     return Math.max(Math.abs(ps[0].y - ps[2].y),
                     Math.abs(ps[1].y - ps[3].y));
   }
+
+  public String toString() {
+    String res = "";
+    for (Point p : ps) {
+      res += (p.toString() + ", ");
+    }
+    return res;
+  }
 }
 

@@ -36,7 +36,8 @@ public class RectangleScanNumberTest {
       ay = grp.getGeoEncoding().getGeoContext().getMaxY() * rand.nextDouble();
       angle = 2 * Math.PI * rand.nextDouble();
       rect = new Rectangle(ax, ay, xx, yy);
-      gr = new RectangleGeoRequest(rect.rotate(angle));
+      gr = new RectangleGeoRequest(rect.rotate(angle),
+          grp.getGeoEncoding().getGeoContext().getMaxResolution());
       
 
       ranges = grp.getScanRanges(gr);

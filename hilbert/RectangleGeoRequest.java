@@ -10,7 +10,8 @@ public class RectangleGeoRequest extends GeoRequest {
 
   private Rectangle rect;
 
-  public RectangleGeoRequest(Rectangle rect) {
+  public RectangleGeoRequest(Rectangle rect, long reqResolution) {
+    super(reqResolution);
     this.rect = rect.clone();
   }
 
@@ -54,7 +55,7 @@ public class RectangleGeoRequest extends GeoRequest {
     Point c = new Point(3, 10);
     Point d = new Point(0, 6);
     Rectangle rect = new Rectangle(a, b, c, d);
-    RectangleGeoRequest rgr = new RectangleGeoRequest(rect);
+    RectangleGeoRequest rgr = new RectangleGeoRequest(rect, 20);
     System.out.println(rgr.isCovered(0, 0, 2, 2) + ", Expecting " + GeoRequest.NO_COVER);
     System.out.println(rgr.isCovered(-1, -1, 200, 200) + ", Expecting " + GeoRequest.PARTIAL_COVER);
     System.out.println(rgr.isCovered(4.1, 3.1, 2, 3) + ", Expecting " + GeoRequest.FULL_COVER);

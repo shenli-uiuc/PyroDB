@@ -29,8 +29,9 @@ public class ZGeoEncoding extends GeoEncoding {
     long nZeros = this.maxResolution - r;
     long mask = (1L << nZeros) - 1;
     LinkedList<Range> res = new LinkedList<Range>();
-    res.add(new Range(encode(x, y, this.maxResolution), 
-                      encode(x | mask, y | mask, this.maxResolution))); 
+    long start = encode(x, y, this.maxResolution);
+    long end = encode(x | mask, y | mask, this.maxResolution);
+    res.add(new Range(start, end)); 
     return res;
   }
 

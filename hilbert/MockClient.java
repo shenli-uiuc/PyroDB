@@ -40,17 +40,25 @@ public class MockClient {
     }
   }
 
+  public void setRandSeed(long seed) {
+    rand.setSeed(seed);
+  }
+
   public RectangleGeoRequest genRandRectGeoReq(double xx, 
-                                               double yy) {
+                                               double yy,
+                                               long resolution) {
     double ax = this.gc.getMaxX() * rand.nextDouble();
     double ay = this.gc.getMaxY() * rand.nextDouble();
     double angle = 2 * Math.PI * rand.nextDouble();
     Rectangle rect = new Rectangle(ax, ay, xx, yy);
-    return new RectangleGeoRequest(rect.rotate(angle));
+    System.out.println(rect.toString());
+    return new RectangleGeoRequest(rect.rotate(angle), resolution);
   }
 
-  public LinkedList<Block> issueRandRectReq(double xx, double yy) {
-    RectangleGeoRequest rgr = genRandRectGeoReq(xx, yy);
+  public LinkedList<Block> issueRandRectReq(double xx, 
+                                            double yy, 
+                                            long resolution) {
+    RectangleGeoRequest rgr = genRandRectGeoReq(xx, yy, resolution);
     LinkedList<Range> ranges = grp.getScanRanges(rgr);
     return fetchAll(ranges);
   }
@@ -74,9 +82,10 @@ public class MockClient {
       endKey = ranges.get(i).getEnd();
       if (curLastKey >= endKey)
         continue;
-      startKey = curLastKey + 1;
+      if (startKey < curLastKey)
+        startKey = curLastKey + 1;
       tmp = server.scan(startKey, endKey);
-      if (null != tmp) {
+      if (null != tmp && tmp.size() > 0) {
         if (res.size() <= 0
             || res.get(res.size() - 1).getLastKey()
             <  tmp.get(tmp.size() - 1).getLastKey())
@@ -92,13 +101,13 @@ public class MockClient {
 
   public static void printBlocksAndRanges(LinkedList<Block> blocks, 
                                           LinkedList<Range> ranges) {
-    System.out.println("blocks");
+    System.out.println("blocks " + (null == blocks ? 0 : blocks.size()));
     for (Block block : blocks) {
       System.out.print("(" + block.getFirstKey() + ", " 
           + block.getLastKey() + "), " + block.data.size() + "; ");
     }
     System.out.println();
-    System.out.println("ranges");
+    System.out.println("ranges " + (null == ranges ? 0 : ranges.size()));
     for (Range range : ranges) {
       System.out.print("(" + range.getStart() + ", " 
           + range.getEnd() + "); ");
@@ -115,13 +124,15 @@ public class MockClient {
     MockDataStore server = new MockDataStore(zge);
     MockClient client = new MockClient(gc, grp);
     client.connect(server);
-    server.add(100, 100, 1000);
-    server.add(101, 101, 1000);
-    server.add(105, 95, 1000);
-    server.add(106, 109, 1000);
+    server.add(100, 100, 20000);
+    server.add(101, 101, 20000);
+    server.add(105, 95, 20000);
+    server.add(106, 109, 20000);
+    server.add( 60,  60, 40000);
+    server.add( 50,  50, 30000);
     server.flushAll();
     Rectangle rect = new Rectangle(90, 90, 20, 20);
-    RectangleGeoRequest rgr = new RectangleGeoRequest(rect);
+    RectangleGeoRequest rgr = new RectangleGeoRequest(rect, 10);
     LinkedList<Range> ranges = grp.getScanRanges(rgr);
     LinkedList<Block> blocks = client.fetchAll(ranges);
     printBlocksAndRanges(blocks, ranges);   

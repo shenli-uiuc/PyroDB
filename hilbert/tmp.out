@@ -1,0 +1,10 @@
+Exception in thread "main" java.lang.OutOfMemoryError: Java heap space
+	at java.util.Arrays.copyOf(Arrays.java:2219)
+	at java.util.ArrayList.grow(ArrayList.java:242)
+	at java.util.ArrayList.ensureExplicitCapacity(ArrayList.java:216)
+	at java.util.ArrayList.ensureCapacityInternal(ArrayList.java:208)
+	at java.util.ArrayList.add(ArrayList.java:440)
+	at Block.write(Block.java:31)
+	at MockDataStore.flushAll(MockDataStore.java:67)
+	at EffectiveRatioTest.testOne(EffectiveRatioTest.java:94)
+	at EffectiveRatioTest.main(EffectiveRatioTest.java:159)

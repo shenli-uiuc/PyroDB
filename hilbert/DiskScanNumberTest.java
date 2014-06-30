@@ -31,7 +31,8 @@ public class DiskScanNumberTest {
     while (testNum-- > 0) {
       cx = grp.getGeoEncoding().getGeoContext().getMaxX() * rand.nextDouble();
       cy = grp.getGeoEncoding().getGeoContext().getMaxY() * rand.nextDouble();
-      gr = new DiskGeoRequest(cx, cy, radius);
+      gr = new DiskGeoRequest(cx, cy, radius, 
+          grp.getGeoEncoding().getGeoContext().getMaxResolution());
 
       ranges = grp.getScanRanges(gr);
       if (null == ranges) {

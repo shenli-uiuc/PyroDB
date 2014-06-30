@@ -24,9 +24,13 @@ public class Block {
   }
 
   public long write(long key, long kvLen) {
-    data.add(new Pair<Long, Long>(key, kvLen));
-    blockSize += kvLen;
-    return kvLen;
+    return write(new Pair<Long, Long>(key, kvLen));
+  }
+
+  public long write(Pair<Long, Long> kv) {
+    data.add(kv);
+    blockSize += kv.second;
+    return blockSize;
   }
 
   public long size() {

@@ -51,7 +51,8 @@ public class QuadTreeGeoRequestParser extends GeoRequestParser{
     }
 
     // max resolution reached.
-    if (curResolution >= this.maxResolution) {
+    if (curResolution >= this.maxResolution 
+        || curResolution >= gr.getResolution()) {
       LinkedList<Range> res = new LinkedList<Range>();
       res.addAll(this.ge.getTileRange(xTile, yTile, curResolution));
       return res;
