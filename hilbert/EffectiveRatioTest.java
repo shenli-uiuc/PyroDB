@@ -157,7 +157,7 @@ public class EffectiveRatioTest {
         new PrintWriter("rect_effect_" + kvNum + ".txt");
 
       LinkedList<Range> maxRanges = null;
-      for (long resolution = maxResolution; resolution >= 7; --resolution) {
+      for (long resolution = maxResolution; resolution >= 6; --resolution) {
         GeoContext gc = new GeoContext(hiResolution, maxX, maxY);
 
         GeoEncoding zge = new ZGeoEncoding(gc);
