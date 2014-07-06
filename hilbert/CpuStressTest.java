@@ -66,24 +66,51 @@ public class CpuStressTest {
     double setXX = Double.parseDouble(args[0]);
     double setYY = Double.parseDouble(args[1]);
     long maxResolution = Long.parseLong(args[2]);
+    boolean cached = false;
+    int cacheSize = 0;
+    if (args.length > 4) {
+      cached = Boolean.parseBoolean(args[3]);
+      cacheSize = Integer.parseInt(args[4]);
+    }
+
+    // key 8 byte; range 8 * 3; next 8; prev 8
+    int CACHE_ENTRY_MEM_SIZE = 8 * 6;
     // size of earth in meters
     long maxX = 40000000L;
     long maxY = 40000000L;
     long resolution = 0;
 
-    long seed = 0;
+    long seed = 10;
     long testNum = 200;
     Pair<Long, Long> res = null;
     try {
+      String name = null;
+      if (cached) {
+        name = "cpu_stress_cached.txt";
+      } else {
+        name = "cpu_stress.txt";
+      }
       PrintWriter writer = 
-        new PrintWriter("cpu_stress.txt", "UTF-8");
+        new PrintWriter(name, "UTF-8");
 
       for (resolution = 10; resolution <= maxResolution; ++resolution) {
         GeoContext gc = new GeoContext(maxResolution, maxX, maxY);
         //GeoEncoding ge = new MooreGeoEncoding(gc);
         GeoEncoding mge = new MooreGeoEncoding(gc);
 
-        GeoRequestParser mgrp = new QuadTreeGeoRequestParser(mge);
+        GeoRequestParser mgrp = null;
+        if (cached) {
+          int maxEntries = cacheSize /  CACHE_ENTRY_MEM_SIZE;
+          mgrp = new LruQuadTreeGeoRequestParser(mge, maxEntries);
+          //warm-up
+          testOneConf(mgrp, setXX, setYY, testNum, seed + 1, resolution);
+          testOneConf(mgrp, setXX, setYY, testNum, seed + 2, resolution);
+          testOneConf(mgrp, setXX, setYY, testNum, seed + 3, resolution);
+          testOneConf(mgrp, setXX, setYY, testNum, seed + 4, resolution);
+          testOneConf(mgrp, setXX, setYY, testNum, seed + 5, resolution);
+        } else {
+          mgrp = new QuadTreeGeoRequestParser(mge);
+        }
 
         res = testOneConf(mgrp, setXX, setYY, testNum, seed, resolution);
 
