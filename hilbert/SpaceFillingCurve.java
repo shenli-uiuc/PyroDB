@@ -17,6 +17,13 @@ public abstract class SpaceFillingCurve {
     return h;
   }
 
+  protected static long interleaveRangeBits(long odd, long even, 
+      int start, int end) {
+
+    return interleaveBits(odd >> start, even >> start, 
+                          end - start + 1) << (start << 1);
+  }
+
   protected static Pair<Long, Long> deInterleaveBits(long h, long r) {
     long even = 0;
     long odd = 0;
