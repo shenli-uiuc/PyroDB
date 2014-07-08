@@ -22,21 +22,37 @@ public class SubQuadTreeCache {
     }
   }
 
-  public SubQuadTreeCache(long p0, long p1, long x, long y, 
-      int left, int right, boolean isRoot) {
+  public SubQuadTreeCache(long x, long y, 
+      int left, int right, int encodeLen) {
+    if (encodeLen < left + 1 || left < right) {
+      throw new IllegalStateException("Cache encoding range error");
+    }
+    boolean isRoot = false;
+    if (encodeLen == left + 1) {
+      isRoot = true;
+    }
     this.left = left;
     this.right = right;
-    int entries = ((1 << ((left - right + 1) << 1)) - 1) / 3;
+    int entries = ((1 << ((left - right + 2) << 1)) - 1) / 3;
     cache = new long[entries];
     long mask = ~((1L << (left + 1)) - 1);
-    initCache(p0, p1, x & mask, y & mask, isRoot);
+    if (isRoot) {
+      initCache(0, 0, x & mask, y & mask, isRoot);
+    } else {
+      int parentBitPos = left + 1;
+      int orientation = 
+        MooreCurve.getOrientation(x >> parentBitPos, y >> parentBitPos,
+                                  encodeLen - parentBitPos);
+      initCache((orientation & 1) << parentBitPos, 
+                (orientation & 2) << parentBitPos - 1, 
+                x & mask, y & mask, isRoot);
+    }
   }
 
   private void initCache(long p0, long p1, 
       long x, long y, boolean isRoot) {
     Queue<Tuple> q = new LinkedList<Tuple>();
-    // TODO: should it be left + 1
-    q.add(new Tuple(x, y, 0, left));
+    q.add(new Tuple(x, y, 0, left + 1));
     Tuple cur = null;
     int childID = 0;
     long unit = 0;
@@ -48,7 +64,7 @@ public class SubQuadTreeCache {
     // (x, y), (x | unit, y), (x, y | unit), (x | unit, y | unit)
     while (q.size() > 0) {
       cur = q.poll();
-      if (false) {
+      if (isRoot) {
         cache[cur.id] = 
           MooreCurve.staticEncode(cur.x >> cur.right, cur.y >> cur.right,
               left - cur.right + 1) << (cur.right << 1);
@@ -76,42 +92,29 @@ public class SubQuadTreeCache {
     }
   }
 
-  public static void main(String args[]) {
-    int left = 4;
-    int right = 0;
-    SubQuadTreeCache treeCache = 
-      new SubQuadTreeCache(0, 0, 0, 0, left, right, true);
-
-    long newLineCnt = 0;
-    long lineLen = 1;
-    long cnt = 0;
-    for (int i = 0 ; i < treeCache.cache.length; ++i) {
-      if (i >= newLineCnt) {
-        if (newLineCnt > 0)
-          lineLen <<= 1;
-        System.out.println("\n================================");
-        newLineCnt = (newLineCnt << 2) + 1;
-        cnt = 0;
-      }
-      System.out.print(treeCache.cache[i] + "\t");
-      ++cnt;
-      if (cnt >= lineLen) {
-        System.out.println("\n");
-        cnt = 0;
-      }
-    }
-
+  public static void printCache(int left, int right, long [] cache) {
     int offset = 0;
-    for (int r = 1; r <= left - right; ++r) {
-      offset = (offset << 2) + 1;
+    for (int r = left - right + 1; r <= left - right + 1; ++r) {
+      for (int i = 0; i < r; ++i) {
+        offset = (offset << 2) + 1;
+      }
       for (long i = 0 ; i < (1 << r); ++i) {
         for (long j = 0 ; j < (1 << r); ++j) {
           int index = (int)SpaceFillingCurve.interleaveBits(i, j, r);
-          System.out.print(treeCache.cache[index + offset] + "\t");
+          System.out.print(cache[index + offset] + "\t");
         }
         System.out.println("\n");
       }
       System.out.println("\n");
     }
+  }
+
+  public static void main(String args[]) {
+    int left = Integer.parseInt(args[0]);
+    int right = Integer.parseInt(args[1]);
+    int encodeLen = Integer.parseInt(args[2]);
+    SubQuadTreeCache treeCache = 
+      new SubQuadTreeCache(0, 0, left, right, encodeLen);
+    printCache(left, right, treeCache.cache);
   }
 }

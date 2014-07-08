@@ -96,8 +96,8 @@ public class CpuStressTest {
       for (resolution = 10; resolution <= maxResolution; ++resolution) {
         GeoContext gc = new GeoContext(maxResolution, maxX, maxY);
         //GeoEncoding ge = new MooreGeoEncoding(gc);
-        GeoEncoding mge = new MooreGeoEncoding(gc);
-
+        //GeoEncoding mge = new MooreGeoEncoding(gc);
+        GeoEncoding mge = new ZGeoEncoding(gc);
         GeoRequestParser mgrp = null;
         if (cached) {
           int maxEntries = cacheSize /  CACHE_ENTRY_MEM_SIZE;

@@ -6,7 +6,27 @@ public class MooreCurve extends SpaceFillingCurve {
                                          2,  3, 12, 13,
                                          5,  4, 11, 10,
                                          6,  7,  8,  9};
-  
+
+  public static final int [] codeMap = {3, 2, 0, 1,
+                                        3, 0, 2, 1,
+                                        1, 0, 2, 3,
+                                        1, 2, 0, 3};
+
+  public static final int [] orientationMap = {1, 0, 3, 0,
+                                               0, 2, 1, 1,
+                                               2, 1, 2, 3,
+                                               3, 3, 0, 2};
+
+  public static final int [] childXMap = {1, 1, 0, 0,
+                                          0, 1, 1, 0,
+                                          0, 0, 1, 1,
+                                          1, 0, 0, 1};
+
+  public static final int [] childYMap = {0, 1, 1, 0,
+                                          1, 1, 0, 0,
+                                          1, 0, 0, 1,
+                                          0, 0, 1, 1};
+
   private static long catLowerBits(long x, long y, long r) {
     long mask = (1L << r) - 1;
 
@@ -16,6 +36,74 @@ public class MooreCurve extends SpaceFillingCurve {
   @Override
   public long encode(long x, long y, long r) {
     return staticEncode(x, y, r);
+  }
+
+  public static int getCurOrientation(long i0, long i1, long i2, long i3) {
+    if (i0 - i1 == i3 - i2) {
+      if (i2 > i0) {
+        /**
+         * 2 3
+         * 1 0
+         */
+        return 3;
+      } else {
+        /**
+         * 0 1
+         * 3 2
+         */
+        return 1;
+      }
+    } else {
+      if (i0 > i1) {
+        /**
+         * 2 1
+         * 3 0
+         */
+        return 0;
+      } else {
+        /**
+         * 0 3
+         * 1 2
+         */
+        return 2;
+      }
+    }
+  }
+
+  public static int getLowerOrientation(long x, long y, long r,
+      long pd0, long pd1) {
+    long mask = (1L << (r)) - 1;
+    long hodd = 0;
+    long notx = ~x;
+    long noty = ~y;
+    long heven = notx ^ y;
+    long xorxy = x ^ y;
+
+    long d0 = pd0;
+    long d1 = pd1;
+    for (int k = 0; k < r; ++k) {
+      // heven equals to notx ^ y
+      d1 = (((d1 & heven) | (xorxy & (d0 ^ x))) >>> 1) & mask | pd1;
+      d0 = (((~d0 & (d1 ^ noty)) | (d0 & (d1 ^ x))) >>> 1) & mask | pd0;
+    }
+    return (int)((d1 << 1) | (d0 & 1) & 3);
+  }
+
+  public static int getOrientation(long x, long y, long r) {
+    if (r <= 0) {
+      return 0;
+    }
+
+    long p0 = 1;
+    long p1 = 1;
+    if ((x & (1 << (r-1))) > 0) {
+      p1 = 0;
+    }
+
+    if (r <= 1) {
+      return (int)((p1 << 1) + p0);
+    }
+    return getLowerOrientation(x, y, r-1, p0, p1);
   }
 
   public static long staticEncode(long x, long y, long r) {
