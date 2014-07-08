@@ -58,17 +58,7 @@ public class MooreCurve extends SpaceFillingCurve {
       encodeLowerBits(x, y, r - 2, d0, d1);
   }
 
-  /**
-   * both start and end are inclusive
-   */
-  public static long encodeRangeBits(long x, long y,
-      int start, int end, long pd0, long pd1) {
-    return encodeLowerBits(x >> start,
-                           y >> start,
-                           end - start + 1,
-                           pd0 >> start,
-                           pd1 >> start) << (start << 1);
-  }
+  
 
   /*
    * d0 and d1 are already set for the r + 1 bit from right;
@@ -101,8 +91,7 @@ public class MooreCurve extends SpaceFillingCurve {
     for (int r = 2; r < 5; ++r) {
       for (long i = 0 ; i < (1L << r); ++i) {
         for (long j = 0 ; j < (1L << r); ++j) {
-          System.out.print("\t" + encodeRangeBits(j, i, 1, r, 0, 0) +  ", ");
-          //System.out.print("\t" + moore.encode(j, i, r) + ",");
+          System.out.print("\t" + moore.encode(j, i, r) + ",");
           //System.out.print("\t" + encodeLowerBits(j, i, r, 0, 0) +  ", ");
           //System.out.println();
         }

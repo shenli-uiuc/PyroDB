@@ -6,7 +6,7 @@ public class LruCache<A, B> extends LinkedHashMap<A, B> {
   private final int maxEntries;
 
   public LruCache(final int maxEntries) {
-    super(Math.ceil(maxEntries / DEFAULT_LOAD_FACTOR) + 1, 
+    super((int)Math.ceil(maxEntries / DEFAULT_LOAD_FACTOR) + 1, 
           DEFAULT_LOAD_FACTOR, true);
     this.maxEntries = maxEntries;
   }
