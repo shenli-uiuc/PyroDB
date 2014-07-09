@@ -98,6 +98,7 @@ public class Rectangle {
   }
 
   /**
+   * TODO: the efficiency can be improved by handling a tile differently
    * @return    0   not intersected
    *            1   intersected but not fully covered
    *            2   the given rectangle is fully covered by this rectangle

@@ -27,6 +27,13 @@ public class Range {
   }
 
   public boolean isConsecutive(Range r) {
+    /*
+    if (this.end > r.start) {
+      throw new IllegalStateException("Ranges in wrong order: "
+          + "(" + this.start + ", " + this.end + ");"
+          + "(" + r.start + ", " + r.end + ")");
+    }
+    */
     return this.end + 1 == r.start;
   }
 

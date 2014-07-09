@@ -102,14 +102,8 @@ public class CpuStressTest {
         if (cached) {
           int maxEntries = cacheSize /  CACHE_ENTRY_MEM_SIZE;
           mgrp = new LruQuadTreeGeoRequestParser(mge, maxEntries);
-          //warm-up
-          testOneConf(mgrp, setXX, setYY, testNum, seed + 1, resolution);
-          testOneConf(mgrp, setXX, setYY, testNum, seed + 2, resolution);
-          testOneConf(mgrp, setXX, setYY, testNum, seed + 3, resolution);
-          testOneConf(mgrp, setXX, setYY, testNum, seed + 4, resolution);
-          testOneConf(mgrp, setXX, setYY, testNum, seed + 5, resolution);
         } else {
-          mgrp = new QuadTreeGeoRequestParser(mge);
+          mgrp = new BraidQuadTreeGeoRequestParser(mge);
         }
 
         res = testOneConf(mgrp, setXX, setYY, testNum, seed, resolution);

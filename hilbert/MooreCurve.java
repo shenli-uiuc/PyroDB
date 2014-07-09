@@ -7,7 +7,7 @@ public class MooreCurve extends SpaceFillingCurve {
                                          5,  4, 11, 10,
                                          6,  7,  8,  9};
 
-  public static final int [] codeMap = {3, 2, 0, 1,
+  public static final long [] codeMap = {3, 2, 0, 1,
                                         3, 0, 2, 1,
                                         1, 0, 2, 3,
                                         1, 2, 0, 3};
