@@ -914,6 +914,7 @@ public class HFileBlock implements Cacheable {
       startOffset = offset;
 
       finishBlockAndWriteHeaderAndData((DataOutputStream) out);
+      // Shen Li: check seal here?
     }
 
     /**

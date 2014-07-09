@@ -351,3 +351,33 @@ Call Traces:
                                   defines loadBlockAndSeekToKey() on line 897.
   HFileReaderV2.java      897     loadBlockAndSeekToKey().
   HFileReaderV2.java      987     blockSeek()
+
+8. HBase create HDFS output stream
+  HFile.java              389     HFile.WriterFactory.create() calls
+                                  createWriter who gets the outputstream from
+                                  AbstractHFileWriter.createOutputStream(), 
+                                  which in turn calls FSUtils.create(). Users
+                                  may specify favoredNodes. FSUtils.create()
+                                  calls DistributedFileSystem.create() on line
+                                  292. which is a source file in HDFS. The
+                                  call reaches the create() method on line 350
+                                  of DistributedFileSystem.java in HDFS.
+                                  It creates a DFSOutputStream that extends 
+                                  FSOutputSummer, passes it to 
+                                  HdfsDataOutputStream, and returns the
+                                  HdfsDataOutputStream.
+
+                                  HdfsDataOutputStream extends 
+                                  FSDataOutputStream. DFSOutputStream is a 
+                                  member variable of FSDataOutputStream.
+
+                                  FSDataOutputStream takes the DFSOutputStream
+                                  as a OutputStream, so it cannot seal a HDFS
+                                  block. But, HdfsDataOutputStream can. So,
+                                  I need to override the seal method in
+                                  HdfsDataOutputStream to seal a block.
+                                  Inside that method, it should call
+                                  DFSOutputStream.seal(), which in turns
+                                  calls FSOutputSummer.seal(); NOTE I, maybe I
+                                  should not put it in FSOutputStream. NOTE II,
+                                  do I also need to modify RawLocalFileSystem?
