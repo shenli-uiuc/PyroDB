@@ -381,3 +381,24 @@ Call Traces:
                                   calls FSOutputSummer.seal(); NOTE I, maybe I
                                   should not put it in FSOutputStream. NOTE II,
                                   do I also need to modify RawLocalFileSystem?
+
+                                  DFSOutputStream.java explains how it works
+
+                                  It seems using a non-full block to indicate
+                                  the end of the file.
+
+                                  add a field isSealed into LocatedBlock, which
+                                  allows HDFS to distinguish intentionally 
+                                  partially filled block from the last block
+
+                                  but how to modify the datanode side.
+
+                                  line 1321 NetUtils.getOutputStream() creates
+                                  the blockStream. 
+
+                                  check hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/datanode/BlockReceiver.java
+                                  In that file, check receiveBlock() and receivePacket()
+
+                                  datanode/BlockSender.java sends blocks to client.
+
+                                  It should be the receivePacket() method that we modify
