@@ -402,3 +402,19 @@ Call Traces:
                                   datanode/BlockSender.java sends blocks to client.
 
                                   It should be the receivePacket() method that we modify
+
+                                  DataXceiver.java readBlock() calls BlockSender.sendBlock()
+                                  DataXceiver.readBlock() is the server side method, while
+                                  Sender.readBlock is the client side method
+
+                                  Here is what happened: 
+                                  1. client call Sender.readBlock(), the server will 
+                                  receive an READ_BLOCK operation. Then the server
+                                  calls DataXceiver.readBlock() to process.
+
+                                  2. DataXceiver extends Receiver which is the
+                                  protocol API. DataXceiver will be spawned as 
+                                  a Daemon on DataXceiverServer. in DataXceiver.run(),
+                                  it waits for operation from client side,
+                                  and calls Receiver.processOp() to perocess
+                                  the operation
