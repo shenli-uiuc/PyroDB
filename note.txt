@@ -418,3 +418,27 @@ Call Traces:
                                   it waits for operation from client side,
                                   and calls Receiver.processOp() to perocess
                                   the operation
+
+DFSInputStream.java    430       getBlockAt() calls DFSClient.getLocatedBlocks(src, offet);
+                                  which calls DFSClient.callGetBlockLocations() which calls
+                                  namenode.getBlockLocations(), where the namenode is a 
+                                  ClientProtocol instance. On namenode side, 
+                                  the method getBlockLocations() is implementated by
+                                  NameNodeRpcServer.java, which then calls FSNameSystem.getBlockLocations(),
+
+                                  FSDirectory().getLastINodeInPath(), INode related code does
+                                  not care about offset, instead, it returns inode information
+                                  of that file. Then BlockManager.createLocatedBlocks() takes
+                                  the offset and returns the right LocatedBlocks. It seems that
+                                  BlockManager.createLocatedBlockList() allows viable length block.
+                                  the process goes through all blocks and add together their length
+
+DFSInputStream.java   1270        read(long position, ...) calls getBlockRange() 
+                                  calls getFinallizedBlockRange(), which also calls
+                                  dfsClient.getLocatedBlocks();
+
+                                  So, the read path should be able to find the block
+                                  even if we have viable blocks
+
+                                  where is the shared packet structure defined? need to add an is sealed
+                                  field: protocol.datatransfer.PacketHeader.java
