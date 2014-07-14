@@ -442,3 +442,17 @@ DFSInputStream.java   1270        read(long position, ...) calls getBlockRange()
 
                                   where is the shared packet structure defined? need to add an is sealed
                                   field: protocol.datatransfer.PacketHeader.java
+
+DatanodeStorageInfo.java          Each Datanode has one or multiple DatanodeStorage. DatanodeStorageInfo
+                                  has reference of its own Datanode on line 104 DatanodeDescriptor dn
+
+
+How does hdfs determine locations to write blocks:
+DFSOutputStream.java    1589      In constructor, set the favorite nodes. It can be reset by calling
+                                  DFSOutputStream.DataStreamer.setFavoredNodes(). Then in 
+                                  DataStreamer.locateFollowingBlock(), it passes the favoredNodes
+                                  information to dfsClient.namenode.addBlock() method on
+                                  line 1448, which reaches NameNodeRpcServer.addBlock() through
+                                  the protocol. Which then calls FSNamesystem.getAdditionalBlock().
+FSNamesystem.java       2702      getBlockManager().chooseTarget() to get DatanodeStorageInfo.
+BlockManager.java       1436      chooseTarget() calls BlockPlacementPolicy.chooseTarget().
