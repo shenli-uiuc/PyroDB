@@ -260,6 +260,10 @@ Call Traces:
                                   IncreasingToUpperBoundRegionSplitPolicy.java
                                   and ConstantSizeRegionSplitPolicy.java
 
+  SplitTransaction.java            578     stepsAfterPONR() calls openDaughters() to
+                                  perform the actual open daughter opertaion.
+                                  Which then calls HRegion.openHRegion();
+
 5. flush MemStore to HFiles
   hbase-server/.../regionserver
   HRegion.java            4851    In processRowsWithLocks(), it checks whether
@@ -456,3 +460,23 @@ DFSOutputStream.java    1589      In constructor, set the favorite nodes. It can
                                   the protocol. Which then calls FSNamesystem.getAdditionalBlock().
 FSNamesystem.java       2702      getBlockManager().chooseTarget() to get DatanodeStorageInfo.
 BlockManager.java       1436      chooseTarget() calls BlockPlacementPolicy.chooseTarget().
+
+File Meta
+
+FSNamesystem.java       1696      getBlockLocationsUpdateTimes() calls 
+                                  FSDirectory.getLastINodeInPath() on line 1727
+
+FSDirectory.java        2059      addINode();
+BlockReceiver.java      732       
+FSNamesystem.java       3901      getAdditionalBlocks() calls commitOrCompleteLastBlock();
+                                  on 2750
+                                  added a splitFileReuseBlocks() method.
+
+
+9. move a region
+
+on client side:
+HBaseAdmin.java       1702        move(regionname, server) calls MasterRpcServices.moveRegion(),
+                                  which then calls HMaster.move();
+HMaster.java          1054        move(); which then calls AssignmentManager.balance(RegionPlan);
+
