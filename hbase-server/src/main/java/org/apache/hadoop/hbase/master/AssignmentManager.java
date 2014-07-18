@@ -3152,6 +3152,8 @@ public class AssignmentManager extends ZooKeeperListener {
 
   /**
    * A helper to handle region splitting transition event.
+   *
+   * Shen Li: move regions here if reuse is specified
    */
   private boolean handleRegionSplitting(final RegionTransition rt, final String encodedName,
       final String prettyPrintedRegionName, final ServerName sn) {
@@ -3275,6 +3277,11 @@ public class AssignmentManager extends ZooKeeperListener {
         unassign(hri_b);
       }
     }
+
+    // Shen Li: add here to move new regions to new servers
+    // region server should tell the master which servers the new regions should 
+    // be moved to. region server can get that information by pulling the datanode
+    // hosting the data blocks from HDFS. 
     return true;
   }
 

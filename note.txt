@@ -264,6 +264,10 @@ Call Traces:
                                   perform the actual open daughter opertaion.
                                   Which then calls HRegion.openHRegion();
 
+  Solution: implement in SplitTransaction line 441. The transitionZKNode() method
+  blocks to wait for master to react. So, I can add a field to let master node that
+  we would like to reuse files
+
 5. flush MemStore to HFiles
   hbase-server/.../regionserver
   HRegion.java            4851    In processRowsWithLocks(), it checks whether
@@ -479,4 +483,12 @@ on client side:
 HBaseAdmin.java       1702        move(regionname, server) calls MasterRpcServices.moveRegion(),
                                   which then calls HMaster.move();
 HMaster.java          1054        move(); which then calls AssignmentManager.balance(RegionPlan);
+                                  which puts the RegionPlan object into this.regionPlans;
 
+AssignmentManager.java            in balance() it calls unassign() to do the job
+AssignmentManager.java            processRegionInTransitionAndBlockUntilAssigned() calls 
+                                  processRegionsInTransition() calls handleRegionSplitting()
+                                  which gets RegionPlan from regionPlans.
+
+                                  handleAssignmentEvent() calls handleRegion() calls 
+                                  handleRegionSplitting();

@@ -438,6 +438,8 @@ public class SplitTransaction {
       final RegionServerServices services, HRegion a, HRegion b)
       throws IOException {
     // Tell master about split by updating zk.  If we fail, abort.
+    // Shen Li: add reuse file parameter, to allow the master to 
+    // directly move new regions
     if (server != null && server.getZooKeeper() != null) {
       try {
         this.znodeVersion = transitionSplittingNode(server.getZooKeeper(),
