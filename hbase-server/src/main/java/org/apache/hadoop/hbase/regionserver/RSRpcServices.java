@@ -1434,10 +1434,12 @@ public class RSRpcServices implements HBaseRPCErrorHandler,
   @QosPriority(priority=HConstants.HIGH_QOS)
   public SplitRegionResponse splitRegion(final RpcController controller,
       final SplitRegionRequest request) throws ServiceException {
+    // Shen Li: add a reuseFile field to request
     try {
       checkOpen();
       requestCount.increment();
       HRegion region = getRegion(request.getRegion());
+      boolean reuseFile = request.getReuseFile();
       region.startRegionOperation(Operation.SPLIT_REGION);
       LOG.info("Splitting " + region.getRegionNameAsString());
       region.flushcache();
@@ -1446,7 +1448,8 @@ public class RSRpcServices implements HBaseRPCErrorHandler,
         splitPoint = request.getSplitPoint().toByteArray();
       }
       region.forceSplit(splitPoint);
-      regionServer.compactSplitThread.requestSplit(region, region.checkSplit());
+      regionServer.compactSplitThread
+        .requestSplit(region, region.checkSplit(), reuseFile);
       return SplitRegionResponse.newBuilder().build();
     } catch (IOException ie) {
       throw new ServiceException(ie);

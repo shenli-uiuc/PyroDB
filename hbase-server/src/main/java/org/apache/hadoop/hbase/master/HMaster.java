@@ -1051,6 +1051,21 @@ public class HMaster extends HRegionServer implements MasterServices, Server {
         this.catalogJanitorChore, region_a, region_b, forcible));
   }
 
+  /**
+   * Shen Li: 
+   */
+  void move(final byte[] encodedRegionName,
+            String destHostName) throws HBaseIOException {
+    final List<Servername> destServers = 
+      this.servermanager.getDestinationServersList(destHostName);
+    if (null == destServers || destServers.size() <= 0) {
+      throw new HBaseIOException("No HRegionServer running on "
+          + "host " + destHostName);
+    }
+    // TODO: should I randomly choose one?
+    move(encodedRegionName, destServers.get(0));
+  }
+
   void move(final byte[] encodedRegionName,
       final byte[] destServerName) throws HBaseIOException {
     RegionState regionState = assignmentManager.getRegionStates().

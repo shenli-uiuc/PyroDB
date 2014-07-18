@@ -1018,6 +1018,14 @@ public class ServerManager {
   }
 
   /**
+   * Shen Li:
+   */
+  public List<ServerName> getDestinationServersList(final String hostName) {
+    //TODO: return the list of ServerNames running on the given host
+    return null;
+  }
+
+  /**
    * Calls {@link #createDestinationServersList} without server to exclude.
    */
   public List<ServerName> createDestinationServersList(){

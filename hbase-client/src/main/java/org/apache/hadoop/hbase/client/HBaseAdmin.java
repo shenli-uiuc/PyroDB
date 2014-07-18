@@ -1948,12 +1948,24 @@ public class HBaseAdmin implements Admin {
     split(tableNameOrRegionName, null);
   }
 
+  // Shen Li: redirect
   public void split(final String tableNameOrRegionName,
     final String splitPoint) throws IOException, InterruptedException {
-    split(Bytes.toBytes(tableNameOrRegionName), Bytes.toBytes(splitPoint));
+    split(tableNameOrRegionname, splitPoint, false;)
   }
 
   /**
+   * Shen Li: add boolean reuseFile parameter
+   */
+  public void split(final String tableNameOrRegionName,
+    final String splitPoint, boolean reuseFile) throws IOException, InterruptedException {
+    split(Bytes.toBytes(tableNameOrRegionName), Bytes.toBytes(splitPoint), reuseFile);
+  }
+
+
+  /**
+   * Shen Li: redirect
+   *
    * Split a table or an individual region.
    * Asynchronous operation.
    *
@@ -1964,6 +1976,12 @@ public class HBaseAdmin implements Admin {
    */
   public void split(final byte[] tableNameOrRegionName,
       final byte [] splitPoint) throws IOException, InterruptedException {
+    split(tableNameOrRegionName, splitPoint, false);
+  }
+
+  public void split(final byte[] tableNameOrRegionName,
+      final byte [] splitPoint, boolean reuseFile) 
+      throws IOException, InterruptedException {
     CatalogTracker ct = getCatalogTracker();
     try {
       Pair<HRegionInfo, ServerName> regionServerPair

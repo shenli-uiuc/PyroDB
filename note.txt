@@ -266,7 +266,11 @@ Call Traces:
 
   Solution: implement in SplitTransaction line 441. The transitionZKNode() method
   blocks to wait for master to react. So, I can add a field to let master node that
-  we would like to reuse files
+  we would like to reuse files. 
+
+  So the steps are: 1. client send the request to region server
+                    2. region splits it self, and notify master
+                    3. master move new regions
 
 5. flush MemStore to HFiles
   hbase-server/.../regionserver
