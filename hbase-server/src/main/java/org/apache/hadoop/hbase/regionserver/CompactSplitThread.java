@@ -211,14 +211,26 @@ public class CompactSplitThread implements CompactionRequestor {
     return false;
   }
 
+  /**
+   * Shen Li: redirect
+   */
   public synchronized void requestSplit(final HRegion r, byte[] midKey) {
+    requestSplit(r, midKey, false);
+  }
+
+  /**
+   * Shen Li: added parameter reuseFile
+   */
+  public synchronized void requestSplit(final HRegion r, 
+                                        byte[] midKey, boolean reuseFile) {
     if (midKey == null) {
       LOG.debug("Region " + r.getRegionNameAsString() +
         " not splittable because midkey=null");
       return;
     }
     try {
-      this.splits.execute(new SplitRequest(r, midKey, this.server));
+      this.splits.execute(new SplitRequest(r, midKey, this.server, 
+                                           reuseFile));
       if (LOG.isDebugEnabled()) {
         LOG.debug("Split requested for " + r + ".  " + this);
       }

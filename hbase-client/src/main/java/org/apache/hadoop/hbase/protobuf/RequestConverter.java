@@ -824,12 +824,24 @@ public final class RequestConverter {
   */
  public static SplitRegionRequest buildSplitRegionRequest(
      final byte[] regionName, final byte[] splitPoint) {
+   return buildSplitRegionRequest(regionName, splitPoint, false);
+ }
+
+ /**
+  * Shen Li: add parameter reuseFile
+  */
+ public static SplitRegionRequest buildSplitRegionRequest(
+     final byte[] regionName, final byte[] splitPoint,
+     boolean reuseFile) {
    SplitRegionRequest.Builder builder = SplitRegionRequest.newBuilder();
    RegionSpecifier region = buildRegionSpecifier(
      RegionSpecifierType.REGION_NAME, regionName);
    builder.setRegion(region);
    if (splitPoint != null) {
      builder.setSplitPoint(HBaseZeroCopyByteString.wrap(splitPoint));
+   }
+   if (reuseFile) {
+     builder.setReuseFile(reuseFile);
    }
    return builder.build();
  }

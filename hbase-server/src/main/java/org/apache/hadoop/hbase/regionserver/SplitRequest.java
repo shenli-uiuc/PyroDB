@@ -41,11 +41,26 @@ class SplitRequest implements Runnable {
   private final HRegionServer server;
   private TableLock tableLock;
 
+  // Shen Li: add parameter reuseFile
+  private final boolean reuseFile;
+
+  /**
+   * Shen Li
+   */
   SplitRequest(HRegion region, byte[] midKey, HRegionServer hrs) {
+    this(region, midKey, hrs, false);
+  }
+
+  /**
+   * Shen Li: added parameter reuseFile
+   */
+  SplitRequest(HRegion region, byte[] midKey, 
+               HRegionServer hrs, boolean reuseFile) {
     Preconditions.checkNotNull(hrs);
     this.parent = region;
     this.midKey = midKey;
     this.server = hrs;
+    this.reuseFile = reuseFile;
   }
 
   @Override
@@ -62,7 +77,8 @@ class SplitRequest implements Runnable {
     }
     try {
       final long startTime = System.currentTimeMillis();
-      SplitTransaction st = new SplitTransaction(parent, midKey);
+      // Shen Li: add parameter reuseFile
+      SplitTransaction st = new SplitTransaction(parent, midKey, reuseFile);
 
       //acquire a shared read lock on the table, so that table schema modifications
       //do not happen concurrently

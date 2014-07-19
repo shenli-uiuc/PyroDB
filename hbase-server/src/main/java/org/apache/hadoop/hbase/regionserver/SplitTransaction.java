@@ -99,6 +99,9 @@ public class SplitTransaction {
   private long fileSplitTimeout = 30000;
   private int znodeVersion = -1;
 
+  // Shen Li: added parameter
+  private boolean reuseFile = false;
+
   /*
    * Row to split around
    */
@@ -148,13 +151,24 @@ public class SplitTransaction {
   private final List<JournalEntry> journal = new ArrayList<JournalEntry>();
 
   /**
+   * Shen Li: redirect
+   *
    * Constructor
    * @param r Region to split
    * @param splitrow Row to split around
    */
   public SplitTransaction(final HRegion r, final byte [] splitrow) {
+    this(r, splitrow, false);
+  }
+
+  /**
+   * Shen Li: add parameter reuseFile
+   */
+  public SplitTransaction(final HRegion r, final byte [] splitrow, 
+                          boolean reuseFile) {
     this.parent = r;
     this.splitrow = splitrow;
+    this.reuseFile = reuseFile;
   }
 
   /**
@@ -163,6 +177,7 @@ public class SplitTransaction {
    * <code>false</code> if it is not (e.g. its already closed, etc.).
    */
   public boolean prepare() {
+    // Shen Li: TODO: if reuseFile is set, check if the slitPoint is valid
     if (!this.parent.isSplittable()) return false;
     // Split key can be null if this region is unsplittable; i.e. has refs.
     if (this.splitrow == null) return false;
@@ -567,6 +582,7 @@ public class SplitTransaction {
   public PairOfSameType<HRegion> execute(final Server server,
       final RegionServerServices services)
   throws IOException {
+    // Shen Li: TODO: handle reuseFile
     PairOfSameType<HRegion> regions = createDaughters(server, services);
     if (this.parent.getCoprocessorHost() != null) {
       this.parent.getCoprocessorHost().preSplitAfterPONR();

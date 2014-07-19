@@ -1054,16 +1054,17 @@ public class HMaster extends HRegionServer implements MasterServices, Server {
   /**
    * Shen Li: 
    */
-  void move(final byte[] encodedRegionName,
-            String destHostName) throws HBaseIOException {
-    final List<Servername> destServers = 
-      this.servermanager.getDestinationServersList(destHostName);
+  void moveReuseFile(final byte[] encodedRegionName,
+                     String destHostName) throws HBaseIOException {
+    final List<ServerName> destServers = 
+      this.serverManager.getDestinationServersList(destHostName);
     if (null == destServers || destServers.size() <= 0) {
       throw new HBaseIOException("No HRegionServer running on "
           + "host " + destHostName);
     }
     // TODO: should I randomly choose one?
-    move(encodedRegionName, destServers.get(0));
+    // TODO: study how to translate ServerName to byte[]
+    //move(encodedRegionName, destServers.get(0));
   }
 
   void move(final byte[] encodedRegionName,

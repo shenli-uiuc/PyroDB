@@ -130,7 +130,8 @@ message FlushRegionResponse {
 message SplitRegionRequest {
   required RegionSpecifier region = 1;
   optional bytes split_point = 2;
-  optional bool reuseFile = 3 [default = false]; 
+  // Shen Li: added field reuseFile
+  optional bool reuse_file = 3 [default = false]; 
 }
 
 message SplitRegionResponse {

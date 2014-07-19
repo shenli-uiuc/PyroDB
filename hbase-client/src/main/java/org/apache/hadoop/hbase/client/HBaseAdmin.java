@@ -1948,10 +1948,18 @@ public class HBaseAdmin implements Admin {
     split(tableNameOrRegionName, null);
   }
 
+  /**
+   * Shen Li: split a region using the replicaGroup splitPoint 
+   */
+  public void split(final byte[] tableNameOrRegionName, boolean reuseFile)
+  throws IOException, InterruptedException {
+    split(tableNameOrRegionName, null, reuseFile);
+  }
+
   // Shen Li: redirect
   public void split(final String tableNameOrRegionName,
     final String splitPoint) throws IOException, InterruptedException {
-    split(tableNameOrRegionname, splitPoint, false;)
+    split(tableNameOrRegionName, splitPoint, false);
   }
 
   /**
@@ -1990,7 +1998,8 @@ public class HBaseAdmin implements Admin {
         if (regionServerPair.getSecond() == null) {
             throw new NoServerForRegionException(Bytes.toStringBinary(tableNameOrRegionName));
         } else {
-          split(regionServerPair.getSecond(), regionServerPair.getFirst(), splitPoint);
+          split(regionServerPair.getSecond(), 
+                regionServerPair.getFirst(), splitPoint, reuseFile);
         }
       } else {
         final TableName tableName =
@@ -2007,7 +2016,8 @@ public class HBaseAdmin implements Admin {
           // if a split point given, only split that particular region
           if (splitPoint != null && !r.containsRow(splitPoint)) continue;
           // call out to region server to do split now
-          split(pair.getSecond(), pair.getFirst(), splitPoint);
+          // Shen Li: add parameter reuseFile
+          split(pair.getSecond(), pair.getFirst(), splitPoint, reuseFile);
         }
       }
     } finally {
@@ -2015,14 +2025,26 @@ public class HBaseAdmin implements Admin {
     }
   }
 
+  /**
+   * Shen Li: redirect 
+   */
   private void split(final ServerName sn, final HRegionInfo hri,
       byte[] splitPoint) throws IOException {
+    split(sn, hri, splitPoint, false);
+  }
+
+  /**
+   * Shen Li: add parameter reuseFile
+   */
+  private void split(final ServerName sn, final HRegionInfo hri,
+      byte[] splitPoint, boolean reuseFile) throws IOException {
     if (hri.getStartKey() != null && splitPoint != null &&
          Bytes.compareTo(hri.getStartKey(), splitPoint) == 0) {
        throw new IOException("should not give a splitkey which equals to startkey!");
     }
     AdminService.BlockingInterface admin = this.connection.getAdmin(sn);
-    ProtobufUtil.split(admin, hri, splitPoint);
+    // Shen Li: add parameter reuseFile
+    ProtobufUtil.split(admin, hri, splitPoint, reuseFile);
   }
 
   /**

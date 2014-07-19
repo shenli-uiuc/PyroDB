@@ -1681,6 +1681,8 @@ public final class ProtobufUtil {
   }
 
   /**
+   * Shen Li: redirect
+   *
    * A helper to split a region using admin protocol.
    *
    * @param admin
@@ -1690,8 +1692,18 @@ public final class ProtobufUtil {
    */
   public static void split(final AdminService.BlockingInterface admin,
       final HRegionInfo hri, byte[] splitPoint) throws IOException {
+    split(admin, hri, splitPoint, false);
+  }
+
+  /**
+   * Shen Li: add parameter reuseFile
+   */
+  public static void split(final AdminService.BlockingInterface admin,
+      final HRegionInfo hri, byte[] splitPoint, boolean reuseFile) 
+      throws IOException {
     SplitRegionRequest request =
-      RequestConverter.buildSplitRegionRequest(hri.getRegionName(), splitPoint);
+      RequestConverter.buildSplitRegionRequest(hri.getRegionName(), 
+                                               splitPoint, reuseFile);
     try {
       admin.splitRegion(null, request);
     } catch (ServiceException se) {

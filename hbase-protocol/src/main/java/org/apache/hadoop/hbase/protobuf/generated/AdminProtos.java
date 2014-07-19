@@ -9071,6 +9071,24 @@ public final class AdminProtos {
      * <code>optional bytes split_point = 2;</code>
      */
     com.google.protobuf.ByteString getSplitPoint();
+
+    // optional bool reuse_file = 3 [default = false];
+    /**
+     * <code>optional bool reuse_file = 3 [default = false];</code>
+     *
+     * <pre>
+     * Shen Li: added field reuseFile
+     * </pre>
+     */
+    boolean hasReuseFile();
+    /**
+     * <code>optional bool reuse_file = 3 [default = false];</code>
+     *
+     * <pre>
+     * Shen Li: added field reuseFile
+     * </pre>
+     */
+    boolean getReuseFile();
   }
   /**
    * Protobuf type {@code SplitRegionRequest}
@@ -9148,6 +9166,11 @@ public final class AdminProtos {
             case 18: {
               bitField0_ |= 0x00000002;
               splitPoint_ = input.readBytes();
+              break;
+            }
+            case 24: {
+              bitField0_ |= 0x00000004;
+              reuseFile_ = input.readBool();
               break;
             }
           }
@@ -9228,9 +9251,34 @@ public final class AdminProtos {
       return splitPoint_;
     }
 
+    // optional bool reuse_file = 3 [default = false];
+    public static final int REUSE_FILE_FIELD_NUMBER = 3;
+    private boolean reuseFile_;
+    /**
+     * <code>optional bool reuse_file = 3 [default = false];</code>
+     *
+     * <pre>
+     * Shen Li: added field reuseFile
+     * </pre>
+     */
+    public boolean hasReuseFile() {
+      return ((bitField0_ & 0x00000004) == 0x00000004);
+    }
+    /**
+     * <code>optional bool reuse_file = 3 [default = false];</code>
+     *
+     * <pre>
+     * Shen Li: added field reuseFile
+     * </pre>
+     */
+    public boolean getReuseFile() {
+      return reuseFile_;
+    }
+
     private void initFields() {
       region_ = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionSpecifier.getDefaultInstance();
       splitPoint_ = com.google.protobuf.ByteString.EMPTY;
+      reuseFile_ = false;
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -9258,6 +9306,9 @@ public final class AdminProtos {
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
         output.writeBytes(2, splitPoint_);
       }
+      if (((bitField0_ & 0x00000004) == 0x00000004)) {
+        output.writeBool(3, reuseFile_);
+      }
       getUnknownFields().writeTo(output);
     }
 
@@ -9274,6 +9325,10 @@ public final class AdminProtos {
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
         size += com.google.protobuf.CodedOutputStream
           .computeBytesSize(2, splitPoint_);
+      }
+      if (((bitField0_ & 0x00000004) == 0x00000004)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBoolSize(3, reuseFile_);
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -9308,6 +9363,11 @@ public final class AdminProtos {
         result = result && getSplitPoint()
             .equals(other.getSplitPoint());
       }
+      result = result && (hasReuseFile() == other.hasReuseFile());
+      if (hasReuseFile()) {
+        result = result && (getReuseFile()
+            == other.getReuseFile());
+      }
       result = result &&
           getUnknownFields().equals(other.getUnknownFields());
       return result;
@@ -9328,6 +9388,10 @@ public final class AdminProtos {
       if (hasSplitPoint()) {
         hash = (37 * hash) + SPLIT_POINT_FIELD_NUMBER;
         hash = (53 * hash) + getSplitPoint().hashCode();
+      }
+      if (hasReuseFile()) {
+        hash = (37 * hash) + REUSE_FILE_FIELD_NUMBER;
+        hash = (53 * hash) + hashBoolean(getReuseFile());
       }
       hash = (29 * hash) + getUnknownFields().hashCode();
       memoizedHashCode = hash;
@@ -9456,6 +9520,8 @@ public final class AdminProtos {
         bitField0_ = (bitField0_ & ~0x00000001);
         splitPoint_ = com.google.protobuf.ByteString.EMPTY;
         bitField0_ = (bitField0_ & ~0x00000002);
+        reuseFile_ = false;
+        bitField0_ = (bitField0_ & ~0x00000004);
         return this;
       }
 
@@ -9496,6 +9562,10 @@ public final class AdminProtos {
           to_bitField0_ |= 0x00000002;
         }
         result.splitPoint_ = splitPoint_;
+        if (((from_bitField0_ & 0x00000004) == 0x00000004)) {
+          to_bitField0_ |= 0x00000004;
+        }
+        result.reuseFile_ = reuseFile_;
         result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
@@ -9517,6 +9587,9 @@ public final class AdminProtos {
         }
         if (other.hasSplitPoint()) {
           setSplitPoint(other.getSplitPoint());
+        }
+        if (other.hasReuseFile()) {
+          setReuseFile(other.getReuseFile());
         }
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
@@ -9702,6 +9775,55 @@ public final class AdminProtos {
       public Builder clearSplitPoint() {
         bitField0_ = (bitField0_ & ~0x00000002);
         splitPoint_ = getDefaultInstance().getSplitPoint();
+        onChanged();
+        return this;
+      }
+
+      // optional bool reuse_file = 3 [default = false];
+      private boolean reuseFile_ ;
+      /**
+       * <code>optional bool reuse_file = 3 [default = false];</code>
+       *
+       * <pre>
+       * Shen Li: added field reuseFile
+       * </pre>
+       */
+      public boolean hasReuseFile() {
+        return ((bitField0_ & 0x00000004) == 0x00000004);
+      }
+      /**
+       * <code>optional bool reuse_file = 3 [default = false];</code>
+       *
+       * <pre>
+       * Shen Li: added field reuseFile
+       * </pre>
+       */
+      public boolean getReuseFile() {
+        return reuseFile_;
+      }
+      /**
+       * <code>optional bool reuse_file = 3 [default = false];</code>
+       *
+       * <pre>
+       * Shen Li: added field reuseFile
+       * </pre>
+       */
+      public Builder setReuseFile(boolean value) {
+        bitField0_ |= 0x00000004;
+        reuseFile_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional bool reuse_file = 3 [default = false];</code>
+       *
+       * <pre>
+       * Shen Li: added field reuseFile
+       * </pre>
+       */
+      public Builder clearReuseFile() {
+        bitField0_ = (bitField0_ & ~0x00000004);
+        reuseFile_ = false;
         onChanged();
         return this;
       }
@@ -21184,59 +21306,60 @@ public final class AdminProtos {
       "\002(\010\"P\n\022FlushRegionRequest\022 \n\006region\030\001 \002(",
       "\0132\020.RegionSpecifier\022\030\n\020if_older_than_ts\030" +
       "\002 \001(\004\"?\n\023FlushRegionResponse\022\027\n\017last_flu" +
-      "sh_time\030\001 \002(\004\022\017\n\007flushed\030\002 \001(\010\"K\n\022SplitR" +
+      "sh_time\030\001 \002(\004\022\017\n\007flushed\030\002 \001(\010\"f\n\022SplitR" +
       "egionRequest\022 \n\006region\030\001 \002(\0132\020.RegionSpe" +
-      "cifier\022\023\n\013split_point\030\002 \001(\014\"\025\n\023SplitRegi" +
-      "onResponse\"W\n\024CompactRegionRequest\022 \n\006re" +
-      "gion\030\001 \002(\0132\020.RegionSpecifier\022\r\n\005major\030\002 " +
-      "\001(\010\022\016\n\006family\030\003 \001(\014\"\027\n\025CompactRegionResp" +
-      "onse\"\262\001\n\031UpdateFavoredNodesRequest\022@\n\013up" +
-      "date_info\030\001 \003(\0132+.UpdateFavoredNodesRequ",
-      "est.RegionUpdateInfo\032S\n\020RegionUpdateInfo" +
-      "\022\033\n\006region\030\001 \002(\0132\013.RegionInfo\022\"\n\rfavored" +
-      "_nodes\030\002 \003(\0132\013.ServerName\".\n\032UpdateFavor" +
-      "edNodesResponse\022\020\n\010response\030\001 \001(\r\"v\n\023Mer" +
-      "geRegionsRequest\022\"\n\010region_a\030\001 \002(\0132\020.Reg" +
-      "ionSpecifier\022\"\n\010region_b\030\002 \002(\0132\020.RegionS" +
-      "pecifier\022\027\n\010forcible\030\003 \001(\010:\005false\"\026\n\024Mer" +
-      "geRegionsResponse\"X\n\010WALEntry\022\024\n\003key\030\001 \002" +
-      "(\0132\007.WALKey\022\027\n\017key_value_bytes\030\002 \003(\014\022\035\n\025" +
-      "associated_cell_count\030\003 \001(\005\"4\n\030Replicate",
-      "WALEntryRequest\022\030\n\005entry\030\001 \003(\0132\t.WALEntr" +
-      "y\"\033\n\031ReplicateWALEntryResponse\"\026\n\024RollWA" +
-      "LWriterRequest\"0\n\025RollWALWriterResponse\022" +
-      "\027\n\017region_to_flush\030\001 \003(\014\"#\n\021StopServerRe" +
-      "quest\022\016\n\006reason\030\001 \002(\t\"\024\n\022StopServerRespo" +
-      "nse\"\026\n\024GetServerInfoRequest\"B\n\nServerInf" +
-      "o\022 \n\013server_name\030\001 \002(\0132\013.ServerName\022\022\n\nw" +
-      "ebui_port\030\002 \001(\r\"9\n\025GetServerInfoResponse" +
-      "\022 \n\013server_info\030\001 \002(\0132\013.ServerInfo2\306\007\n\014A" +
-      "dminService\022>\n\rGetRegionInfo\022\025.GetRegion",
-      "InfoRequest\032\026.GetRegionInfoResponse\022;\n\014G" +
-      "etStoreFile\022\024.GetStoreFileRequest\032\025.GetS" +
-      "toreFileResponse\022D\n\017GetOnlineRegion\022\027.Ge" +
-      "tOnlineRegionRequest\032\030.GetOnlineRegionRe" +
-      "sponse\0225\n\nOpenRegion\022\022.OpenRegionRequest" +
-      "\032\023.OpenRegionResponse\0228\n\013CloseRegion\022\023.C" +
-      "loseRegionRequest\032\024.CloseRegionResponse\022" +
-      "8\n\013FlushRegion\022\023.FlushRegionRequest\032\024.Fl" +
-      "ushRegionResponse\0228\n\013SplitRegion\022\023.Split" +
-      "RegionRequest\032\024.SplitRegionResponse\022>\n\rC",
-      "ompactRegion\022\025.CompactRegionRequest\032\026.Co" +
-      "mpactRegionResponse\022;\n\014MergeRegions\022\024.Me" +
-      "rgeRegionsRequest\032\025.MergeRegionsResponse" +
-      "\022J\n\021ReplicateWALEntry\022\031.ReplicateWALEntr" +
-      "yRequest\032\032.ReplicateWALEntryResponse\022?\n\006" +
-      "Replay\022\031.ReplicateWALEntryRequest\032\032.Repl" +
-      "icateWALEntryResponse\022>\n\rRollWALWriter\022\025" +
-      ".RollWALWriterRequest\032\026.RollWALWriterRes" +
-      "ponse\022>\n\rGetServerInfo\022\025.GetServerInfoRe" +
-      "quest\032\026.GetServerInfoResponse\0225\n\nStopSer",
-      "ver\022\022.StopServerRequest\032\023.StopServerResp" +
-      "onse\022M\n\022UpdateFavoredNodes\022\032.UpdateFavor" +
-      "edNodesRequest\032\033.UpdateFavoredNodesRespo" +
-      "nseBA\n*org.apache.hadoop.hbase.protobuf." +
-      "generatedB\013AdminProtosH\001\210\001\001\240\001\001"
+      "cifier\022\023\n\013split_point\030\002 \001(\014\022\031\n\nreuse_fil" +
+      "e\030\003 \001(\010:\005false\"\025\n\023SplitRegionResponse\"W\n" +
+      "\024CompactRegionRequest\022 \n\006region\030\001 \002(\0132\020." +
+      "RegionSpecifier\022\r\n\005major\030\002 \001(\010\022\016\n\006family" +
+      "\030\003 \001(\014\"\027\n\025CompactRegionResponse\"\262\001\n\031Upda" +
+      "teFavoredNodesRequest\022@\n\013update_info\030\001 \003",
+      "(\0132+.UpdateFavoredNodesRequest.RegionUpd" +
+      "ateInfo\032S\n\020RegionUpdateInfo\022\033\n\006region\030\001 " +
+      "\002(\0132\013.RegionInfo\022\"\n\rfavored_nodes\030\002 \003(\0132" +
+      "\013.ServerName\".\n\032UpdateFavoredNodesRespon" +
+      "se\022\020\n\010response\030\001 \001(\r\"v\n\023MergeRegionsRequ" +
+      "est\022\"\n\010region_a\030\001 \002(\0132\020.RegionSpecifier\022" +
+      "\"\n\010region_b\030\002 \002(\0132\020.RegionSpecifier\022\027\n\010f" +
+      "orcible\030\003 \001(\010:\005false\"\026\n\024MergeRegionsResp" +
+      "onse\"X\n\010WALEntry\022\024\n\003key\030\001 \002(\0132\007.WALKey\022\027" +
+      "\n\017key_value_bytes\030\002 \003(\014\022\035\n\025associated_ce",
+      "ll_count\030\003 \001(\005\"4\n\030ReplicateWALEntryReque" +
+      "st\022\030\n\005entry\030\001 \003(\0132\t.WALEntry\"\033\n\031Replicat" +
+      "eWALEntryResponse\"\026\n\024RollWALWriterReques" +
+      "t\"0\n\025RollWALWriterResponse\022\027\n\017region_to_" +
+      "flush\030\001 \003(\014\"#\n\021StopServerRequest\022\016\n\006reas" +
+      "on\030\001 \002(\t\"\024\n\022StopServerResponse\"\026\n\024GetSer" +
+      "verInfoRequest\"B\n\nServerInfo\022 \n\013server_n" +
+      "ame\030\001 \002(\0132\013.ServerName\022\022\n\nwebui_port\030\002 \001" +
+      "(\r\"9\n\025GetServerInfoResponse\022 \n\013server_in" +
+      "fo\030\001 \002(\0132\013.ServerInfo2\306\007\n\014AdminService\022>",
+      "\n\rGetRegionInfo\022\025.GetRegionInfoRequest\032\026" +
+      ".GetRegionInfoResponse\022;\n\014GetStoreFile\022\024" +
+      ".GetStoreFileRequest\032\025.GetStoreFileRespo" +
+      "nse\022D\n\017GetOnlineRegion\022\027.GetOnlineRegion" +
+      "Request\032\030.GetOnlineRegionResponse\0225\n\nOpe" +
+      "nRegion\022\022.OpenRegionRequest\032\023.OpenRegion" +
+      "Response\0228\n\013CloseRegion\022\023.CloseRegionReq" +
+      "uest\032\024.CloseRegionResponse\0228\n\013FlushRegio" +
+      "n\022\023.FlushRegionRequest\032\024.FlushRegionResp" +
+      "onse\0228\n\013SplitRegion\022\023.SplitRegionRequest",
+      "\032\024.SplitRegionResponse\022>\n\rCompactRegion\022" +
+      "\025.CompactRegionRequest\032\026.CompactRegionRe" +
+      "sponse\022;\n\014MergeRegions\022\024.MergeRegionsReq" +
+      "uest\032\025.MergeRegionsResponse\022J\n\021Replicate" +
+      "WALEntry\022\031.ReplicateWALEntryRequest\032\032.Re" +
+      "plicateWALEntryResponse\022?\n\006Replay\022\031.Repl" +
+      "icateWALEntryRequest\032\032.ReplicateWALEntry" +
+      "Response\022>\n\rRollWALWriter\022\025.RollWALWrite" +
+      "rRequest\032\026.RollWALWriterResponse\022>\n\rGetS" +
+      "erverInfo\022\025.GetServerInfoRequest\032\026.GetSe",
+      "rverInfoResponse\0225\n\nStopServer\022\022.StopSer" +
+      "verRequest\032\023.StopServerResponse\022M\n\022Updat" +
+      "eFavoredNodes\022\032.UpdateFavoredNodesReques" +
+      "t\032\033.UpdateFavoredNodesResponseBA\n*org.ap" +
+      "ache.hadoop.hbase.protobuf.generatedB\013Ad" +
+      "minProtosH\001\210\001\001\240\001\001"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
@@ -21326,7 +21449,7 @@ public final class AdminProtos {
           internal_static_SplitRegionRequest_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_SplitRegionRequest_descriptor,
-              new java.lang.String[] { "Region", "SplitPoint", });
+              new java.lang.String[] { "Region", "SplitPoint", "ReuseFile", });
           internal_static_SplitRegionResponse_descriptor =
             getDescriptor().getMessageTypes().get(13);
           internal_static_SplitRegionResponse_fieldAccessorTable = new
