@@ -193,6 +193,13 @@ public class ServerName implements Comparable<ServerName>, Serializable {
     return hostnameOnly;
   }
 
+  /**
+   * Shen Li: to find out the right host for splitReuseFile
+   */
+  public boolean matchHostname(String hostname) {
+    return hostnameOnly.equals(hostname);
+  }
+
   public int getPort() {
     return port;
   }

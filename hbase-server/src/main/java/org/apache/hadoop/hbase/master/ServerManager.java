@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -1020,9 +1021,15 @@ public class ServerManager {
   /**
    * Shen Li:
    */
-  public List<ServerName> getDestinationServersList(final String hostName) {
-    //TODO: return the list of ServerNames running on the given host
-    return null;
+  public List<ServerName> getDestinationServersList(final String hostname) {
+    final List<ServerName> destServers = createDestinationServersList();
+    List<ServerName> ret = new LinkedList<ServerName>();
+    for (ServerName serverName : destServers) {
+      if (serverName.matchHostname(hostname)) {
+        ret.add(serverName);
+      }
+    }
+    return ret;
   }
 
   /**
