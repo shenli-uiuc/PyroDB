@@ -496,3 +496,7 @@ AssignmentManager.java            processRegionInTransitionAndBlockUntilAssigned
 
                                   handleAssignmentEvent() calls handleRegion() calls 
                                   handleRegionSplitting();
+
+TODO: 1. finish the splitReuseFile in SplitTransaction.java
+      2. take a look at hbase FSUtils.computeHDFSBlocksDistribution(), need to figure out a way that 
+      HMaster can get the hostnames where the given replicaGroup is hosted

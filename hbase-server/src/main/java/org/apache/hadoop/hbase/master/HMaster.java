@@ -1063,7 +1063,6 @@ public class HMaster extends HRegionServer implements MasterServices, Server {
           + "host " + destHostName);
     }
     // TODO: should I randomly choose one?
-    // TODO: study how to translate ServerName to byte[]
     move(encodedRegionName, destServers.get(0).getServerName().getBytes());
   }
 

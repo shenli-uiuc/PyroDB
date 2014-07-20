@@ -3164,6 +3164,7 @@ public class AssignmentManager extends ZooKeeperListener {
     byte [] payloadOfSplitting = rt.getPayload();
     List<HRegionInfo> splittingRegions;
     try {
+      // Shen Li: make the first byte a boolean for reuseFile
       splittingRegions = HRegionInfo.parseDelimitedFrom(
         payloadOfSplitting, 0, payloadOfSplitting.length);
     } catch (IOException e) {

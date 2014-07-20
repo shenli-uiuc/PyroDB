@@ -925,6 +925,8 @@ public class SplitTransaction {
   }
 
   /**
+   * Shen Li: redirect
+   *
    * Transitions an existing ephemeral node for the specified region which is
    * currently in the begin state to be in the end state. Master cleans up the
    * final SPLIT znode when it reads it (or if we crash, zk will clean it up).
@@ -962,6 +964,20 @@ public class SplitTransaction {
       HRegionInfo parent, HRegionInfo a, HRegionInfo b, ServerName serverName,
       final int znodeVersion, final EventType beginState,
       final EventType endState) throws KeeperException, IOException {
+    transitionSplittingNode(zkw, parent, a, b, servername, znodeVersion, 
+                            beginState, endState, false);
+  }
+
+  /**
+   * Shen Li: add parameter reuseFile
+   */
+  public static int transitionSplittingNode(ZooKeeperWatcher zkw,
+      HRegionInfo parent, HRegionInfo a, HRegionInfo b, ServerName serverName,
+      final int znodeVersion, final EventType beginState,
+      final EventType endState, boolean reuseFile) throws KeeperException, IOException {
+    // Shen Li: reuseFile
+    // make first byte a boolean for reuseFile,
+    // the consumer of the payload is AssignmentManager.handleRegionSplitting
     byte [] payload = HRegionInfo.toDelimitedByteArray(a, b);
     return ZKAssign.transitionNode(zkw, parent, serverName,
       beginState, endState, znodeVersion, payload);
