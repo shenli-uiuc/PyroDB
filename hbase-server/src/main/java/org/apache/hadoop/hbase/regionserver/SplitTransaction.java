@@ -964,7 +964,7 @@ public class SplitTransaction {
       HRegionInfo parent, HRegionInfo a, HRegionInfo b, ServerName serverName,
       final int znodeVersion, final EventType beginState,
       final EventType endState) throws KeeperException, IOException {
-    transitionSplittingNode(zkw, parent, a, b, servername, znodeVersion, 
+    return transitionSplittingNode(zkw, parent, a, b, serverName, znodeVersion, 
                             beginState, endState, false);
   }
 

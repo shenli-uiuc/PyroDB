@@ -301,6 +301,7 @@ public class HMaster extends HRegionServer implements MasterServices, Server {
     }
     startActiveMasterManager();
     putUpJettyServer();
+    LOG.info("Shen Li: HMaster hostname " + getServerName().getHostname());
   }
 
   private void putUpJettyServer() throws IOException {
