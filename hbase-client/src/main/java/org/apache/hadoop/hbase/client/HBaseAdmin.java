@@ -446,6 +446,9 @@ public class HBaseAdmin implements Admin {
   }
 
   /**
+   *
+   * Shen Li: redirect
+   *
    * Creates a new table with the specified number of regions.  The start key
    * specified will become the end key of the first region of the table, and
    * the end key specified will become the start key of the last region of the
@@ -472,6 +475,19 @@ public class HBaseAdmin implements Admin {
   public void createTable(HTableDescriptor desc, byte [] startKey,
       byte [] endKey, int numRegions)
   throws IOException {
+    createTable(desc, startKey, endKey, numRegions, -1);
+  }
+
+  /**
+   * Shen Li: a possitive replicaNum means files should be reused
+   * during splitting. The key space will be partitioned into
+   * numRegions * (2 ^ (replicaNum -1)) regions, which will also be
+   * used as replica group boundaries.
+   */
+  public void createTable(HTableDescriptor desc, byte [] startKey,
+      byte [] endKey, int numRegions, int replicaNum)
+  throws IOException {
+    // TODO: handle replicaNum
     if(numRegions < 3) {
       throw new IllegalArgumentException("Must create at least three regions");
     } else if(Bytes.compareTo(startKey, endKey) >= 0) {
@@ -489,6 +505,9 @@ public class HBaseAdmin implements Admin {
   }
 
   /**
+   *
+   * Shen Li: redrect
+   *
    * Creates a new table with an initial set of empty regions defined by the
    * specified split keys.  The total number of regions created will be the
    * number of split keys plus one. Synchronous operation.
@@ -507,6 +526,29 @@ public class HBaseAdmin implements Admin {
    */
   public void createTable(final HTableDescriptor desc, byte [][] splitKeys)
   throws IOException {
+    createTable(desc, splitKeys, -1);
+  }
+
+  /**
+   * Shen Li: if replicaNum > 1,
+   * splitKeys.length == regionNum * (2 ^ (replicaNum - 1))
+   */
+  public void createTable(final HTableDescriptor desc, byte [][] splitKeys,
+                          int replicaNum)
+  throws IOException {
+    // Shen Li: TODO: finish handling replicaNum
+    if (replicaNum > 1) {
+      // TODO: is it splitKeys.length or splitKeys.length + 1? make sure
+      int mask = (1 << (replicaNum -1 )) - 1;
+      if (null == splitKeys) {
+        throw new IllegalStateException("Shen Li: splitKeys is null in "
+            + "HBaseAdmin.createTalbe(...) with positive replicaNum");
+      }else if ((splitKeys.length & mask) > 0) {
+        throw new IllegalStateException("Shen Li: there are "
+            + splitKeys.length + " split keys, which is not valid "
+            + "with replica num " + replicaNum);
+      }
+    }
     try {
       createTableAsync(desc, splitKeys);
     } catch (SocketTimeoutException ste) {

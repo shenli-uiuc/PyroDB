@@ -3163,10 +3163,13 @@ public class AssignmentManager extends ZooKeeperListener {
     }
     byte [] payloadOfSplitting = rt.getPayload();
     List<HRegionInfo> splittingRegions;
+    // Shen Li
+    boolean reuseFile = false;
     try {
       // Shen Li: make the first byte a boolean for reuseFile
+      reuseFile = payloadOfSplitting[0] > 0 ? true : false;
       splittingRegions = HRegionInfo.parseDelimitedFrom(
-        payloadOfSplitting, 0, payloadOfSplitting.length);
+        payloadOfSplitting, 1, payloadOfSplitting.length);
     } catch (IOException e) {
       LOG.error("Dropped splitting! Failed reading " + rt.getEventType()
         + " payload for " + prettyPrintedRegionName);
@@ -3280,9 +3283,11 @@ public class AssignmentManager extends ZooKeeperListener {
     }
 
     // Shen Li: add here to move new regions to new servers
-    // region server should tell the master which servers the new regions should 
-    // be moved to. region server can get that information by pulling the datanode
-    // hosting the data blocks from HDFS. 
+    if (reuseFile) {
+      //TODO: move region now
+      LOG.info("Shen Li: receive splitRegion request on AssignmentManger"
+          + " with reuseFile set to true");
+    }
     return true;
   }
 

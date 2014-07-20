@@ -761,6 +761,7 @@ public class HFileBlock implements Cacheable {
      * @throws IOException
      */
     public void write(KeyValue kv) throws IOException{
+      // Shen Li: TODO: check if need to flush and seal the current HDFS block
       expectState(State.WRITING);
       this.unencodedDataSizeWritten += this.dataBlockEncoder.encode(kv, dataBlockEncodingCtx,
           this.userDataStream);

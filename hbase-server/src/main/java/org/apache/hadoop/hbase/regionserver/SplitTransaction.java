@@ -978,7 +978,10 @@ public class SplitTransaction {
     // Shen Li: reuseFile
     // make first byte a boolean for reuseFile,
     // the consumer of the payload is AssignmentManager.handleRegionSplitting
-    byte [] payload = HRegionInfo.toDelimitedByteArray(a, b);
+    byte [] daughterInfo = HRegionInfo.toDelimitedByteArray(a, b);
+    byte [] payload = new byte[daughterInfo.length + 1];
+    payload[0] = (reuseFile) ? (byte) 1: (byte)0;
+    System.arraycopy(daughterInfo, 0, payload, 1, daughterInfo.length);
     return ZKAssign.transitionNode(zkw, parent, serverName,
       beginState, endState, znodeVersion, payload);
   }
