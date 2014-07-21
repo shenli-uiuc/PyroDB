@@ -219,6 +219,13 @@ public class TestCatalogJanitor {
     }
 
     @Override
+    public void createTable(HTableDescriptor desc, byte[][] splitKeys,
+                            int replicaNum)
+        throws IOException {
+      // no-op
+    }
+
+    @Override
     public AssignmentManager getAssignmentManager() {
       return this.asm;
     }

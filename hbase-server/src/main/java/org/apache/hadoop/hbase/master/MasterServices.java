@@ -91,6 +91,12 @@ public interface MasterServices extends Server {
       throws IOException;
 
   /**
+   * Shen Li: add parameter replicaNum
+   */
+  void createTable(HTableDescriptor desc, byte[][] splitKeys, int replicaNum)
+      throws IOException;
+
+  /**
    * Delete a table
    * @param tableName The table name
    * @throws IOException

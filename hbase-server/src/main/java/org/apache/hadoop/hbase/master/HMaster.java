@@ -1115,9 +1115,21 @@ public class HMaster extends HRegionServer implements MasterServices, Server {
     }
   }
 
+  /**
+   * Shen Li: redirect
+   */
   @Override
   public void createTable(HTableDescriptor hTableDescriptor,
       byte [][] splitKeys) throws IOException {
+    createTable(hTableDescriptor, splitKeys, -1);
+  }
+
+  /**
+   * Shen Li: add parameter replicaNum
+   */
+  @Override
+  public void createTable(HTableDescriptor hTableDescriptor,
+      byte [][] splitKeys, int replicaNum) throws IOException {
     if (isStopped()) {
       throw new MasterNotRunningException();
     }

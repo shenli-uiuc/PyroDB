@@ -502,3 +502,4 @@ TODO: 1. finish the splitReuseFile in SplitTransaction.java
       this method, to add recplicaNum. a possitive replicaNum means that files should be reused
       and splitKeys.length needs to be numOfRegions * (2 ^ (replicaNum - 1)); They keys will be used
       determine replica group boundaries as well
+      3. finish replicaNum operation in HBaseAdmine and HMaster

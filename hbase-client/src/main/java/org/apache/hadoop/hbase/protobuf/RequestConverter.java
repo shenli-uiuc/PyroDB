@@ -1138,6 +1138,8 @@ public final class RequestConverter {
   }
 
   /**
+   * Shen Li: redirect
+   *
    * Creates a protocol buffer CreateTableRequest
    *
    * @param hTableDesc
@@ -1146,12 +1148,24 @@ public final class RequestConverter {
    */
   public static CreateTableRequest buildCreateTableRequest(
       final HTableDescriptor hTableDesc, final byte [][] splitKeys) {
+    return buildCreateTableRequest(hTableDesc, splitKeys, -1);
+  }
+
+  /**
+   * Shen Li: add parameter replicaNum
+   */
+  public static CreateTableRequest buildCreateTableRequest(
+      final HTableDescriptor hTableDesc, final byte [][] splitKeys,
+      int replicaNum) {
     CreateTableRequest.Builder builder = CreateTableRequest.newBuilder();
     builder.setTableSchema(hTableDesc.convert());
     if (splitKeys != null) {
       for (byte [] splitKey : splitKeys) {
         builder.addSplitKeys(HBaseZeroCopyByteString.wrap(splitKey));
       }
+    }
+    if (replicaNum > 1) {
+      builder.setReplicaNum(replicaNum);
     }
     return builder.build();
   }

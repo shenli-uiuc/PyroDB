@@ -104,6 +104,8 @@ message OfflineRegionResponse {
 message CreateTableRequest {
   required TableSchema table_schema = 1;
   repeated bytes split_keys = 2;
+  // Shen Li
+  optional int32 replicaNum = 3 [default = -1];
 }
 
 message CreateTableResponse {

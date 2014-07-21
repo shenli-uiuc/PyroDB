@@ -550,10 +550,12 @@ public class HBaseAdmin implements Admin {
       }
     }
     try {
-      createTableAsync(desc, splitKeys);
+      // Shen Li: add parameter replicaNum
+      createTableAsync(desc, splitKeys, replicaNum);
     } catch (SocketTimeoutException ste) {
       LOG.warn("Creating " + desc.getTableName() + " took too long", ste);
     }
+    // Shen Li: consider replicaNum when calculating numRegs
     int numRegs = splitKeys == null ? 1 : splitKeys.length + 1;
     int prevRegCount = 0;
     boolean doneWithMetaScan = false;
@@ -620,6 +622,8 @@ public class HBaseAdmin implements Admin {
   }
 
   /**
+   * Shen Li: redirect
+   *
    * Creates a new table but does not block and wait for it to come online.
    * Asynchronous operation.  To check if the table exists, use
    * {@link #isTableAvailable} -- it is not safe to create an HTable
@@ -637,6 +641,16 @@ public class HBaseAdmin implements Admin {
    */
   public void createTableAsync(
     final HTableDescriptor desc, final byte [][] splitKeys)
+  throws IOException {
+    createTableAsync(desc, splitKeys, -1); 
+  }
+
+  /**
+   * Shen Li: add parameter replicaNum
+   */
+  public void createTableAsync(
+    final HTableDescriptor desc, final byte [][] splitKeys, 
+    final int replicaNum)
   throws IOException {
     if(desc.getTableName() == null) {
       throw new IllegalArgumentException("TableName cannot be null");
@@ -659,10 +673,12 @@ public class HBaseAdmin implements Admin {
       }
     }
 
+    // Shen Li:
     executeCallable(new MasterCallable<Void>(getConnection()) {
       @Override
       public Void call(int callTimeout) throws ServiceException {
-        CreateTableRequest request = RequestConverter.buildCreateTableRequest(desc, splitKeys);
+        CreateTableRequest request = 
+          RequestConverter.buildCreateTableRequest(desc, splitKeys, replicaNum);
         master.createTable(null, request);
         return null;
       }

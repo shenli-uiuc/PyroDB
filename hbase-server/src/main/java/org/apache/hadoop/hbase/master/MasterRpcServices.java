@@ -391,8 +391,10 @@ public class MasterRpcServices extends RSRpcServices
   throws ServiceException {
     HTableDescriptor hTableDescriptor = HTableDescriptor.convert(req.getTableSchema());
     byte [][] splitKeys = ProtobufUtil.getSplitKeysArray(req);
+    // Shen Li: add parameter replicaNum
+    int replicaNum = req.getReplicaNum();
     try {
-      master.createTable(hTableDescriptor, splitKeys);
+      master.createTable(hTableDescriptor, splitKeys, replicaNum);
     } catch (IOException ioe) {
       throw new ServiceException(ioe);
     }
