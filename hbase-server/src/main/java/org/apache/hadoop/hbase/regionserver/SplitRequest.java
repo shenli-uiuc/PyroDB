@@ -65,7 +65,8 @@ class SplitRequest implements Runnable {
 
   @Override
   public String toString() {
-    return "regionName=" + parent + ", midKey=" + Bytes.toStringBinary(midKey);
+    return "regionName=" + parent + ", midKey=" + Bytes.toStringBinary(midKey)
+           + ", reuseFile = " + reuseFile;
   }
 
   @Override

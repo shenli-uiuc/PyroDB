@@ -245,6 +245,42 @@ public class HTable implements HTableInterface {
   }
 
   /**
+   * Shen Li: does not consider regions before start key and after end key
+   */
+  public static int splitKeyNum2RegNum(int splitKeyNum, int replicaNum) {
+    if (splitKeyNum <= 0) {
+      throw new IllegalStateException("Shen Li: 0 length splitKeyNum "
+                                      + "is not allowed");
+    }
+    if (replicaNum > 1) {
+      int mask = (1 << (replicaNum - 1)) - 1;
+      if (((splitKeyNum + 1) & mask) > 0) {
+        throw new IllegalStateException("Shen Li: invalid splitKeyNum and "
+            + "replicaNum combination, splitKeyNum = " + splitKeyNum
+            + ", replicaNum = " + replicaNum);
+      }
+      return (splitKeyNum + 1) >>> (replicaNum - 1);
+    } else {
+      return splitKeyNum + 1;
+    }
+  }
+
+  /**
+   * Shen Li: does not consider regions before start key and after end key
+   */
+  public static int regNum2SplitKeyNum(int regNum, int replicaNum) {
+    if (regNum <= 0) {
+      throw new IllegalStateException("Shen Li: non-positive region num "
+                                      + "is not allowed");
+    }
+    if (replicaNum > 1) {
+      return (regNum << (replicaNum - 1)) - 1;
+    } else {
+      return regNum - 1;
+    }
+  }
+
+  /**
    * Creates an object to access a HBase table.
    * Shares zookeeper connection and other resources with other HTable instances
    * created with the same <code>conf</code> instance.  Uses already-populated

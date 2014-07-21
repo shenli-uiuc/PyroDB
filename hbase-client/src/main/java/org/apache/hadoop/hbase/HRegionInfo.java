@@ -30,6 +30,9 @@ import java.util.Arrays;
 import java.util.List;
 
 import com.google.protobuf.HBaseZeroCopyByteString;
+// Shen Li
+import com.google.protobuf.ByteString;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
@@ -176,6 +179,9 @@ public class HRegionInfo implements Comparable<HRegionInfo> {
     return encodedRegionName;
   }
 
+  // Shen Li:
+  private byte[][] splitKeys = null;
+
   private byte [] endKey = HConstants.EMPTY_BYTE_ARRAY;
   // This flag is in the parent of a split while the parent is still referenced
   // by daughter regions.  We USED to set this flag when we disabled a table
@@ -267,6 +273,8 @@ public class HRegionInfo implements Comparable<HRegionInfo> {
 
 
   /**
+   * Shen Li: redirect
+   *
    * Construct HRegionInfo with explicit parameters
    *
    * @param tableName the table descriptor
@@ -280,15 +288,50 @@ public class HRegionInfo implements Comparable<HRegionInfo> {
   public HRegionInfo(final TableName tableName, final byte[] startKey,
                      final byte[] endKey, final boolean split, final long regionid)
   throws IllegalArgumentException {
+    this(tableName, new byte[][]{startKey, endKey}, 0, 1, split, regionid);
+  }
+
+  /**
+   * Shen Li: 
+   */
+  public HRegionInfo(final TableName tableName, final byte[][] splitKeys,
+                     final int startIndex, final int endIndex) 
+  throws IllegalArgumentException {
+    this(tableName, splitKeys, startIndex, endIndex, false, 
+         System.currentTimeMillis());
+  }
+
+  /**
+   * Shen Li: add parameter splitKeys
+   */
+  public HRegionInfo(final TableName tableName, final byte[][] splitKeys,
+                     final int startIndex, final int endIndex, 
+                     final boolean split, final long regionid)
+  throws IllegalArgumentException {
 
     super();
     if (tableName == null) {
       throw new IllegalArgumentException("TableName cannot be null");
     }
+    // Shen Li
+    boolean is2Pow = false;
+    int rangeLen = endIndex - startIndex;
+    if (0 == (rangeLen & (rangeLen - 1))) {
+      is2Pow = true;
+    }
+    if (null == splitKeys || startIndex < 0 
+        || endIndex >= splitKeys.length || !is2Pow) {
+      int length = (null == splitKeys) ? -1 : splitKeys.length;
+      throw new IllegalArgumentException("Shen Li: invalid split keys: "
+          + "splitKeys.length = " + length + ", startIndex = " + startIndex
+          + ", endIndex = " + endIndex);
+    }
     this.tableName = tableName;
     this.offLine = false;
     this.regionId = regionid;
 
+    byte [] startKey = splitKeys[startIndex];
+    byte [] endKey = splitKeys[endIndex];
     this.regionName = createRegionName(this.tableName, startKey, regionId, true);
 
     this.split = split;
@@ -296,6 +339,15 @@ public class HRegionInfo implements Comparable<HRegionInfo> {
     this.startKey = startKey == null?
       HConstants.EMPTY_START_ROW: startKey.clone();
     this.tableName = tableName;
+
+    // Shen Li: record pre-defined splitKeys
+    int splitKeyNum = endIndex - startIndex - 1;
+    if (splitKeyNum > 0) {
+      this.splitKeys = new byte[splitKeyNum][];
+      for (int i = 0; i < splitKeyNum; ++i) {
+        this.splitKeys[i] = splitKeys[i + startIndex + 1].clone();
+      }
+    }
     setHashCode();
   }
 
@@ -849,6 +901,12 @@ public class HRegionInfo implements Comparable<HRegionInfo> {
     }
     builder.setOffline(info.isOffline());
     builder.setSplit(info.isSplit());
+    // Shen Li: splitKeys
+    if (null != info.splitKeys) {
+      for (byte [] splitKey : info.splitKeys) {
+        builder.addSplitKey(HBaseZeroCopyByteString.wrap(splitKey));
+      }
+    }
     return builder.build();
   }
 
@@ -878,10 +936,23 @@ public class HRegionInfo implements Comparable<HRegionInfo> {
     if (proto.hasSplit()) {
       split = proto.getSplit();
     }
+    // Shen Li: splitKeys
+    byte[][] splitKeys = null;
+    List<ByteString> splitKeyList = proto.getSplitKeyList();
+    if (null != splitKeyList && splitKeyList.size() > 0) {
+      splitKeys = new byte[splitKeyList.size() + 2][];
+      int index = 0;
+      splitKeys[index++] = startKey;
+      for (ByteString splitKey: splitKeyList) {
+        splitKeys[index++] = splitKey.toByteArray();
+      }
+      splitKeys[index] = endKey;
+    } else {
+      splitKeys = new byte[][] {startKey, endKey};
+    }
+
     HRegionInfo hri = new HRegionInfo(
-        tableName,
-        startKey,
-        endKey, split, regionId);
+        tableName, splitKeys, 0, splitKeys.length - 1, split, regionId);
     if (proto.hasOffline()) {
       hri.setOffline(proto.getOffline());
     }
@@ -1184,6 +1255,17 @@ public class HRegionInfo implements Comparable<HRegionInfo> {
       return true;
     }
     return false;
+  }
+
+  /**
+   * Shen Li:
+   */
+  public byte[] getMidSplitKey() {
+    if (null == splitKeys) {
+      return null;
+    } else {
+      return splitKeys[splitKeys.length >> 1].clone();
+    }
   }
 
 }

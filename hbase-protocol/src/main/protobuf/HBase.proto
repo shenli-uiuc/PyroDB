@@ -64,6 +64,8 @@ message RegionInfo {
   optional bytes end_key = 4;
   optional bool offline = 5;
   optional bool split = 6;
+  // Shen Li
+  repeated bytes split_key = 7;
 }
 
 /**

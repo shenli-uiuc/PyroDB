@@ -494,14 +494,21 @@ public class HBaseAdmin implements Admin {
       throw new IllegalArgumentException("Start key must be smaller than end key");
     }
     if (numRegions == 3) {
+      // Shen Li: why using startKey and endKey as splitKeys?
+      // Answer: two more regions are added just in case keys fall out
+      // of the range
       createTable(desc, new byte[][]{startKey, endKey});
       return;
     }
-    byte [][] splitKeys = Bytes.split(startKey, endKey, numRegions - 3);
-    if(splitKeys == null || splitKeys.length != numRegions - 1) {
-      throw new IllegalArgumentException("Unable to split key range into enough regions");
+    byte [][] splitKeys = null;
+    int splitKeyNum = HTable.regNum2SplitKeyNum(numRegions - 2, replicaNum);
+    splitKeys = Bytes.split(startKey, endKey, splitKeyNum);
+    if (splitKeys == null || splitKeys.length != splitKeyNum + 2) {
+      throw new IllegalArgumentException("Shen Li: unable to split "
+                                         + "key range into enough regions");
     }
-    createTable(desc, splitKeys);
+
+    createTable(desc, splitKeys, replicaNum);
   }
 
   /**
@@ -531,23 +538,16 @@ public class HBaseAdmin implements Admin {
 
   /**
    * Shen Li: if replicaNum > 1,
-   * splitKeys.length == regionNum * (2 ^ (replicaNum - 1))
+   * splitKeys.length == (regionNum - 2) * (2^(replicaNum - 1)) -1 + 2;
+   * the "+2" is because splitkeys also contain the startkey and endKey
    */
   public void createTable(final HTableDescriptor desc, byte [][] splitKeys,
                           int replicaNum)
   throws IOException {
-    // Shen Li: TODO: finish handling replicaNum
-    if (replicaNum > 1) {
-      // TODO: is it splitKeys.length or splitKeys.length + 1? make sure
-      int mask = (1 << (replicaNum -1 )) - 1;
-      if (null == splitKeys) {
-        throw new IllegalStateException("Shen Li: splitKeys is null in "
-            + "HBaseAdmin.createTalbe(...) with positive replicaNum");
-      }else if ((splitKeys.length & mask) > 0) {
-        throw new IllegalStateException("Shen Li: there are "
-            + splitKeys.length + " split keys, which is not valid "
-            + "with replica num " + replicaNum);
-      }
+    // Shen Li: check if replicaNum agrees with splitKeys.length
+    if (replicaNum > 1 && null == splitKeys) {
+      throw new IllegalStateException("Shen Li: splitKeys is null in "
+          + "HBaseAdmin.createTalbe(...) with positive replicaNum");
     }
     try {
       // Shen Li: add parameter replicaNum
@@ -557,6 +557,10 @@ public class HBaseAdmin implements Admin {
     }
     // Shen Li: consider replicaNum when calculating numRegs
     int numRegs = splitKeys == null ? 1 : splitKeys.length + 1;
+    if (replicaNum > 1) {
+      numRegs = 
+        HTable.splitKeyNum2RegNum(splitKeys.length - 2, replicaNum) + 2;
+    }
     int prevRegCount = 0;
     boolean doneWithMetaScan = false;
     for (int tries = 0; tries < this.numRetries * this.retryLongerMultiplier;

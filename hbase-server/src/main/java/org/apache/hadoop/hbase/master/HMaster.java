@@ -69,6 +69,9 @@ import org.apache.hadoop.hbase.client.MetaScanner;
 import org.apache.hadoop.hbase.client.MetaScanner.MetaScannerVisitor;
 import org.apache.hadoop.hbase.client.MetaScanner.MetaScannerVisitorBase;
 import org.apache.hadoop.hbase.client.Result;
+//Shen Li
+import org.apache.hadoop.hbase.client.HTable;
+
 import org.apache.hadoop.hbase.CoordinatedStateManager;
 import org.apache.hadoop.hbase.coprocessor.CoprocessorHost;
 import org.apache.hadoop.hbase.exceptions.DeserializationException;
@@ -1124,6 +1127,17 @@ public class HMaster extends HRegionServer implements MasterServices, Server {
     createTable(hTableDescriptor, splitKeys, -1);
   }
 
+  public static long bytes2long(byte [] v) {
+    if (null == v) {
+      return 0;
+    }
+    long ret = 0;
+    for (int i = 0 ; i < v.length; ++i) {
+      ret = (ret << 8) | (v[i] & 0xff);
+    }
+    return ret;
+  }
+
   /**
    * Shen Li: add parameter replicaNum
    */
@@ -1137,7 +1151,17 @@ public class HMaster extends HRegionServer implements MasterServices, Server {
     String namespace = hTableDescriptor.getTableName().getNamespaceAsString();
     getNamespaceDescriptor(namespace); // ensure namespace exists
 
-    HRegionInfo[] newRegions = getHRegionInfos(hTableDescriptor, splitKeys);
+    // Shen Li: add parameter replicaNum
+    HRegionInfo[] newRegions = 
+      getHRegionInfos(hTableDescriptor, splitKeys, replicaNum);
+
+    // Shen Li: testing
+    for (HRegionInfo region: newRegions) {
+      LOG.info("Shen Li: creating region " + region.getRegionNameAsString()
+          + ", startkey = " + bytes2long(region.getStartKey())
+          + ", endkey = " + bytes2long(region.getEndKey()));
+    }
+
     checkInitialized();
     sanityCheckTableDescriptor(hTableDescriptor);
     if (cpHost != null) {
@@ -1321,23 +1345,52 @@ public class HMaster extends HRegionServer implements MasterServices, Server {
     CompressionTest.testCompression(hcd.getCompactionCompression());
   }
 
+  /**
+   * Shen Li: redirect
+   */
   private HRegionInfo[] getHRegionInfos(HTableDescriptor hTableDescriptor,
     byte[][] splitKeys) {
+    return getHRegionInfos(hTableDescriptor, splitKeys, -1);
+  }
+
+  /**
+   * Shen Li: add parameter replicaNum
+   */
+  private HRegionInfo[] getHRegionInfos(HTableDescriptor hTableDescriptor,
+    byte[][] splitKeys, int replicaNum) {
     HRegionInfo[] hRegionInfos = null;
     if (splitKeys == null || splitKeys.length == 0) {
       hRegionInfos = new HRegionInfo[]{
           new HRegionInfo(hTableDescriptor.getTableName(), null, null)};
     } else {
-      int numRegions = splitKeys.length + 1;
+      // Shen Li: handle replicaNum
+      int numRegions = 
+        HTable.splitKeyNum2RegNum(splitKeys.length - 2, replicaNum) + 2;
+      LOG.info("Shen Li: HMaster creating " + numRegions + " regions "
+          + "with " + splitKeys.length + " split keys, and relicaNum = "
+          + replicaNum);
       hRegionInfos = new HRegionInfo[numRegions];
-      byte[] startKey = null;
-      byte[] endKey = null;
-      for (int i = 0; i < numRegions; i++) {
-        endKey = (i == splitKeys.length) ? null : splitKeys[i];
-        hRegionInfos[i] =
-            new HRegionInfo(hTableDescriptor.getTableName(), startKey, endKey);
-        startKey = endKey;
+      // Shen Li: region before startKey
+      hRegionInfos[0] = 
+        new HRegionInfo(hTableDescriptor.getTableName(), null, splitKeys[0]);
+      // Shen Li: effective regions
+      int step = 1;
+      if (replicaNum > 1) {
+        step <<= (replicaNum - 1);
       }
+      int startIndex = 0;
+      int endIndex = 0;
+      for(int i = 1; i < numRegions - 1; ++i) {
+        endIndex = startIndex + step;
+        hRegionInfos[i] =
+            new HRegionInfo(hTableDescriptor.getTableName(), splitKeys, 
+                            startIndex, endIndex);
+        startIndex = endIndex;
+      }
+      // Shen Li: region after endKey
+      hRegionInfos[numRegions - 1] =
+        new HRegionInfo(hTableDescriptor.getTableName(), 
+                        splitKeys[splitKeys.length - 1], null);
     }
     return hRegionInfos;
   }

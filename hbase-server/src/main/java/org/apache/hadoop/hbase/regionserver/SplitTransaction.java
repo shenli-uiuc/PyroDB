@@ -180,21 +180,28 @@ public class SplitTransaction {
     // Shen Li: TODO: if reuseFile is set, check if the slitPoint is valid
     if (!this.parent.isSplittable()) return false;
     // Split key can be null if this region is unsplittable; i.e. has refs.
-    if (this.splitrow == null) return false;
+    // Shen Li: add reuseFile check
+    if (this.splitrow == null && !reuseFile) return false;
     HRegionInfo hri = this.parent.getRegionInfo();
     parent.prepareToSplit();
     // Check splitrow.
-    byte [] startKey = hri.getStartKey();
-    byte [] endKey = hri.getEndKey();
-    if (Bytes.equals(startKey, splitrow) ||
-        !this.parent.getRegionInfo().containsRow(splitrow)) {
-      LOG.info("Split row is not inside region key range or is equal to " +
-          "startkey: " + Bytes.toStringBinary(this.splitrow));
-      return false;
-    }
+    // Shen Li: check hri.splitKeys
     long rid = getDaughterRegionIdTimestamp(hri);
-    this.hri_a = new HRegionInfo(hri.getTable(), startKey, this.splitrow, false, rid);
-    this.hri_b = new HRegionInfo(hri.getTable(), this.splitrow, endKey, false, rid);
+    if (reuseFile) {
+      // Shen Li: TODO
+      // only need to calculate the index of splitKeys
+    } else {
+      byte [] startKey = hri.getStartKey();
+      byte [] endKey = hri.getEndKey();
+      if (Bytes.equals(startKey, splitrow) ||
+          !this.parent.getRegionInfo().containsRow(splitrow)) {
+        LOG.info("Split row is not inside region key range or is equal to " +
+            "startkey: " + Bytes.toStringBinary(this.splitrow));
+        return false;
+      }
+      this.hri_a = new HRegionInfo(hri.getTable(), startKey, this.splitrow, false, rid);
+      this.hri_b = new HRegionInfo(hri.getTable(), this.splitrow, endKey, false, rid);
+    }
     return true;
   }
 
