@@ -223,6 +223,7 @@ public class CompactSplitThread implements CompactionRequestor {
    */
   public synchronized void requestSplit(final HRegion r, 
                                         byte[] midKey, boolean reuseFile) {
+    LOG.info("Shen Li: in CompactSplitThread.requestSplit");
     if (midKey == null) {
       LOG.debug("Region " + r.getRegionNameAsString() +
         " not splittable because midkey=null");

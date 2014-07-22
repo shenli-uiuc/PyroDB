@@ -2,6 +2,7 @@ package org.apache.hadoop.hbase;
 
 import java.nio.ByteBuffer;
 import java.io.IOException;
+import java.util.List;
 
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.conf.Configuration;
@@ -48,6 +49,16 @@ public class TestPyroPreSplit extends Configured {
       int regionNum = Integer.parseInt(args[0]);
       int replicaNum = Integer.parseInt(args[1]);
       checkTable(admin, desc, startKey, endKey, regionNum, replicaNum);
+      List<HRegionInfo> rInfos = admin.getTableRegions(desc.getTableName());
+      for (HRegionInfo info : rInfos) {
+        System.out.println(info.getRegionNameAsString());
+      }
+      admin.split(rInfos.get(0).getRegionName(), true);
+      System.out.println("After Split");
+      rInfos = admin.getTableRegions(desc.getTableName());
+      for (HRegionInfo info : rInfos) {
+        System.out.println(info.getRegionNameAsString());
+      }
     } catch (Exception ex) {
       System.out.println(ex.getMessage());
       ex.printStackTrace();

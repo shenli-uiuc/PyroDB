@@ -177,6 +177,7 @@ public class SplitTransaction {
    * <code>false</code> if it is not (e.g. its already closed, etc.).
    */
   public boolean prepare() {
+    LOG.info("Shen Li: SplitTransaction.prepare()");
     // Shen Li: TODO: if reuseFile is set, check if the slitPoint is valid
     if (!this.parent.isSplittable()) return false;
     // Split key can be null if this region is unsplittable; i.e. has refs.
@@ -190,6 +191,18 @@ public class SplitTransaction {
     if (reuseFile) {
       // Shen Li: TODO
       // only need to calculate the index of splitKeys
+      byte [][] allKeys = hri.getAllKeys();
+      if (null == allKeys || allKeys.length <= 2) {
+        int length = (null == allKeys) ? 0: allKeys.length;
+        throw new IllegalStateException("Shen Li: allKeys length = " 
+            + length + ", not able to further split");
+      }
+      LOG.info("Shen Li: init daughter regions with reuseFile = true");
+      int midIndex = allKeys.length >> 1;
+      this.hri_a = new HRegionInfo(hri.getTable(), allKeys, 
+                                   0, midIndex, false, rid);
+      this.hri_b = new HRegionInfo(hri.getTable(), allKeys,
+                                   midIndex, allKeys.length - 1, false, rid);
     } else {
       byte [] startKey = hri.getStartKey();
       byte [] endKey = hri.getEndKey();
@@ -321,6 +334,7 @@ public class SplitTransaction {
       final RegionServerServices services, boolean testing) throws IOException {
     // Set ephemeral SPLITTING znode up in zk.  Mocked servers sometimes don't
     // have zookeeper so don't do zk stuff if server or zookeeper is null
+    LOG.info("Shen Li: SplitTransaction.stepsBeforePONR");
     if (server != null && server.getZooKeeper() != null) {
       try {
         createNodeSplitting(server.getZooKeeper(),
@@ -374,6 +388,8 @@ public class SplitTransaction {
     // splitStoreFiles creates daughter region dirs under the parent splits dir
     // Nothing to unroll here if failure -- clean up of CREATE_SPLIT_DIR will
     // clean this up.
+    //
+    // Shen Li: apply reuseBlock
     splitStoreFiles(hstoreFilesToSplit);
 
     // Log to the journal that we are creating region A, the first daughter
@@ -590,6 +606,8 @@ public class SplitTransaction {
       final RegionServerServices services)
   throws IOException {
     // Shen Li: TODO: handle reuseFile
+    // ANSWER: it is handled in prepare()
+    LOG.info("Shen Li: SplitTransaction.execute()");
     PairOfSameType<HRegion> regions = createDaughters(server, services);
     if (this.parent.getCoprocessorHost() != null) {
       this.parent.getCoprocessorHost().preSplitAfterPONR();
@@ -600,6 +618,7 @@ public class SplitTransaction {
   public PairOfSameType<HRegion> stepsAfterPONR(final Server server,
       final RegionServerServices services, PairOfSameType<HRegion> regions)
       throws IOException {
+    LOG.info("Shen Li: SplitTransaction.stepsAfterPONR");
     openDaughters(server, services, regions.getFirst(), regions.getSecond());
     transitionZKNode(server, services, regions.getFirst(), regions.getSecond());
     return regions;

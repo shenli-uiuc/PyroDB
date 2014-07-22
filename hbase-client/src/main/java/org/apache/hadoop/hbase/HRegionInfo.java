@@ -367,8 +367,28 @@ public class HRegionInfo implements Comparable<HRegionInfo> {
     this.hashCode = other.hashCode();
     this.encodedName = other.getEncodedName();
     this.tableName = other.tableName;
+
+    // Shen Li:
+    this.splitKeys = other.splitKeys;
   }
 
+  /**
+   * Shen Li: cat startKey | splitKeys | endKey
+   */
+  public byte [][] getAllKeys() {
+    int splitKeyNum = 0;
+    if (null != splitKeys) {
+      splitKeyNum = splitKeys.length;
+    }
+
+    byte [][] allKeys = new byte[splitKeyNum + 2][];
+    allKeys[0] = startKey;
+    for (int i = 0; i < splitKeyNum; ++i) {
+      allKeys[i + 1] = splitKeys[i];
+    }
+    allKeys[splitKeyNum + 1] = endKey;
+    return allKeys;
+  }
 
   /**
    * Make a region name of passed parameters.

@@ -2052,6 +2052,7 @@ public class HBaseAdmin implements Admin {
   public void split(final byte[] tableNameOrRegionName,
       final byte [] splitPoint, boolean reuseFile) 
       throws IOException, InterruptedException {
+    LOG.info("Shen Li: in split(byte[], byte[], boolean)");
     CatalogTracker ct = getCatalogTracker();
     try {
       Pair<HRegionInfo, ServerName> regionServerPair
@@ -2106,6 +2107,7 @@ public class HBaseAdmin implements Admin {
     }
     AdminService.BlockingInterface admin = this.connection.getAdmin(sn);
     // Shen Li: add parameter reuseFile
+    LOG.info("Shen Li: calling ProtobufUtil.split");
     ProtobufUtil.split(admin, hri, splitPoint, reuseFile);
   }
 

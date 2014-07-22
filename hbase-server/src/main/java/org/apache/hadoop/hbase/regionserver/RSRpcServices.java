@@ -1441,7 +1441,7 @@ public class RSRpcServices implements HBaseRPCErrorHandler,
       HRegion region = getRegion(request.getRegion());
       boolean reuseFile = request.getReuseFile();
       region.startRegionOperation(Operation.SPLIT_REGION);
-      LOG.info("Splitting " + region.getRegionNameAsString());
+      LOG.info("Shen Li: Splitting " + region.getRegionNameAsString());
       region.flushcache();
       byte[] splitPoint = null;
       if (request.hasSplitPoint()) {

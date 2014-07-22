@@ -79,6 +79,8 @@ class SplitRequest implements Runnable {
     try {
       final long startTime = System.currentTimeMillis();
       // Shen Li: add parameter reuseFile
+      LOG.info("Shen Li: SplitRequest calling SplitTransaction with reuseFile "
+                + reuseFile);
       SplitTransaction st = new SplitTransaction(parent, midKey, reuseFile);
 
       //acquire a shared read lock on the table, so that table schema modifications
