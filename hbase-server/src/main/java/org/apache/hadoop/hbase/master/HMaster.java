@@ -1159,7 +1159,8 @@ public class HMaster extends HRegionServer implements MasterServices, Server {
     for (HRegionInfo region: newRegions) {
       LOG.info("Shen Li: creating region " + region.getRegionNameAsString()
           + ", startkey = " + bytes2long(region.getStartKey())
-          + ", endkey = " + bytes2long(region.getEndKey()));
+          + ", endkey = " + bytes2long(region.getEndKey())
+          + ", splitKeyNum = " + (region.getAllKeys().length - 2));
     }
 
     checkInitialized();

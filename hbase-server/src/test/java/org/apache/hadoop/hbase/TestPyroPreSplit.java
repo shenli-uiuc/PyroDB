@@ -53,11 +53,22 @@ public class TestPyroPreSplit extends Configured {
       for (HRegionInfo info : rInfos) {
         System.out.println(info.getRegionNameAsString());
       }
-      admin.split(rInfos.get(0).getRegionName(), true);
-      System.out.println("After Split");
-      rInfos = admin.getTableRegions(desc.getTableName());
-      for (HRegionInfo info : rInfos) {
-        System.out.println(info.getRegionNameAsString());
+      int prevRegionNum = admin.getTableRegions(desc.getTableName()).size();
+      boolean shouldSplit = Boolean.parseBoolean(args[2]);
+      if (shouldSplit) {
+        admin.split(rInfos.get(1).getRegionName(), true);
+     
+        int cnt = 0;
+        while (prevRegionNum >= 
+            admin.getTableRegions(desc.getTableName()).size()) {
+          ++cnt;
+          Thread.sleep(Long.parseLong(args[3]));
+          System.out.println("\n============" + cnt + "===============\n");
+        }
+        rInfos = admin.getTableRegions(desc.getTableName());
+        for (HRegionInfo info : rInfos) {
+          System.out.println(info.getRegionNameAsString());
+        }
       }
     } catch (Exception ex) {
       System.out.println(ex.getMessage());

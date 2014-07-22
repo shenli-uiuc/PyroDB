@@ -730,6 +730,7 @@ public class AssignmentManager extends ZooKeeperListener {
    * @param expectedVersion
    */
   void handleRegion(final RegionTransition rt, int expectedVersion) {
+    LOG.info("Shen Li: in handleRegion()");
     if (rt == null) {
       LOG.warn("Unexpected NULL input for RegionTransition rt");
       return;
@@ -770,7 +771,9 @@ public class AssignmentManager extends ZooKeeperListener {
     }
 
     // We need a lock on the region as we could update it
+    LOG.info("Shen Li: before acquireLock for " + rt.getEventType());
     Lock lock = locker.acquireLock(encodedName);
+    LOG.info("Shen Li: after acquireLock" + rt.getEventType());
     try {
       RegionState latestState =
         regionStates.getRegionState(encodedName);
@@ -919,6 +922,7 @@ public class AssignmentManager extends ZooKeeperListener {
       }
     } finally {
       lock.unlock();
+      LOG.info("Shen Li: unlock " + rt.getEventType());
     }
   }
 
@@ -3157,6 +3161,7 @@ public class AssignmentManager extends ZooKeeperListener {
    */
   private boolean handleRegionSplitting(final RegionTransition rt, final String encodedName,
       final String prettyPrintedRegionName, final ServerName sn) {
+    LOG.info("Shen Li: in handleRegionSplitting");
     if (!serverManager.isServerOnline(sn)) {
       LOG.warn("Dropped splitting! ServerName=" + sn + " unknown.");
       return false;
@@ -3165,16 +3170,18 @@ public class AssignmentManager extends ZooKeeperListener {
     List<HRegionInfo> splittingRegions;
     // Shen Li
     boolean reuseFile = false;
+    LOG.info("Shen Li: before parsing");
     try {
       // Shen Li: make the first byte a boolean for reuseFile
       reuseFile = payloadOfSplitting[0] > 0 ? true : false;
       splittingRegions = HRegionInfo.parseDelimitedFrom(
-        payloadOfSplitting, 1, payloadOfSplitting.length);
+        payloadOfSplitting, 1, payloadOfSplitting.length - 1);
     } catch (IOException e) {
       LOG.error("Dropped splitting! Failed reading " + rt.getEventType()
         + " payload for " + prettyPrintedRegionName);
       return false;
     }
+    LOG.info("Shen Li: after parsing");
     assert splittingRegions.size() == 2;
     HRegionInfo hri_a = splittingRegions.get(0);
     HRegionInfo hri_b = splittingRegions.get(1);
@@ -3203,6 +3210,7 @@ public class AssignmentManager extends ZooKeeperListener {
       regionStates.regionOnline(rs_p.getRegion(), sn);
     }
 
+    LOG.info("Shen Li: before processing RS_ZK_REQUEST_REGION_SPLIT");
     HRegionInfo p = rs_p.getRegion();
     EventType et = rt.getEventType();
     if (et == EventType.RS_ZK_REQUEST_REGION_SPLIT) {
@@ -3230,6 +3238,7 @@ public class AssignmentManager extends ZooKeeperListener {
       }
     }
 
+    LOG.info("Shen Li: sync regionStates");
     synchronized (regionStates) {
       regionStates.updateRegionState(hri_a, State.SPLITTING_NEW, sn);
       regionStates.updateRegionState(hri_b, State.SPLITTING_NEW, sn);
@@ -3251,12 +3260,15 @@ public class AssignmentManager extends ZooKeeperListener {
       }
     }
 
+    LOG.info("Shen Li: before deleting node");
     if (et == EventType.RS_ZK_REGION_SPLIT) {
+      LOG.info(" Shen Li: Handling SPLIT event for " + encodedName + "; deleting node");
       LOG.debug("Handling SPLIT event for " + encodedName + "; deleting node");
       // Remove region from ZK
       try {
         boolean successful = false;
         while (!successful) {
+          LOG.info("Shen Li: loop deleting");
           // It's possible that the RS tickles in between the reading of the
           // znode and the deleting, so it's safe to retry.
           successful = ZKAssign.deleteNode(watcher, encodedName,
@@ -3274,6 +3286,7 @@ public class AssignmentManager extends ZooKeeperListener {
         + ", daughter a=" + hri_a.getRegionNameAsString() + ", daughter b="
         + hri_b.getRegionNameAsString() + ", on " + sn);
 
+      LOG.info("Shen Li: before unassign");
       // User could disable the table before master knows the new region.
       if (tableStateManager.isTableState(p.getTable(),
           ZooKeeperProtos.Table.State.DISABLED, ZooKeeperProtos.Table.State.DISABLING)) {
@@ -3281,7 +3294,7 @@ public class AssignmentManager extends ZooKeeperListener {
         unassign(hri_b);
       }
     }
-
+    LOG.info("Shen Li: after deleting node");
     // Shen Li: add here to move new regions to new servers
     if (reuseFile) {
       //TODO: move region now

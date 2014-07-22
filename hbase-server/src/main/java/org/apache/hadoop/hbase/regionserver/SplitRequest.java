@@ -71,6 +71,7 @@ class SplitRequest implements Runnable {
 
   @Override
   public void run() {
+    LOG.info("Shen Li: SplitRequest.run()");
     if (this.server.isStopping() || this.server.isStopped()) {
       LOG.debug("Skipping split because server is stopping=" +
         this.server.isStopping() + " or stopped=" + this.server.isStopped());
@@ -96,8 +97,10 @@ class SplitRequest implements Runnable {
 
       // If prepare does not return true, for some reason -- logged inside in
       // the prepare call -- we are not ready to split just now. Just return.
+      LOG.info("Shen Li: SplitTransaction.prepare()");
       if (!st.prepare()) return;
       try {
+        LOG.info("Shen Li: call SplitTransaction.execute()");
         st.execute(this.server, this.server);
       } catch (Exception e) {
         if (this.server.isStopping() || this.server.isStopped()) {

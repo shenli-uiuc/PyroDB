@@ -498,5 +498,4 @@ AssignmentManager.java            processRegionInTransitionAndBlockUntilAssigned
                                   handleRegionSplitting();
 
 TODO: 1. SplitTransaction.java 390 splitStoreFiles(); 
-      2. seems that splitRequest is not successfully passed to the reciever, check logs
       4. create a configuration file for pre-splits: refer to hbase.apache.org/book/rowkey.design.html

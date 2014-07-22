@@ -767,6 +767,7 @@ public class HRegionInfo implements Comparable<HRegionInfo> {
    */
   @Deprecated
   public void write(DataOutput out) throws IOException {
+    LOG.info("Shen Li: using HRegionInfo.write");
     out.writeByte(getVersion());
     Bytes.writeByteArray(out, endKey);
     out.writeBoolean(offLine);
@@ -776,6 +777,14 @@ public class HRegionInfo implements Comparable<HRegionInfo> {
     Bytes.writeByteArray(out, startKey);
     Bytes.writeByteArray(out, tableName.getName());
     out.writeInt(hashCode);
+    if (null == this.splitKeys) {
+      out.writeInt(0);
+    } else {
+      out.writeInt(this.splitKeys.length);
+      for (int i = 0; i < this.splitKeys.length; ++i) {
+        Bytes.writeByteArray(out, this.splitKeys[i]);
+      }
+    }
   }
 
   /**
@@ -787,6 +796,7 @@ public class HRegionInfo implements Comparable<HRegionInfo> {
     // Read the single version byte.  We don't ask the super class do it
     // because freaks out if its not the current classes' version.  This method
     // can deserialize version 0 and version 1 of HRI.
+    LOG.info("Shen Li: in HRegionInfo.readFields");
     byte version = in.readByte();
     if (version == 0) {
       // This is the old HRI that carried an HTD.  Migrate it.  The below
@@ -814,6 +824,15 @@ public class HRegionInfo implements Comparable<HRegionInfo> {
       this.startKey = Bytes.readByteArray(in);
       this.tableName = TableName.valueOf(Bytes.readByteArray(in));
       this.hashCode = in.readInt();
+      // Shen Li: splitKeys
+      int splitKeyNum = in.readInt();
+      if (splitKeyNum > 0)
+        this.splitKeys = new byte[splitKeyNum][];
+      else
+        this.splitKeys = null;
+      for (int i = 0; i < splitKeyNum; ++i) {
+        this.splitKeys[i] = Bytes.readByteArray(in);
+      }
     } else {
       throw new IOException("Non-migratable/unknown version=" + getVersion());
     }
@@ -1173,6 +1192,7 @@ public class HRegionInfo implements Comparable<HRegionInfo> {
   public static HRegionInfo parseFrom(final DataInputStream in) throws IOException {
     // I need to be able to move back in the stream if this is not a pb serialization so I can
     // do the Writable decoding instead.
+    LOG.info("Shen Li: in HRegionInfo.parseFrom(in)");
     int pblen = ProtobufUtil.lengthOfPBMagic();
     byte [] pbuf = new byte[pblen];
     if (in.markSupported()) { //read it with mark()

@@ -275,6 +275,7 @@ public class SplitTransaction {
           this.fileSplitTimeout);
 
     PairOfSameType<HRegion> daughterRegions = stepsBeforePONR(server, services, testing);
+    LOG.info("Shen Li: after calling stepsBeforePONR");
 
     List<Mutation> metaEntries = new ArrayList<Mutation>();
     if (this.parent.getCoprocessorHost() != null) {
@@ -344,6 +345,7 @@ public class SplitTransaction {
           this.parent.getRegionNameAsString(), e);
       }
     }
+    LOG.info("Shen Li: before journal.add");
     this.journal.add(JournalEntry.SET_SPLITTING_IN_ZK);
     if (server != null && server.getZooKeeper() != null) {
       // After creating the split node, wait for master to transition it
@@ -352,8 +354,12 @@ public class SplitTransaction {
       znodeVersion = getZKNode(server, services);
     }
 
+    LOG.info("Shen Li: before RegionFileSystem().createSplitsDir()");
     this.parent.getRegionFileSystem().createSplitsDir();
+    LOG.info("Shen Li: after RegionFileSystem().createSplitDir()");
     this.journal.add(JournalEntry.CREATE_SPLIT_DIR);
+
+    LOG.info("Shen Li: after createSplitsDir");
 
     Map<byte[], List<StoreFile>> hstoreFilesToSplit = null;
     Exception exceptionToThrow = null;
@@ -390,7 +396,9 @@ public class SplitTransaction {
     // clean this up.
     //
     // Shen Li: apply reuseBlock
+    LOG.info("Shen Li: before calling splitStoreFiles");
     splitStoreFiles(hstoreFilesToSplit);
+    LOG.info("Shen Li: after calling splitStoreFiles");
 
     // Log to the journal that we are creating region A, the first daughter
     // region.  We could fail halfway through.  If we do, we could have left
@@ -402,6 +410,7 @@ public class SplitTransaction {
     // Ditto
     this.journal.add(JournalEntry.STARTED_REGION_B_CREATION);
     HRegion b = this.parent.createDaughterRegionFromSplits(this.hri_b);
+    LOG.info("Shen Li:: before stepsBeforePONR return");
     return new PairOfSameType<HRegion>(a, b);
   }
 
@@ -532,6 +541,7 @@ public class SplitTransaction {
   private int getZKNode(final Server server,
       final RegionServerServices services) throws IOException {
     // Wait for the master to process the pending_split.
+    LOG.info("Shen Li: waiting for master to process pending_split");
     try {
       int spins = 0;
       Stat stat = new Stat();
@@ -539,6 +549,7 @@ public class SplitTransaction {
       ServerName expectedServer = server.getServerName();
       String node = parent.getRegionInfo().getEncodedName();
       while (!(server.isStopped() || services.isStopping())) {
+        LOG.info("Shen Li: still waiting for master ");
         if (spins % 5 == 0) {
           LOG.debug("Still waiting for master to process "
             + "the pending_split for " + node);
@@ -562,8 +573,9 @@ public class SplitTransaction {
               + serverName + ", not us " + expectedServer);
           }
           byte [] payloadOfSplitting = rt.getPayload();
+          // Shen Li: the first byte is reuseFile boolean
           List<HRegionInfo> splittingRegions = HRegionInfo.parseDelimitedFrom(
-            payloadOfSplitting, 0, payloadOfSplitting.length);
+            payloadOfSplitting, 1, payloadOfSplitting.length - 1);
           assert splittingRegions.size() == 2;
           HRegionInfo a = splittingRegions.get(0);
           HRegionInfo b = splittingRegions.get(1);
@@ -607,11 +619,12 @@ public class SplitTransaction {
   throws IOException {
     // Shen Li: TODO: handle reuseFile
     // ANSWER: it is handled in prepare()
-    LOG.info("Shen Li: SplitTransaction.execute()");
+    LOG.info("Shen Li: in SplitTransaction.execute()");
     PairOfSameType<HRegion> regions = createDaughters(server, services);
     if (this.parent.getCoprocessorHost() != null) {
       this.parent.getCoprocessorHost().preSplitAfterPONR();
     }
+    LOG.info("Shen Li: before SplitTransaction.stepsAfterPONR");
     return stepsAfterPONR(server, services, regions);
   }
 

@@ -223,15 +223,19 @@ public class CompactSplitThread implements CompactionRequestor {
    */
   public synchronized void requestSplit(final HRegion r, 
                                         byte[] midKey, boolean reuseFile) {
-    LOG.info("Shen Li: in CompactSplitThread.requestSplit");
-    if (midKey == null) {
+    LOG.info("Shen Li: in CompactSplitThread.requestSplit with reuseFile = "
+        + reuseFile);
+    if (midKey == null && !reuseFile) {
+      LOG.info("Shen Li: null midKey");
       LOG.debug("Region " + r.getRegionNameAsString() +
         " not splittable because midkey=null");
       return;
     }
     try {
+      LOG.info("Shen Li: before split.execute(SplitRequest)");
       this.splits.execute(new SplitRequest(r, midKey, this.server, 
                                            reuseFile));
+      LOG.info("Shen Li: after split.execute(SplitRequest)");
       if (LOG.isDebugEnabled()) {
         LOG.debug("Split requested for " + r + ".  " + this);
       }
