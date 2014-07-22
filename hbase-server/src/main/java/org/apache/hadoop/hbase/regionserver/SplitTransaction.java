@@ -743,6 +743,9 @@ public class SplitTransaction {
     }
   }
 
+  /**
+   * Shen Li: TODO add reuseFile
+   */
   private void splitStoreFiles(final Map<byte[], List<StoreFile>> hstoreFilesToSplit)
       throws IOException {
     if (hstoreFilesToSplit == null) {
