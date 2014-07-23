@@ -200,9 +200,13 @@ public class SplitTransaction {
       LOG.info("Shen Li: init daughter regions with reuseFile = true");
       int midIndex = allKeys.length >> 1;
       this.hri_a = new HRegionInfo(hri.getTable(), allKeys, 
-                                   0, midIndex, false, rid);
+                                   0, midIndex, false, rid, 
+                                   hri.getReplicaNamespace(),
+                                   hri.getDaughterReplicaGroupIds(true));
       this.hri_b = new HRegionInfo(hri.getTable(), allKeys,
-                                   midIndex, allKeys.length - 1, false, rid);
+                                   midIndex, allKeys.length - 1, false, rid,
+                                   hri.getReplicaNamespace(),
+                                   hri.getDaughterReplicaGroupIds(false));
     } else {
       byte [] startKey = hri.getStartKey();
       byte [] endKey = hri.getEndKey();
@@ -404,6 +408,9 @@ public class SplitTransaction {
     // region.  We could fail halfway through.  If we do, we could have left
     // stuff in fs that needs cleanup -- a storefile or two.  Thats why we
     // add entry to journal BEFORE rather than AFTER the change.
+    //
+    // Shen Li: createDaughterRegionFromSplits calls commitDaughterRegion
+    // which moves tempery file/reference to the right location
     this.journal.add(JournalEntry.STARTED_REGION_A_CREATION);
     HRegion a = this.parent.createDaughterRegionFromSplits(this.hri_a);
 
@@ -809,6 +816,9 @@ public class SplitTransaction {
   private void splitStoreFile(final byte[] family, final StoreFile sf) throws IOException {
     HRegionFileSystem fs = this.parent.getRegionFileSystem();
     String familyName = Bytes.toString(family);
+    // Shen Li: TODO: handle reuseFile
+    // Answer: the reference is OK, as long as the new region is moved onto
+    // the right server
     fs.splitStoreFile(this.hri_a, familyName, sf, this.splitrow, false);
     fs.splitStoreFile(this.hri_b, familyName, sf, this.splitrow, true);
   }

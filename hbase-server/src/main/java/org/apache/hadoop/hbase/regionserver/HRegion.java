@@ -6163,4 +6163,32 @@ public class HRegion implements HeapSize { // , Writable{
   public void updatesUnlock() throws InterruptedIOException {
     updatesLock.readLock().unlock();
   }
+
+  /**
+   * Shen Li: calculate the set of group id with given
+   * number of splits and the current split index
+   */
+  public static int [] getReplicaGroupIds(int splitNum, int splitIndex) {
+    // splitNum has to be possitive and a power of 2
+    if (splitNum <= 0 || (splitNum & (splitNum - 1)) != 0
+        || splitIndex < 0 || splitIndex >= splitNum) {
+      throw new IllegalStateException("Shen Li: invalid splitNum = " 
+          + splitNum + ", splitIndex = " + splitIndex);
+    }
+    int replicaNum = 0;
+    int tmp = splitNum;
+    while (tmp > 0) {
+      ++replicaNum;
+      tmp >>= 1;
+    }
+    int [] ret = new int[replicaNum];
+    // find the id in the highest resolution, then add parents
+    int rg = splitNum - 1 + splitIndex;
+    for (int i = 0 ; i < replicaNum ; ++i) {
+      ret[i] = rg;
+      rg = (rg - 1) >> 1;
+    }
+    return ret;
+  }
+
 }

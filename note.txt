@@ -497,9 +497,7 @@ AssignmentManager.java            processRegionInTransitionAndBlockUntilAssigned
                                   handleAssignmentEvent() calls handleRegion() calls 
                                   handleRegionSplitting();
 
-TODO: 1. SplitTransaction.java 390 splitStoreFiles();
-      2. HRegion.doClose() returns the store(family) name and store files to split
-      3. The real splitting logic is in SplitTransaction.splitStoreFile(), which calls
-         HRegionFileSystem.splitStoreFile();
-         check HStore.java 1975 commit()
+TODO: !!!!!! do not need to actually split the StoreFile into two real StoreFiles!! Reference should still be OK as the HDFS block will be hosted on the daughter server!!!!!
+      1. continue AssignmentManager.java 3303 
+      2. alter HDFS replica group logic, add namespace
       4. create a configuration file for pre-splits: refer to hbase.apache.org/book/rowkey.design.html

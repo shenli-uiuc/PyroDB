@@ -181,6 +181,8 @@ public class HRegionInfo implements Comparable<HRegionInfo> {
 
   // Shen Li:
   private byte[][] splitKeys = null;
+  private byte[] replicaNamespace = null;
+  private int[] replicaGroupIds = null;
 
   private byte [] endKey = HConstants.EMPTY_BYTE_ARRAY;
   // This flag is in the parent of a split while the parent is still referenced
@@ -308,6 +310,19 @@ public class HRegionInfo implements Comparable<HRegionInfo> {
                      final int startIndex, final int endIndex, 
                      final boolean split, final long regionid)
   throws IllegalArgumentException {
+    this(tableName, splitKeys, startIndex, endIndex, split, regionid,
+         null, null);
+  }
+
+  /**
+   * Shen Li: add parameter replicaNamespace, replicaGroupIds
+   */
+  public HRegionInfo(final TableName tableName, final byte[][] splitKeys,
+                     final int startIndex, final int endIndex, 
+                     final boolean split, final long regionid,
+                     final byte[] replicaNamespace, 
+                     final int[] resplicaGroupIds)
+  throws IllegalArgumentException {
 
     super();
     if (tableName == null) {
@@ -348,6 +363,26 @@ public class HRegionInfo implements Comparable<HRegionInfo> {
         this.splitKeys[i] = splitKeys[i + startIndex + 1].clone();
       }
     }
+
+    // Shen Li: set replica group info
+    if (null == replicaNamespace) {
+      this.replicaNamespace = this.regionName;
+    } else {
+      this.replicaNamespace = replicaNamespace;
+    }
+
+    // Shen Li: replica group ids
+    if (null == replicaGroupIds) {
+      this.replicaGroupIds = generateReplicaGroupIds(splitKeyNum + 1);
+    } else {
+      if (splitKeyNum + 1 != replicaGroupIds.length) {
+        throw new IllegalStateException("Shen Li: invalid splitKeyNum = "
+            + splitKeyNum + ", replicaGroupIds.length = " 
+            + replicaGroupIds.length);
+      }
+      this.replicaGroupIds = replicaGroupIds.clone();
+    }
+
     setHashCode();
   }
 
@@ -370,6 +405,57 @@ public class HRegionInfo implements Comparable<HRegionInfo> {
 
     // Shen Li:
     this.splitKeys = other.splitKeys;
+    this.replicaNamespace = other.getReplicaNamespace();
+    this.replicaGroupIds = other.getReplicaGroupIds();
+  }
+
+  /**
+   * Shen Li:
+   */
+  public byte [] getReplicaNamespace() {
+    return this.replicaNamespace;
+  }
+
+  /**
+   * Shen Li:
+   */
+  public int [] getReplicaGroupIds() {
+    return this.replicaGroupIds;
+  }
+
+  /**
+   * Shen Li:
+   */
+  public int [] getDaughterReplicaGroupIds(boolean isTop) {
+    if (null == replicaGroupIds || replicaGroupIds.length < 3) {
+      throw new IllegalStateException("Shen Li: "
+          + "invalid replicaGroupIds.length, there should be at "
+          + "least 3 replica group id when splitting");
+    }
+    int [] ret = new int [(replicaGroupIds.length - 1) >>> 1];
+    int rgIdIndex = -1;
+    rgIdIndex = isTop ? 1: 2;
+    int layerSize = 1;
+    int retIndex = 0;
+    while(rgIdIndex < replicaGroupIds.length) {
+      for (int i = 0 ; i < layerSize; ++i) {
+        ret[retIndex++] = replicaGroupIds[rgIdIndex + i];
+      }
+      layerSize <<= 1;
+      rgIdIndex = (rgIdIndex << 1) + 1;
+    }
+    return ret;
+  }
+
+  /**
+   * Shen Li
+   */
+  private static int[] generateReplicaGroupIds(int maxSplitNum) {
+    int [] ret = new int[(maxSplitNum << 1) - 1];
+    for (int i = 0 ; i < ret.length; ++i) {
+      ret[i] = i;
+    }
+    return ret;
   }
 
   /**
@@ -777,6 +863,7 @@ public class HRegionInfo implements Comparable<HRegionInfo> {
     Bytes.writeByteArray(out, startKey);
     Bytes.writeByteArray(out, tableName.getName());
     out.writeInt(hashCode);
+    /*
     if (null == this.splitKeys) {
       out.writeInt(0);
     } else {
@@ -785,6 +872,7 @@ public class HRegionInfo implements Comparable<HRegionInfo> {
         Bytes.writeByteArray(out, this.splitKeys[i]);
       }
     }
+    */
   }
 
   /**
@@ -825,6 +913,7 @@ public class HRegionInfo implements Comparable<HRegionInfo> {
       this.tableName = TableName.valueOf(Bytes.readByteArray(in));
       this.hashCode = in.readInt();
       // Shen Li: splitKeys
+      /*
       int splitKeyNum = in.readInt();
       if (splitKeyNum > 0)
         this.splitKeys = new byte[splitKeyNum][];
@@ -833,6 +922,7 @@ public class HRegionInfo implements Comparable<HRegionInfo> {
       for (int i = 0; i < splitKeyNum; ++i) {
         this.splitKeys[i] = Bytes.readByteArray(in);
       }
+      */
     } else {
       throw new IOException("Non-migratable/unknown version=" + getVersion());
     }
@@ -946,6 +1036,13 @@ public class HRegionInfo implements Comparable<HRegionInfo> {
         builder.addSplitKey(HBaseZeroCopyByteString.wrap(splitKey));
       }
     }
+    if (null != info.replicaGroupIds) {
+      for (int rgId : info.replicaGroupIds) {
+        builder.addRgId(rgId);
+      }
+    }
+    builder.setReplicaNamespace(HBaseZeroCopyByteString
+                                .wrap(info.replicaNamespace));
     return builder.build();
   }
 
@@ -990,8 +1087,23 @@ public class HRegionInfo implements Comparable<HRegionInfo> {
       splitKeys = new byte[][] {startKey, endKey};
     }
 
+    // Shen Li: replica group id
+    int [] replicaGroupIds = null;
+    List<Integer> rgIds = proto.getRgIdList();
+    if (null != rgIds && rgIds.size() > 0) {
+      replicaGroupIds = new int[rgIds.size()];
+      for (int i = 0 ; i < replicaGroupIds.length; ++i) {
+        replicaGroupIds[i] = rgIds.get(i);
+      }
+    }
+
+    // Shen Li: replica namespace
+    byte[] replicaNamespace = 
+      proto.getReplicaNamespace().toByteArray();
+
     HRegionInfo hri = new HRegionInfo(
-        tableName, splitKeys, 0, splitKeys.length - 1, split, regionId);
+        tableName, splitKeys, 0, splitKeys.length - 1, split, regionId,
+        replicaNamespace, replicaGroupIds);
     if (proto.hasOffline()) {
       hri.setOffline(proto.getOffline());
     }

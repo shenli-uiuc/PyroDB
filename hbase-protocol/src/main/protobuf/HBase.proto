@@ -66,6 +66,8 @@ message RegionInfo {
   optional bool split = 6;
   // Shen Li
   repeated bytes split_key = 7;
+  repeated int32 rg_id = 8 [packed=true];
+  optional bytes replica_namespace = 9;
 }
 
 /**

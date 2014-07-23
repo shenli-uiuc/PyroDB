@@ -3300,6 +3300,10 @@ public class AssignmentManager extends ZooKeeperListener {
       //TODO: move region now
       LOG.info("Shen Li: receive splitRegion request on AssignmentManger"
           + " with reuseFile set to true");
+      // hri_a and hri_b has replicaNamespace and replicaGroupIds
+      // contact HDFS to get dest server hostname
+      // call ServerManager to translate hostname into ServerName
+      // call balance(RegionPlan(hri, srcServerName, destServerName))
     }
     return true;
   }

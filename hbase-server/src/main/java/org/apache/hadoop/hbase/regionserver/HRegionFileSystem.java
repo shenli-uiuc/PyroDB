@@ -556,37 +556,6 @@ public class HRegionFileSystem {
   }
 
   /**
-   * Shen Li
-   */
-  Pair<Path, Path> splitStoreFileReuseBlocks(final HRegionInfo hri_a,
-      final HRegionInfo hri_b,
-      final String familyName, final StoreFile f, long splitOffset) 
-  throws IOException {
-    // check if it is using HDFS
-    if (!(fs instanceof DistributedFileSystem)) {
-      throw new IllegalStateException("Shen Li: calling "
-          + "HRegionFileSystem.splitStoreFile() with reuseFile = true"
-          + ", but fs is not an instance of DistributedFileSystem");
-    }
-
-    DistributedFileSystem dfs = (DistributedFileSystem) fs;
-
-    // TODO: check how to name the storefile
-    String parentRegionName = regionInfo.getEncodedName();
-    Path splitDir_a = new Path(getSplitsDir(hri_a), familyName);
-    Path p_a = new Path(splitDir_a, 
-                        f.getPath().getName() + "." + parentRegionName);
-    Path splitDir_b = new Path(getSplitsDir(hri_b), familyName);
-    Path p_b = new Path(splitDir_b, 
-                        f.getPath().getName() + "." + parentRegionName);
-    if (dfs.splitFileReuseBlocks(f.getpath(), p_a, p_b, splitOffset)) {
-      return new Pair<Path, Path>(p_a, p_b);
-    } else {
-      return null;
-    }
-  }
-
-  /**
    *
    * Write out a split reference. Package local so it doesnt leak out of
    * regionserver.
