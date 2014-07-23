@@ -501,4 +501,5 @@ TODO: 1. SplitTransaction.java 390 splitStoreFiles();
       2. HRegion.doClose() returns the store(family) name and store files to split
       3. The real splitting logic is in SplitTransaction.splitStoreFile(), which calls
          HRegionFileSystem.splitStoreFile();
+         check HStore.java 1975 commit()
       4. create a configuration file for pre-splits: refer to hbase.apache.org/book/rowkey.design.html

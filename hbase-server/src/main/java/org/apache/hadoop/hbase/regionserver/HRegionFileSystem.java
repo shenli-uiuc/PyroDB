@@ -53,6 +53,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.FSHDFSUtils;
 import org.apache.hadoop.hbase.util.FSUtils;
 
+import org.apache.hadoop.hdfs.DistributedFileSystem;
 /**
  * View to an on-disk Region.
  * Provides the set of methods necessary to interact with the on-disk region data.
@@ -555,7 +556,37 @@ public class HRegionFileSystem {
   }
 
   /**
-   * Shen Li: redirect
+   * Shen Li
+   */
+  Pair<Path, Path> splitStoreFileReuseBlocks(final HRegionInfo hri_a,
+      final HRegionInfo hri_b,
+      final String familyName, final StoreFile f, long splitOffset) 
+  throws IOException {
+    // check if it is using HDFS
+    if (!(fs instanceof DistributedFileSystem)) {
+      throw new IllegalStateException("Shen Li: calling "
+          + "HRegionFileSystem.splitStoreFile() with reuseFile = true"
+          + ", but fs is not an instance of DistributedFileSystem");
+    }
+
+    DistributedFileSystem dfs = (DistributedFileSystem) fs;
+
+    // TODO: check how to name the storefile
+    String parentRegionName = regionInfo.getEncodedName();
+    Path splitDir_a = new Path(getSplitsDir(hri_a), familyName);
+    Path p_a = new Path(splitDir_a, 
+                        f.getPath().getName() + "." + parentRegionName);
+    Path splitDir_b = new Path(getSplitsDir(hri_b), familyName);
+    Path p_b = new Path(splitDir_b, 
+                        f.getPath().getName() + "." + parentRegionName);
+    if (dfs.splitFileReuseBlocks(f.getpath(), p_a, p_b, splitOffset)) {
+      return new Pair<Path, Path>(p_a, p_b);
+    } else {
+      return null;
+    }
+  }
+
+  /**
    *
    * Write out a split reference. Package local so it doesnt leak out of
    * regionserver.
@@ -569,16 +600,6 @@ public class HRegionFileSystem {
    */
   Path splitStoreFile(final HRegionInfo hri, final String familyName,
       final StoreFile f, final byte[] splitRow, final boolean top) throws IOException {
-    return splitStoreFile(hri, familyName, f, splitRow, top, false);
-  }
-
-  /**
-   * Shen Li: add parameter reuseFile
-   */
-  Path splitStoreFile(final HRegionInfo hri, final String familyName,
-      final StoreFile f, final byte[] splitRow, final boolean top,
-      boolean reuseFile) throws IOException {
-
     // Check whether the split row lies in the range of the store file
     // If it is outside the range, return directly.
     if (top) {
@@ -605,27 +626,20 @@ public class HRegionFileSystem {
 
     f.getReader().close(true);
 
-    // Shen Li: TODO: if reuseFile is set to true, split HDFS file
-    // instead of create references
 
-    if (reuseFile) {
-      // check if it is using HDFS
-      // split the file
-    } else {
-      Path splitDir = new Path(getSplitsDir(hri), familyName);
-      // A reference to the bottom half of the hsf store file.
-      Reference r =
-        top ? Reference.createTopReference(splitRow): Reference.createBottomReference(splitRow);
-      // Add the referred-to regions name as a dot separated suffix.
-      // See REF_NAME_REGEX regex above.  The referred-to regions name is
-      // up in the path of the passed in <code>f</code> -- parentdir is family,
-      // then the directory above is the region name.
-      String parentRegionName = regionInfo.getEncodedName();
-      // Write reference with same file id only with the other region name as
-      // suffix and into the new region location (under same family).
-      Path p = new Path(splitDir, f.getPath().getName() + "." + parentRegionName);
-      return r.write(fs, p);
-    }
+    Path splitDir = new Path(getSplitsDir(hri), familyName);
+    // A reference to the bottom half of the hsf store file.
+    Reference r =
+      top ? Reference.createTopReference(splitRow): Reference.createBottomReference(splitRow);
+    // Add the referred-to regions name as a dot separated suffix.
+    // See REF_NAME_REGEX regex above.  The referred-to regions name is
+    // up in the path of the passed in <code>f</code> -- parentdir is family,
+    // then the directory above is the region name.
+    String parentRegionName = regionInfo.getEncodedName();
+    // Write reference with same file id only with the other region name as
+    // suffix and into the new region location (under same family).
+    Path p = new Path(splitDir, f.getPath().getName() + "." + parentRegionName);
+    return r.write(fs, p);
   }
 
   // ===========================================================================
