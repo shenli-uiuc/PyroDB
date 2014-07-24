@@ -3301,7 +3301,16 @@ public class AssignmentManager extends ZooKeeperListener {
       LOG.info("Shen Li: receive splitRegion request on AssignmentManger"
           + " with reuseFile set to true");
       // hri_a and hri_b has replicaNamespace and replicaGroupIds
-      // contact HDFS to get dest server hostname
+      // this.server should be an instance of HMaster, if not throw exception
+      //
+      // no as HMaster don't have reference to HDFS, and that will further 
+      // block master.
+      //
+      //
+      // SplitRequest has the reference to parent HRegion, which 
+      // has the reference to FileSystem. It can be retrieved by calling
+      // HRegion.getFileSystem(). So, we should directly
+      // pass the hostnames to HMaster from HRegion
       // call ServerManager to translate hostname into ServerName
       // call balance(RegionPlan(hri, srcServerName, destServerName))
     }
