@@ -3297,16 +3297,20 @@ public class AssignmentManager extends ZooKeeperListener {
     LOG.info("Shen Li: after deleting node");
     // Shen Li: add here to move new regions to new servers
     if (reuseFile) {
-      //TODO: move region now
       LOG.info("Shen Li: receive splitRegion request on AssignmentManger"
           + " with reuseFile set to true");
-      // hri_a and hri_b has replicaNamespace and replicaGroupIds
-      // this.server should be an instance of HMaster, if not throw exception
-      //
-      // no as HMaster don't have reference to HDFS, and that will further 
-      // block master.
-      //
-      //
+      if (null == hri_a.getDestHostname() || null == hri_b.getDestHostname()) {
+        throw new IllegalStateException("Shen Li: AssignmentManager got "
+            + "null dest hostnames with reuseFile set to true");
+      }
+      List<ServerName> aServers = 
+        serverManager.getDestinationServersList(hri_a.getDestHostname()); 
+      List<ServerName> bServers =
+        serverManager.getDestinationServersList(hri_b.getDestHostname());
+      // TODO: only need to move one of them
+      balance(new RegionPlan(hri_a, sn, aServers.get(0)));
+      balance(new RegionPlan(hri_b, sn, bServers.get(0)));
+
       // SplitRequest has the reference to parent HRegion, which 
       // has the reference to FileSystem. It can be retrieved by calling
       // HRegion.getFileSystem(). So, we should directly

@@ -3737,6 +3737,21 @@ public final class HBaseProtos {
      * <code>optional bytes replica_namespace = 9;</code>
      */
     com.google.protobuf.ByteString getReplicaNamespace();
+
+    // optional string dest_hostname = 10;
+    /**
+     * <code>optional string dest_hostname = 10;</code>
+     */
+    boolean hasDestHostname();
+    /**
+     * <code>optional string dest_hostname = 10;</code>
+     */
+    java.lang.String getDestHostname();
+    /**
+     * <code>optional string dest_hostname = 10;</code>
+     */
+    com.google.protobuf.ByteString
+        getDestHostnameBytes();
   }
   /**
    * Protobuf type {@code RegionInfo}
@@ -3864,6 +3879,11 @@ public final class HBaseProtos {
             case 74: {
               bitField0_ |= 0x00000040;
               replicaNamespace_ = input.readBytes();
+              break;
+            }
+            case 82: {
+              bitField0_ |= 0x00000080;
+              destHostname_ = input.readBytes();
               break;
             }
           }
@@ -4089,6 +4109,49 @@ public final class HBaseProtos {
       return replicaNamespace_;
     }
 
+    // optional string dest_hostname = 10;
+    public static final int DEST_HOSTNAME_FIELD_NUMBER = 10;
+    private java.lang.Object destHostname_;
+    /**
+     * <code>optional string dest_hostname = 10;</code>
+     */
+    public boolean hasDestHostname() {
+      return ((bitField0_ & 0x00000080) == 0x00000080);
+    }
+    /**
+     * <code>optional string dest_hostname = 10;</code>
+     */
+    public java.lang.String getDestHostname() {
+      java.lang.Object ref = destHostname_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        if (bs.isValidUtf8()) {
+          destHostname_ = s;
+        }
+        return s;
+      }
+    }
+    /**
+     * <code>optional string dest_hostname = 10;</code>
+     */
+    public com.google.protobuf.ByteString
+        getDestHostnameBytes() {
+      java.lang.Object ref = destHostname_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        destHostname_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
     private void initFields() {
       regionId_ = 0L;
       tableName_ = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName.getDefaultInstance();
@@ -4099,6 +4162,7 @@ public final class HBaseProtos {
       splitKey_ = java.util.Collections.emptyList();
       rgId_ = java.util.Collections.emptyList();
       replicaNamespace_ = com.google.protobuf.ByteString.EMPTY;
+      destHostname_ = "";
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -4154,6 +4218,9 @@ public final class HBaseProtos {
       }
       if (((bitField0_ & 0x00000040) == 0x00000040)) {
         output.writeBytes(9, replicaNamespace_);
+      }
+      if (((bitField0_ & 0x00000080) == 0x00000080)) {
+        output.writeBytes(10, getDestHostnameBytes());
       }
       getUnknownFields().writeTo(output);
     }
@@ -4214,6 +4281,10 @@ public final class HBaseProtos {
       if (((bitField0_ & 0x00000040) == 0x00000040)) {
         size += com.google.protobuf.CodedOutputStream
           .computeBytesSize(9, replicaNamespace_);
+      }
+      if (((bitField0_ & 0x00000080) == 0x00000080)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBytesSize(10, getDestHostnameBytes());
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -4277,6 +4348,11 @@ public final class HBaseProtos {
         result = result && getReplicaNamespace()
             .equals(other.getReplicaNamespace());
       }
+      result = result && (hasDestHostname() == other.hasDestHostname());
+      if (hasDestHostname()) {
+        result = result && getDestHostname()
+            .equals(other.getDestHostname());
+      }
       result = result &&
           getUnknownFields().equals(other.getUnknownFields());
       return result;
@@ -4325,6 +4401,10 @@ public final class HBaseProtos {
       if (hasReplicaNamespace()) {
         hash = (37 * hash) + REPLICA_NAMESPACE_FIELD_NUMBER;
         hash = (53 * hash) + getReplicaNamespace().hashCode();
+      }
+      if (hasDestHostname()) {
+        hash = (37 * hash) + DEST_HOSTNAME_FIELD_NUMBER;
+        hash = (53 * hash) + getDestHostname().hashCode();
       }
       hash = (29 * hash) + getUnknownFields().hashCode();
       memoizedHashCode = hash;
@@ -4463,6 +4543,8 @@ public final class HBaseProtos {
         bitField0_ = (bitField0_ & ~0x00000080);
         replicaNamespace_ = com.google.protobuf.ByteString.EMPTY;
         bitField0_ = (bitField0_ & ~0x00000100);
+        destHostname_ = "";
+        bitField0_ = (bitField0_ & ~0x00000200);
         return this;
       }
 
@@ -4533,6 +4615,10 @@ public final class HBaseProtos {
           to_bitField0_ |= 0x00000040;
         }
         result.replicaNamespace_ = replicaNamespace_;
+        if (((from_bitField0_ & 0x00000200) == 0x00000200)) {
+          to_bitField0_ |= 0x00000080;
+        }
+        result.destHostname_ = destHostname_;
         result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
@@ -4589,6 +4675,11 @@ public final class HBaseProtos {
         }
         if (other.hasReplicaNamespace()) {
           setReplicaNamespace(other.getReplicaNamespace());
+        }
+        if (other.hasDestHostname()) {
+          bitField0_ |= 0x00000200;
+          destHostname_ = other.destHostname_;
+          onChanged();
         }
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
@@ -5115,6 +5206,80 @@ public final class HBaseProtos {
       public Builder clearReplicaNamespace() {
         bitField0_ = (bitField0_ & ~0x00000100);
         replicaNamespace_ = getDefaultInstance().getReplicaNamespace();
+        onChanged();
+        return this;
+      }
+
+      // optional string dest_hostname = 10;
+      private java.lang.Object destHostname_ = "";
+      /**
+       * <code>optional string dest_hostname = 10;</code>
+       */
+      public boolean hasDestHostname() {
+        return ((bitField0_ & 0x00000200) == 0x00000200);
+      }
+      /**
+       * <code>optional string dest_hostname = 10;</code>
+       */
+      public java.lang.String getDestHostname() {
+        java.lang.Object ref = destHostname_;
+        if (!(ref instanceof java.lang.String)) {
+          java.lang.String s = ((com.google.protobuf.ByteString) ref)
+              .toStringUtf8();
+          destHostname_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>optional string dest_hostname = 10;</code>
+       */
+      public com.google.protobuf.ByteString
+          getDestHostnameBytes() {
+        java.lang.Object ref = destHostname_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          destHostname_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>optional string dest_hostname = 10;</code>
+       */
+      public Builder setDestHostname(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000200;
+        destHostname_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string dest_hostname = 10;</code>
+       */
+      public Builder clearDestHostname() {
+        bitField0_ = (bitField0_ & ~0x00000200);
+        destHostname_ = getDefaultInstance().getDestHostname();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string dest_hostname = 10;</code>
+       */
+      public Builder setDestHostnameBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000200;
+        destHostname_ = value;
         onChanged();
         return this;
       }
@@ -16699,44 +16864,44 @@ public final class HBaseProtos {
       "ingPair\"o\n\022ColumnFamilySchema\022\014\n\004name\030\001 " +
       "\002(\014\022#\n\nattributes\030\002 \003(\0132\017.BytesBytesPair" +
       "\022&\n\rconfiguration\030\003 \003(\0132\017.NameStringPair" +
-      "\"\304\001\n\nRegionInfo\022\021\n\tregion_id\030\001 \002(\004\022\036\n\nta",
+      "\"\333\001\n\nRegionInfo\022\021\n\tregion_id\030\001 \002(\004\022\036\n\nta",
       "ble_name\030\002 \002(\0132\n.TableName\022\021\n\tstart_key\030" +
       "\003 \001(\014\022\017\n\007end_key\030\004 \001(\014\022\017\n\007offline\030\005 \001(\010\022" +
       "\r\n\005split\030\006 \001(\010\022\021\n\tsplit_key\030\007 \003(\014\022\021\n\005rg_" +
-      "id\030\010 \003(\005B\002\020\001\022\031\n\021replica_namespace\030\t \001(\014\"" +
-      "1\n\014FavoredNodes\022!\n\014favored_node\030\001 \003(\0132\013." +
-      "ServerName\"\225\001\n\017RegionSpecifier\0222\n\004type\030\001" +
-      " \002(\0162$.RegionSpecifier.RegionSpecifierTy" +
-      "pe\022\r\n\005value\030\002 \002(\014\"?\n\023RegionSpecifierType" +
-      "\022\017\n\013REGION_NAME\020\001\022\027\n\023ENCODED_REGION_NAME" +
-      "\020\002\"%\n\tTimeRange\022\014\n\004from\030\001 \001(\004\022\n\n\002to\030\002 \001(",
-      "\004\"A\n\nServerName\022\021\n\thost_name\030\001 \002(\t\022\014\n\004po" +
-      "rt\030\002 \001(\r\022\022\n\nstart_code\030\003 \001(\004\"\033\n\013Coproces" +
-      "sor\022\014\n\004name\030\001 \002(\t\"-\n\016NameStringPair\022\014\n\004n" +
-      "ame\030\001 \002(\t\022\r\n\005value\030\002 \002(\t\",\n\rNameBytesPai" +
-      "r\022\014\n\004name\030\001 \002(\t\022\r\n\005value\030\002 \001(\014\"/\n\016BytesB" +
-      "ytesPair\022\r\n\005first\030\001 \002(\014\022\016\n\006second\030\002 \002(\014\"" +
-      ",\n\rNameInt64Pair\022\014\n\004name\030\001 \001(\t\022\r\n\005value\030" +
-      "\002 \001(\003\"\256\001\n\023SnapshotDescription\022\014\n\004name\030\001 " +
-      "\002(\t\022\r\n\005table\030\002 \001(\t\022\030\n\rcreation_time\030\003 \001(" +
-      "\003:\0010\022.\n\004type\030\004 \001(\0162\031.SnapshotDescription",
-      ".Type:\005FLUSH\022\017\n\007version\030\005 \001(\005\"\037\n\004Type\022\014\n" +
-      "\010DISABLED\020\000\022\t\n\005FLUSH\020\001\"}\n\024ProcedureDescr" +
-      "iption\022\021\n\tsignature\030\001 \002(\t\022\020\n\010instance\030\002 " +
-      "\001(\t\022\030\n\rcreation_time\030\003 \001(\003:\0010\022&\n\rconfigu" +
-      "ration\030\004 \003(\0132\017.NameStringPair\"\n\n\010EmptyMs" +
-      "g\"\033\n\007LongMsg\022\020\n\010long_msg\030\001 \002(\003\"\037\n\tDouble" +
-      "Msg\022\022\n\ndouble_msg\030\001 \002(\001\"\'\n\rBigDecimalMsg" +
-      "\022\026\n\016bigdecimal_msg\030\001 \002(\014\"5\n\004UUID\022\026\n\016leas" +
-      "t_sig_bits\030\001 \002(\004\022\025\n\rmost_sig_bits\030\002 \002(\004\"" +
-      "K\n\023NamespaceDescriptor\022\014\n\004name\030\001 \002(\014\022&\n\r",
-      "configuration\030\002 \003(\0132\017.NameStringPair\"$\n\020" +
-      "RegionServerInfo\022\020\n\010infoPort\030\001 \001(\005*r\n\013Co" +
-      "mpareType\022\010\n\004LESS\020\000\022\021\n\rLESS_OR_EQUAL\020\001\022\t" +
-      "\n\005EQUAL\020\002\022\r\n\tNOT_EQUAL\020\003\022\024\n\020GREATER_OR_E" +
-      "QUAL\020\004\022\013\n\007GREATER\020\005\022\t\n\005NO_OP\020\006B>\n*org.ap" +
-      "ache.hadoop.hbase.protobuf.generatedB\013HB" +
-      "aseProtosH\001\240\001\001"
+      "id\030\010 \003(\005B\002\020\001\022\031\n\021replica_namespace\030\t \001(\014\022" +
+      "\025\n\rdest_hostname\030\n \001(\t\"1\n\014FavoredNodes\022!" +
+      "\n\014favored_node\030\001 \003(\0132\013.ServerName\"\225\001\n\017Re" +
+      "gionSpecifier\0222\n\004type\030\001 \002(\0162$.RegionSpec" +
+      "ifier.RegionSpecifierType\022\r\n\005value\030\002 \002(\014" +
+      "\"?\n\023RegionSpecifierType\022\017\n\013REGION_NAME\020\001" +
+      "\022\027\n\023ENCODED_REGION_NAME\020\002\"%\n\tTimeRange\022\014",
+      "\n\004from\030\001 \001(\004\022\n\n\002to\030\002 \001(\004\"A\n\nServerName\022\021" +
+      "\n\thost_name\030\001 \002(\t\022\014\n\004port\030\002 \001(\r\022\022\n\nstart" +
+      "_code\030\003 \001(\004\"\033\n\013Coprocessor\022\014\n\004name\030\001 \002(\t" +
+      "\"-\n\016NameStringPair\022\014\n\004name\030\001 \002(\t\022\r\n\005valu" +
+      "e\030\002 \002(\t\",\n\rNameBytesPair\022\014\n\004name\030\001 \002(\t\022\r" +
+      "\n\005value\030\002 \001(\014\"/\n\016BytesBytesPair\022\r\n\005first" +
+      "\030\001 \002(\014\022\016\n\006second\030\002 \002(\014\",\n\rNameInt64Pair\022" +
+      "\014\n\004name\030\001 \001(\t\022\r\n\005value\030\002 \001(\003\"\256\001\n\023Snapsho" +
+      "tDescription\022\014\n\004name\030\001 \002(\t\022\r\n\005table\030\002 \001(" +
+      "\t\022\030\n\rcreation_time\030\003 \001(\003:\0010\022.\n\004type\030\004 \001(",
+      "\0162\031.SnapshotDescription.Type:\005FLUSH\022\017\n\007v" +
+      "ersion\030\005 \001(\005\"\037\n\004Type\022\014\n\010DISABLED\020\000\022\t\n\005FL" +
+      "USH\020\001\"}\n\024ProcedureDescription\022\021\n\tsignatu" +
+      "re\030\001 \002(\t\022\020\n\010instance\030\002 \001(\t\022\030\n\rcreation_t" +
+      "ime\030\003 \001(\003:\0010\022&\n\rconfiguration\030\004 \003(\0132\017.Na" +
+      "meStringPair\"\n\n\010EmptyMsg\"\033\n\007LongMsg\022\020\n\010l" +
+      "ong_msg\030\001 \002(\003\"\037\n\tDoubleMsg\022\022\n\ndouble_msg" +
+      "\030\001 \002(\001\"\'\n\rBigDecimalMsg\022\026\n\016bigdecimal_ms" +
+      "g\030\001 \002(\014\"5\n\004UUID\022\026\n\016least_sig_bits\030\001 \002(\004\022" +
+      "\025\n\rmost_sig_bits\030\002 \002(\004\"K\n\023NamespaceDescr",
+      "iptor\022\014\n\004name\030\001 \002(\014\022&\n\rconfiguration\030\002 \003" +
+      "(\0132\017.NameStringPair\"$\n\020RegionServerInfo\022" +
+      "\020\n\010infoPort\030\001 \001(\005*r\n\013CompareType\022\010\n\004LESS" +
+      "\020\000\022\021\n\rLESS_OR_EQUAL\020\001\022\t\n\005EQUAL\020\002\022\r\n\tNOT_" +
+      "EQUAL\020\003\022\024\n\020GREATER_OR_EQUAL\020\004\022\013\n\007GREATER" +
+      "\020\005\022\t\n\005NO_OP\020\006B>\n*org.apache.hadoop.hbase" +
+      ".protobuf.generatedB\013HBaseProtosH\001\240\001\001"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
@@ -16766,7 +16931,7 @@ public final class HBaseProtos {
           internal_static_RegionInfo_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_RegionInfo_descriptor,
-              new java.lang.String[] { "RegionId", "TableName", "StartKey", "EndKey", "Offline", "Split", "SplitKey", "RgId", "ReplicaNamespace", });
+              new java.lang.String[] { "RegionId", "TableName", "StartKey", "EndKey", "Offline", "Split", "SplitKey", "RgId", "ReplicaNamespace", "DestHostname", });
           internal_static_FavoredNodes_descriptor =
             getDescriptor().getMessageTypes().get(4);
           internal_static_FavoredNodes_fieldAccessorTable = new

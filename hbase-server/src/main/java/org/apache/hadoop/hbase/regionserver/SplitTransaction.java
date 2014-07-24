@@ -101,6 +101,8 @@ public class SplitTransaction {
 
   // Shen Li: added parameter
   private boolean reuseFile = false;
+  private String destA = null;
+  private String destB = null;
 
   /*
    * Row to split around
@@ -158,17 +160,19 @@ public class SplitTransaction {
    * @param splitrow Row to split around
    */
   public SplitTransaction(final HRegion r, final byte [] splitrow) {
-    this(r, splitrow, false);
+    this(r, splitrow, false, null, null);
   }
 
   /**
    * Shen Li: add parameter reuseFile
    */
   public SplitTransaction(final HRegion r, final byte [] splitrow, 
-                          boolean reuseFile) {
+                          boolean reuseFile, String destA, String destB) {
     this.parent = r;
     this.splitrow = splitrow;
     this.reuseFile = reuseFile;
+    this.destA = destA;
+    this.destB = destB;
   }
 
   /**
@@ -197,6 +201,10 @@ public class SplitTransaction {
         throw new IllegalStateException("Shen Li: allKeys length = " 
             + length + ", not able to further split");
       }
+      if (null == destA || null == destB) {
+        throw new IllegalStateException("Shen Li: In SplitTransaction "
+            + "destA and destB must not be null when reuseFile is true");
+      }
       LOG.info("Shen Li: init daughter regions with reuseFile = true");
       int midIndex = allKeys.length >> 1;
       this.hri_a = new HRegionInfo(hri.getTable(), allKeys, 
@@ -207,6 +215,8 @@ public class SplitTransaction {
                                    midIndex, allKeys.length - 1, false, rid,
                                    hri.getReplicaNamespace(),
                                    hri.getDaughterReplicaGroupIds(false));
+      hri_a.setDestHostname(destA);
+      hri_b.setDestHostname(destB);
     } else {
       byte [] startKey = hri.getStartKey();
       byte [] endKey = hri.getEndKey();

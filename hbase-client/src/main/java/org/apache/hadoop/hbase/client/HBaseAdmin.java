@@ -2013,23 +2013,26 @@ public class HBaseAdmin implements Admin {
   /**
    * Shen Li: split a region using the replicaGroup splitPoint 
    */
-  public void split(final byte[] tableNameOrRegionName, boolean reuseFile)
+  public void split(final byte[] tableNameOrRegionName, boolean reuseFile,
+                    String destA, String destB)
   throws IOException, InterruptedException {
-    split(tableNameOrRegionName, null, reuseFile);
+    split(tableNameOrRegionName, null, reuseFile, destA, destB);
   }
 
   // Shen Li: redirect
   public void split(final String tableNameOrRegionName,
     final String splitPoint) throws IOException, InterruptedException {
-    split(tableNameOrRegionName, splitPoint, false);
+    split(tableNameOrRegionName, splitPoint, false, null, null);
   }
 
   /**
    * Shen Li: add boolean reuseFile parameter
    */
   public void split(final String tableNameOrRegionName,
-    final String splitPoint, boolean reuseFile) throws IOException, InterruptedException {
-    split(Bytes.toBytes(tableNameOrRegionName), Bytes.toBytes(splitPoint), reuseFile);
+    final String splitPoint, boolean reuseFile, String destA, String destB) 
+  throws IOException, InterruptedException {
+    split(Bytes.toBytes(tableNameOrRegionName), Bytes.toBytes(splitPoint), 
+          reuseFile, destA, destB);
   }
 
 
@@ -2046,11 +2049,12 @@ public class HBaseAdmin implements Admin {
    */
   public void split(final byte[] tableNameOrRegionName,
       final byte [] splitPoint) throws IOException, InterruptedException {
-    split(tableNameOrRegionName, splitPoint, false);
+    split(tableNameOrRegionName, splitPoint, false, null, null);
   }
 
   public void split(final byte[] tableNameOrRegionName,
-      final byte [] splitPoint, boolean reuseFile) 
+      final byte [] splitPoint, boolean reuseFile,
+      String destA, String destB) 
       throws IOException, InterruptedException {
     LOG.info("Shen Li: in split(byte[], byte[], boolean)");
     CatalogTracker ct = getCatalogTracker();
@@ -2062,7 +2066,8 @@ public class HBaseAdmin implements Admin {
             throw new NoServerForRegionException(Bytes.toStringBinary(tableNameOrRegionName));
         } else {
           split(regionServerPair.getSecond(), 
-                regionServerPair.getFirst(), splitPoint, reuseFile);
+                regionServerPair.getFirst(), splitPoint, 
+                reuseFile, destA, destB);
         }
       } else {
         final TableName tableName =
@@ -2080,7 +2085,8 @@ public class HBaseAdmin implements Admin {
           if (splitPoint != null && !r.containsRow(splitPoint)) continue;
           // call out to region server to do split now
           // Shen Li: add parameter reuseFile
-          split(pair.getSecond(), pair.getFirst(), splitPoint, reuseFile);
+          split(pair.getSecond(), pair.getFirst(), splitPoint, 
+                reuseFile, destA, destB);
         }
       }
     } finally {
@@ -2093,14 +2099,15 @@ public class HBaseAdmin implements Admin {
    */
   private void split(final ServerName sn, final HRegionInfo hri,
       byte[] splitPoint) throws IOException {
-    split(sn, hri, splitPoint, false);
+    split(sn, hri, splitPoint, false, null, null);
   }
 
   /**
    * Shen Li: add parameter reuseFile
    */
   private void split(final ServerName sn, final HRegionInfo hri,
-      byte[] splitPoint, boolean reuseFile) throws IOException {
+      byte[] splitPoint, boolean reuseFile, 
+      String destA, String destB) throws IOException {
     if (hri.getStartKey() != null && splitPoint != null &&
          Bytes.compareTo(hri.getStartKey(), splitPoint) == 0) {
        throw new IOException("should not give a splitkey which equals to startkey!");
@@ -2108,7 +2115,7 @@ public class HBaseAdmin implements Admin {
     AdminService.BlockingInterface admin = this.connection.getAdmin(sn);
     // Shen Li: add parameter reuseFile
     LOG.info("Shen Li: calling ProtobufUtil.split");
-    ProtobufUtil.split(admin, hri, splitPoint, reuseFile);
+    ProtobufUtil.split(admin, hri, splitPoint, reuseFile, destA, destB);
   }
 
   /**

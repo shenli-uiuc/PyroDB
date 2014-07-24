@@ -824,7 +824,7 @@ public final class RequestConverter {
   */
  public static SplitRegionRequest buildSplitRegionRequest(
      final byte[] regionName, final byte[] splitPoint) {
-   return buildSplitRegionRequest(regionName, splitPoint, false);
+   return buildSplitRegionRequest(regionName, splitPoint, false, null, null);
  }
 
  /**
@@ -832,7 +832,7 @@ public final class RequestConverter {
   */
  public static SplitRegionRequest buildSplitRegionRequest(
      final byte[] regionName, final byte[] splitPoint,
-     boolean reuseFile) {
+     boolean reuseFile, String destA, String destB) {
    SplitRegionRequest.Builder builder = SplitRegionRequest.newBuilder();
    RegionSpecifier region = buildRegionSpecifier(
      RegionSpecifierType.REGION_NAME, regionName);
@@ -842,6 +842,8 @@ public final class RequestConverter {
    }
    if (reuseFile) {
      builder.setReuseFile(reuseFile);
+     builder.setDestA(destA);
+     builder.setDestB(destB);
    }
    return builder.build();
  }

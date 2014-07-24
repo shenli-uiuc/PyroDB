@@ -48,19 +48,27 @@ class SplitRequest implements Runnable {
    * Shen Li
    */
   SplitRequest(HRegion region, byte[] midKey, HRegionServer hrs) {
-    this(region, midKey, hrs, false);
+    this(region, midKey, hrs, false, null, null);
   }
 
   /**
-   * Shen Li: added parameter reuseFile
+   * Shen Li: add parameter reuseFile, destA, destB 
    */
   SplitRequest(HRegion region, byte[] midKey, 
-               HRegionServer hrs, boolean reuseFile) {
+               HRegionServer hrs, boolean reuseFile,
+               String destA, String destB) {
     Preconditions.checkNotNull(hrs);
     this.parent = region;
     this.midKey = midKey;
     this.server = hrs;
+    if (reuseFile && (null == destA || null == destB)) {
+      throw new IllegalStateException("Shen Li: when reuseFile is true"
+          + ", destA and destB must not be null: "
+          + destA + ", " + destB);
+    }
     this.reuseFile = reuseFile;
+    this.destA = destA;
+    this.destB = destB;
   }
 
   @Override
@@ -79,10 +87,17 @@ class SplitRequest implements Runnable {
     }
     try {
       final long startTime = System.currentTimeMillis();
+      // Shen Li: TODO get dest hostnames
+      Pair<String, String> hostnames = new Pair<String, String>(null, null);
+      if (reuseFile) {
+        hostnames = parent.getSplitHostnames();
+      }
       // Shen Li: add parameter reuseFile
       LOG.info("Shen Li: SplitRequest calling SplitTransaction with reuseFile "
-                + reuseFile);
-      SplitTransaction st = new SplitTransaction(parent, midKey, reuseFile);
+                + reuseFile + ", destA = " + destA + ", destB = " + destB);
+      SplitTransaction st = new SplitTransaction(parent, midKey, reuseFile, 
+                                                 hostnames.first, 
+                                                 hostnames.second);
 
       //acquire a shared read lock on the table, so that table schema modifications
       //do not happen concurrently
@@ -94,6 +109,7 @@ class SplitRequest implements Runnable {
         tableLock = null;
         throw ex;
       }
+
 
       // If prepare does not return true, for some reason -- logged inside in
       // the prepare call -- we are not ready to split just now. Just return.

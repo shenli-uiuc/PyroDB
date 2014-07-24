@@ -1692,18 +1692,20 @@ public final class ProtobufUtil {
    */
   public static void split(final AdminService.BlockingInterface admin,
       final HRegionInfo hri, byte[] splitPoint) throws IOException {
-    split(admin, hri, splitPoint, false);
+    split(admin, hri, splitPoint, false, null, null);
   }
 
   /**
    * Shen Li: add parameter reuseFile
    */
   public static void split(final AdminService.BlockingInterface admin,
-      final HRegionInfo hri, byte[] splitPoint, boolean reuseFile) 
+      final HRegionInfo hri, byte[] splitPoint, boolean reuseFile,
+      String destA, String destB) 
       throws IOException {
     SplitRegionRequest request =
       RequestConverter.buildSplitRegionRequest(hri.getRegionName(), 
-                                               splitPoint, reuseFile);
+                                               splitPoint, reuseFile,
+                                               destA, destB);
     try {
       admin.splitRegion(null, request);
     } catch (ServiceException se) {

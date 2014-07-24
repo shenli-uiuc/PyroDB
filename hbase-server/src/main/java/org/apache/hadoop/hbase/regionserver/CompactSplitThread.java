@@ -215,14 +215,15 @@ public class CompactSplitThread implements CompactionRequestor {
    * Shen Li: redirect
    */
   public synchronized void requestSplit(final HRegion r, byte[] midKey) {
-    requestSplit(r, midKey, false);
+    requestSplit(r, midKey, false, null, null);
   }
 
   /**
    * Shen Li: added parameter reuseFile
    */
   public synchronized void requestSplit(final HRegion r, 
-                                        byte[] midKey, boolean reuseFile) {
+                                        byte[] midKey, boolean reuseFile,
+                                        String destA, String destB) {
     LOG.info("Shen Li: in CompactSplitThread.requestSplit with reuseFile = "
         + reuseFile);
     if (midKey == null && !reuseFile) {
@@ -231,10 +232,14 @@ public class CompactSplitThread implements CompactionRequestor {
         " not splittable because midkey=null");
       return;
     }
+    if (reuseFile && (null == destA || null == destB)) {
+      LOG.info("Shen Li: null destA or destB with true reuseFile");
+      return;
+    }
     try {
       LOG.info("Shen Li: before split.execute(SplitRequest)");
       this.splits.execute(new SplitRequest(r, midKey, this.server, 
-                                           reuseFile));
+                                           reuseFile, destA, destB));
       LOG.info("Shen Li: after split.execute(SplitRequest)");
       if (LOG.isDebugEnabled()) {
         LOG.debug("Split requested for " + r + ".  " + this);

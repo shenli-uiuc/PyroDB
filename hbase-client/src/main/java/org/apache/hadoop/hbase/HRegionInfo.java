@@ -183,6 +183,7 @@ public class HRegionInfo implements Comparable<HRegionInfo> {
   private byte[][] splitKeys = null;
   private byte[] replicaNamespace = null;
   private int[] replicaGroupIds = null;
+  private String destHostname = null;
 
   private byte [] endKey = HConstants.EMPTY_BYTE_ARRAY;
   // This flag is in the parent of a split while the parent is still referenced
@@ -407,6 +408,20 @@ public class HRegionInfo implements Comparable<HRegionInfo> {
     this.splitKeys = other.splitKeys;
     this.replicaNamespace = other.getReplicaNamespace();
     this.replicaGroupIds = other.getReplicaGroupIds();
+  }
+
+  /**
+   * Shen Li:
+   */
+  public void setDestHostname(String dest) {
+    this.destHostname = dest;
+  }
+
+  /**
+   * Shen Li
+   */
+  public String getDestHostname() {
+    return this.destHostname;
   }
 
   /**
@@ -1043,6 +1058,9 @@ public class HRegionInfo implements Comparable<HRegionInfo> {
     }
     builder.setReplicaNamespace(HBaseZeroCopyByteString
                                 .wrap(info.replicaNamespace));
+    // Shen Li: split-move
+    if (null == info.destHostname)
+    builder.setDestHostname(info.destHostname);
     return builder.build();
   }
 
@@ -1100,10 +1118,14 @@ public class HRegionInfo implements Comparable<HRegionInfo> {
     // Shen Li: replica namespace
     byte[] replicaNamespace = 
       proto.getReplicaNamespace().toByteArray();
+    String destHostname = proto.getDestHostname();
 
     HRegionInfo hri = new HRegionInfo(
         tableName, splitKeys, 0, splitKeys.length - 1, split, regionId,
         replicaNamespace, replicaGroupIds);
+    if (null != destHostname) {
+      hri.setDestHostname(destHostname);
+    }
     if (proto.hasOffline()) {
       hri.setOffline(proto.getOffline());
     }
