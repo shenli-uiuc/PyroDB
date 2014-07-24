@@ -1442,8 +1442,6 @@ public class RSRpcServices implements HBaseRPCErrorHandler,
       boolean reuseFile = request.getReuseFile();
       // TODO: should not ask client to provide dest hostnames
       // do it in SplitRequest
-      String destA = request.getDestA();
-      String destB = request.getDestB();
       region.startRegionOperation(Operation.SPLIT_REGION);
       LOG.info("Shen Li: Splitting " + region.getRegionNameAsString());
       region.flushcache();
@@ -1453,7 +1451,7 @@ public class RSRpcServices implements HBaseRPCErrorHandler,
       }
       region.forceSplit(splitPoint);
       regionServer.compactSplitThread
-        .requestSplit(region, region.checkSplit(), reuseFile, destA, destB);
+        .requestSplit(region, region.checkSplit(), reuseFile);
       return SplitRegionResponse.newBuilder().build();
     } catch (IOException ie) {
       throw new ServiceException(ie);

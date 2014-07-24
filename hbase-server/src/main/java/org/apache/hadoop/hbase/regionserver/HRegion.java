@@ -63,6 +63,9 @@ import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
+//Shen Li
+import org.apache.hadoop.hdfs.DistributedFileSystem;
+
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
@@ -923,6 +926,25 @@ public class HRegion implements HeapSize { // , Writable{
   /** @return a HRegionInfo object for this region */
   public HRegionInfo getRegionInfo() {
     return this.fs.getRegionInfo();
+  }
+
+  public Pair<String, String> getSplitHostnames() {
+    String namespace = new String(getRegionInfo().getReplicaNamespace());
+    int [] groupIds = getRegionInfo().getReplicaGroupIds();
+
+    FileSystem dfs = getFilesystem();
+    if (!(dfs instanceof DistributedFileSystem)) {
+      throw new IllegalStateException("Shen Li: HRegion can only  "
+          + "retrieve replica group hostnames from DistributeFileSystem "
+          + "instances");
+    } else if (groupIds.length < 3) {
+      throw new IllegalStateException("Shen Li: groupIds.length = "
+          + groupIds.length + ", cannot be further split");
+    }
+
+    String destA = dfs.getReplicaGroupLocation(namespace, "" + groupIds[1]);
+    String destB = dfs.getReplicaGroupLocation(namespace, "" + groupIds[2]);
+    return new Pair<String, String>(destA, destB);
   }
 
   /**

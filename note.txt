@@ -1,5 +1,8 @@
 org.apache.hadoop.hbase.PerformanceEvaluation
 
+By default, maven stores its artifacts in
+/home/shen/.m2/repository/org/apache/hadoop/hadoop-hdfs/2.4.0
+
 IMPORTANT:
 Moore curve helps to reduce the amount of scans. However, since hfile blocks 
 does not respect Moore curve block (quad-tree block) boundaries. we may end

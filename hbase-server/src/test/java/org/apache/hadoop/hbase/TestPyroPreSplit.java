@@ -56,7 +56,7 @@ public class TestPyroPreSplit extends Configured {
       int prevRegionNum = admin.getTableRegions(desc.getTableName()).size();
       boolean shouldSplit = Boolean.parseBoolean(args[2]);
       if (shouldSplit) {
-        admin.split(rInfos.get(1).getRegionName(), true, "", "");
+        admin.split(rInfos.get(1).getRegionName(), true);
      
         int cnt = 0;
         while (prevRegionNum >= 

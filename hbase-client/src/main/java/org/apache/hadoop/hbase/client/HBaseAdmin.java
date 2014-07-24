@@ -2013,26 +2013,25 @@ public class HBaseAdmin implements Admin {
   /**
    * Shen Li: split a region using the replicaGroup splitPoint 
    */
-  public void split(final byte[] tableNameOrRegionName, boolean reuseFile,
-                    String destA, String destB)
+  public void split(final byte[] tableNameOrRegionName, boolean reuseFile)
   throws IOException, InterruptedException {
-    split(tableNameOrRegionName, null, reuseFile, destA, destB);
+    split(tableNameOrRegionName, null, reuseFile);
   }
 
   // Shen Li: redirect
   public void split(final String tableNameOrRegionName,
     final String splitPoint) throws IOException, InterruptedException {
-    split(tableNameOrRegionName, splitPoint, false, null, null);
+    split(tableNameOrRegionName, splitPoint, false);
   }
 
   /**
    * Shen Li: add boolean reuseFile parameter
    */
   public void split(final String tableNameOrRegionName,
-    final String splitPoint, boolean reuseFile, String destA, String destB) 
+    final String splitPoint, boolean reuseFile) 
   throws IOException, InterruptedException {
     split(Bytes.toBytes(tableNameOrRegionName), Bytes.toBytes(splitPoint), 
-          reuseFile, destA, destB);
+          reuseFile);
   }
 
 
@@ -2049,12 +2048,11 @@ public class HBaseAdmin implements Admin {
    */
   public void split(final byte[] tableNameOrRegionName,
       final byte [] splitPoint) throws IOException, InterruptedException {
-    split(tableNameOrRegionName, splitPoint, false, null, null);
+    split(tableNameOrRegionName, splitPoint, false);
   }
 
   public void split(final byte[] tableNameOrRegionName,
-      final byte [] splitPoint, boolean reuseFile,
-      String destA, String destB) 
+      final byte [] splitPoint, boolean reuseFile) 
       throws IOException, InterruptedException {
     LOG.info("Shen Li: in split(byte[], byte[], boolean)");
     CatalogTracker ct = getCatalogTracker();
@@ -2067,7 +2065,7 @@ public class HBaseAdmin implements Admin {
         } else {
           split(regionServerPair.getSecond(), 
                 regionServerPair.getFirst(), splitPoint, 
-                reuseFile, destA, destB);
+                reuseFile);
         }
       } else {
         final TableName tableName =
@@ -2086,7 +2084,7 @@ public class HBaseAdmin implements Admin {
           // call out to region server to do split now
           // Shen Li: add parameter reuseFile
           split(pair.getSecond(), pair.getFirst(), splitPoint, 
-                reuseFile, destA, destB);
+                reuseFile);
         }
       }
     } finally {
@@ -2099,15 +2097,14 @@ public class HBaseAdmin implements Admin {
    */
   private void split(final ServerName sn, final HRegionInfo hri,
       byte[] splitPoint) throws IOException {
-    split(sn, hri, splitPoint, false, null, null);
+    split(sn, hri, splitPoint, false);
   }
 
   /**
    * Shen Li: add parameter reuseFile
    */
   private void split(final ServerName sn, final HRegionInfo hri,
-      byte[] splitPoint, boolean reuseFile, 
-      String destA, String destB) throws IOException {
+      byte[] splitPoint, boolean reuseFile) throws IOException {
     if (hri.getStartKey() != null && splitPoint != null &&
          Bytes.compareTo(hri.getStartKey(), splitPoint) == 0) {
        throw new IOException("should not give a splitkey which equals to startkey!");
@@ -2115,7 +2112,7 @@ public class HBaseAdmin implements Admin {
     AdminService.BlockingInterface admin = this.connection.getAdmin(sn);
     // Shen Li: add parameter reuseFile
     LOG.info("Shen Li: calling ProtobufUtil.split");
-    ProtobufUtil.split(admin, hri, splitPoint, reuseFile, destA, destB);
+    ProtobufUtil.split(admin, hri, splitPoint, reuseFile);
   }
 
   /**

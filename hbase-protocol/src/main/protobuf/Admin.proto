@@ -132,8 +132,6 @@ message SplitRegionRequest {
   optional bytes split_point = 2;
   // Shen Li: added field reuseFile
   optional bool reuse_file = 3 [default = false];
-  optional string dest_a = 4;
-  optional string dest_b = 5;
 }
 
 message SplitRegionResponse {
