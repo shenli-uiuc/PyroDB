@@ -334,6 +334,17 @@ public class HFile {
      * Return the file context for the HFile this writer belongs to
      */
     HFileContext getFileContext();
+
+    /**
+     * Shen Li
+     */
+    void sealCurBlock() throws IOException;
+
+    /**
+     * Shen Li
+     */
+    void setReplicaGroups(String replicaNamespace, 
+                          String [] replicaGroupIds);
   }
 
   /**

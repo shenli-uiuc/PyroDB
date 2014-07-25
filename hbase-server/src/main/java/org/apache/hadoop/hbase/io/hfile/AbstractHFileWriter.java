@@ -265,4 +265,20 @@ public abstract class AbstractHFileWriter implements HFile.Writer {
         HConstants.DATA_FILE_UMASK_KEY);
     return FSUtils.create(fs, path, perms, favoredNodes);
   }
+
+  /**
+   * Shen Li
+   */
+  public void sealCurBlock() throws IOException {
+    outputStream.sealCurBlock();
+  }
+
+  /**
+   * Shen Li
+   */
+  public void setReplicaGroups(String replicaNamespace,
+                               String [] replicaGroups) {
+    outputStream.setReplicaGroups(replicaNamespace,
+                                  replicaGroups);
+  }
 }

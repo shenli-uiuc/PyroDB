@@ -501,6 +501,5 @@ AssignmentManager.java            processRegionInTransitionAndBlockUntilAssigned
                                   handleRegionSplitting();
 
 TODO: !!!!!! do not need to actually split the StoreFile into two real StoreFiles!! Reference should still be OK as the HDFS block will be hosted on the daughter server!!!!!
-      1. continue AssignmentManager.java 3303 
-      2. alter HDFS replica group logic, add namespace
+      1. continue StoreFlusher.performFlush()  
       4. create a configuration file for pre-splits: refer to hbase.apache.org/book/rowkey.design.html

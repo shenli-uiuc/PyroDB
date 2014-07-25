@@ -74,6 +74,13 @@ public abstract class Compactor {
    */
   public interface CellSink {
     void append(KeyValue kv) throws IOException;
+
+    /**
+     * Shen Li
+     */
+    void sealCurBlock() throws IOException;
+    void setReplicaGroups(String replicaNamespace, 
+                          String [] replicaGroups);
   }
 
   public CompactionProgress getProgress() {

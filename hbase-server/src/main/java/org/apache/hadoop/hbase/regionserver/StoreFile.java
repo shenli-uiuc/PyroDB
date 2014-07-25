@@ -707,6 +707,21 @@ public class StoreFile {
     protected HFile.Writer writer;
 
     /**
+     * Shen Li
+     */
+    public void sealCurBlock() throws IOException {
+      writer.sealCurBlock();
+    }
+
+    /**
+     * Shen Li
+     */
+    public void setReplicaGroups(String replicaNamespace,
+                                 String [] replicaGroups) {
+      writer.setReplicaGroups(replicaNamespace, replicaGroups);
+    }
+
+    /**
      * Creates an HFile.Writer that also write helpful meta data.
      * @param fs file system to write to
      * @param path file name to create

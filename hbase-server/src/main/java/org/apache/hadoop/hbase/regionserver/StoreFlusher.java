@@ -102,6 +102,28 @@ abstract class StoreFlusher {
   }
 
   /**
+   * Shen Li
+   */
+  protected boolean shouldSeal(KeyValue kv) {
+    // TODO: compare kv with HRegionInfo.splitKeys
+    return false;
+  }
+
+  /**
+   * Shen Li
+   */
+  protected String getReplicaNamespace() {
+    return null;
+  }
+
+  /**
+   * Shen Li
+   */
+  protected String [] getReplicaGroups() {
+    return null;
+  }
+
+  /**
    * Performs memstore flush, writing data from scanner into sink.
    * @param scanner Scanner to get data from.
    * @param sink Sink to write data to. Could be StoreFile.Writer.
@@ -112,6 +134,7 @@ abstract class StoreFlusher {
     int compactionKVMax =
       conf.getInt(HConstants.COMPACTION_KV_MAX, HConstants.COMPACTION_KV_MAX_DEFAULT);
     List<Cell> kvs = new ArrayList<Cell>();
+
     boolean hasMore;
     do {
       hasMore = scanner.next(kvs, compactionKVMax);
@@ -126,6 +149,22 @@ abstract class StoreFlusher {
             // changing its memstoreTS could affect other threads/scanners.
             kv = kv.shallowCopy();
             kv.setMvccVersion(0);
+          }
+          // Shen Li: TODO check split boundary. use Store, if exceed boundary,
+          // call Store to seal block and reset replica group
+          //
+          // sink is a instance of StoreFile.Writer which has a
+          // HFile.Writer as a member variable
+          //
+          // HFile.Writer has a FSDataOutputStream member variable
+          // which can do seal, and set replica group operations.
+          //
+          if (shouldSeal(kv)) {
+            // TODO
+            //sink.flush();
+            sink.sealCurBlock();
+            sink.setReplicaGroups(getReplicaNamespace(), 
+                                  getReplicaGroups());
           }
           sink.append(kv);
         }

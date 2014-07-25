@@ -928,7 +928,7 @@ public class HRegion implements HeapSize { // , Writable{
     return this.fs.getRegionInfo();
   }
 
-  public Pair<String, String> getSplitHostnames() {
+  public Pair<String, String> getSplitHostnames() throws IOException{
     String namespace = new String(getRegionInfo().getReplicaNamespace());
     int [] groupIds = getRegionInfo().getReplicaGroupIds();
 
