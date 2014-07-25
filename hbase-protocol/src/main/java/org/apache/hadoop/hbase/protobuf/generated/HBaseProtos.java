@@ -3728,15 +3728,20 @@ public final class HBaseProtos {
      */
     int getRgId(int index);
 
-    // optional bytes replica_namespace = 9;
+    // optional string replica_namespace = 9;
     /**
-     * <code>optional bytes replica_namespace = 9;</code>
+     * <code>optional string replica_namespace = 9;</code>
      */
     boolean hasReplicaNamespace();
     /**
-     * <code>optional bytes replica_namespace = 9;</code>
+     * <code>optional string replica_namespace = 9;</code>
      */
-    com.google.protobuf.ByteString getReplicaNamespace();
+    java.lang.String getReplicaNamespace();
+    /**
+     * <code>optional string replica_namespace = 9;</code>
+     */
+    com.google.protobuf.ByteString
+        getReplicaNamespaceBytes();
 
     // optional string dest_hostname = 10;
     /**
@@ -4093,20 +4098,47 @@ public final class HBaseProtos {
     }
     private int rgIdMemoizedSerializedSize = -1;
 
-    // optional bytes replica_namespace = 9;
+    // optional string replica_namespace = 9;
     public static final int REPLICA_NAMESPACE_FIELD_NUMBER = 9;
-    private com.google.protobuf.ByteString replicaNamespace_;
+    private java.lang.Object replicaNamespace_;
     /**
-     * <code>optional bytes replica_namespace = 9;</code>
+     * <code>optional string replica_namespace = 9;</code>
      */
     public boolean hasReplicaNamespace() {
       return ((bitField0_ & 0x00000040) == 0x00000040);
     }
     /**
-     * <code>optional bytes replica_namespace = 9;</code>
+     * <code>optional string replica_namespace = 9;</code>
      */
-    public com.google.protobuf.ByteString getReplicaNamespace() {
-      return replicaNamespace_;
+    public java.lang.String getReplicaNamespace() {
+      java.lang.Object ref = replicaNamespace_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        if (bs.isValidUtf8()) {
+          replicaNamespace_ = s;
+        }
+        return s;
+      }
+    }
+    /**
+     * <code>optional string replica_namespace = 9;</code>
+     */
+    public com.google.protobuf.ByteString
+        getReplicaNamespaceBytes() {
+      java.lang.Object ref = replicaNamespace_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        replicaNamespace_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
     }
 
     // optional string dest_hostname = 10;
@@ -4161,7 +4193,7 @@ public final class HBaseProtos {
       split_ = false;
       splitKey_ = java.util.Collections.emptyList();
       rgId_ = java.util.Collections.emptyList();
-      replicaNamespace_ = com.google.protobuf.ByteString.EMPTY;
+      replicaNamespace_ = "";
       destHostname_ = "";
     }
     private byte memoizedIsInitialized = -1;
@@ -4217,7 +4249,7 @@ public final class HBaseProtos {
         output.writeInt32NoTag(rgId_.get(i));
       }
       if (((bitField0_ & 0x00000040) == 0x00000040)) {
-        output.writeBytes(9, replicaNamespace_);
+        output.writeBytes(9, getReplicaNamespaceBytes());
       }
       if (((bitField0_ & 0x00000080) == 0x00000080)) {
         output.writeBytes(10, getDestHostnameBytes());
@@ -4280,7 +4312,7 @@ public final class HBaseProtos {
       }
       if (((bitField0_ & 0x00000040) == 0x00000040)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(9, replicaNamespace_);
+          .computeBytesSize(9, getReplicaNamespaceBytes());
       }
       if (((bitField0_ & 0x00000080) == 0x00000080)) {
         size += com.google.protobuf.CodedOutputStream
@@ -4541,7 +4573,7 @@ public final class HBaseProtos {
         bitField0_ = (bitField0_ & ~0x00000040);
         rgId_ = java.util.Collections.emptyList();
         bitField0_ = (bitField0_ & ~0x00000080);
-        replicaNamespace_ = com.google.protobuf.ByteString.EMPTY;
+        replicaNamespace_ = "";
         bitField0_ = (bitField0_ & ~0x00000100);
         destHostname_ = "";
         bitField0_ = (bitField0_ & ~0x00000200);
@@ -4674,7 +4706,9 @@ public final class HBaseProtos {
           onChanged();
         }
         if (other.hasReplicaNamespace()) {
-          setReplicaNamespace(other.getReplicaNamespace());
+          bitField0_ |= 0x00000100;
+          replicaNamespace_ = other.replicaNamespace_;
+          onChanged();
         }
         if (other.hasDestHostname()) {
           bitField0_ |= 0x00000200;
@@ -5174,24 +5208,49 @@ public final class HBaseProtos {
         return this;
       }
 
-      // optional bytes replica_namespace = 9;
-      private com.google.protobuf.ByteString replicaNamespace_ = com.google.protobuf.ByteString.EMPTY;
+      // optional string replica_namespace = 9;
+      private java.lang.Object replicaNamespace_ = "";
       /**
-       * <code>optional bytes replica_namespace = 9;</code>
+       * <code>optional string replica_namespace = 9;</code>
        */
       public boolean hasReplicaNamespace() {
         return ((bitField0_ & 0x00000100) == 0x00000100);
       }
       /**
-       * <code>optional bytes replica_namespace = 9;</code>
+       * <code>optional string replica_namespace = 9;</code>
        */
-      public com.google.protobuf.ByteString getReplicaNamespace() {
-        return replicaNamespace_;
+      public java.lang.String getReplicaNamespace() {
+        java.lang.Object ref = replicaNamespace_;
+        if (!(ref instanceof java.lang.String)) {
+          java.lang.String s = ((com.google.protobuf.ByteString) ref)
+              .toStringUtf8();
+          replicaNamespace_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
       }
       /**
-       * <code>optional bytes replica_namespace = 9;</code>
+       * <code>optional string replica_namespace = 9;</code>
        */
-      public Builder setReplicaNamespace(com.google.protobuf.ByteString value) {
+      public com.google.protobuf.ByteString
+          getReplicaNamespaceBytes() {
+        java.lang.Object ref = replicaNamespace_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          replicaNamespace_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>optional string replica_namespace = 9;</code>
+       */
+      public Builder setReplicaNamespace(
+          java.lang.String value) {
         if (value == null) {
     throw new NullPointerException();
   }
@@ -5201,11 +5260,24 @@ public final class HBaseProtos {
         return this;
       }
       /**
-       * <code>optional bytes replica_namespace = 9;</code>
+       * <code>optional string replica_namespace = 9;</code>
        */
       public Builder clearReplicaNamespace() {
         bitField0_ = (bitField0_ & ~0x00000100);
         replicaNamespace_ = getDefaultInstance().getReplicaNamespace();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string replica_namespace = 9;</code>
+       */
+      public Builder setReplicaNamespaceBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000100;
+        replicaNamespace_ = value;
         onChanged();
         return this;
       }
@@ -16868,7 +16940,7 @@ public final class HBaseProtos {
       "ble_name\030\002 \002(\0132\n.TableName\022\021\n\tstart_key\030" +
       "\003 \001(\014\022\017\n\007end_key\030\004 \001(\014\022\017\n\007offline\030\005 \001(\010\022" +
       "\r\n\005split\030\006 \001(\010\022\021\n\tsplit_key\030\007 \003(\014\022\021\n\005rg_" +
-      "id\030\010 \003(\005B\002\020\001\022\031\n\021replica_namespace\030\t \001(\014\022" +
+      "id\030\010 \003(\005B\002\020\001\022\031\n\021replica_namespace\030\t \001(\t\022" +
       "\025\n\rdest_hostname\030\n \001(\t\"1\n\014FavoredNodes\022!" +
       "\n\014favored_node\030\001 \003(\0132\013.ServerName\"\225\001\n\017Re" +
       "gionSpecifier\0222\n\004type\030\001 \002(\0162$.RegionSpec" +

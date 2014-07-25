@@ -34,6 +34,8 @@ import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.monitoring.MonitoredTask;
 import org.apache.hadoop.hbase.regionserver.compactions.Compactor;
 
+// Shen Li
+import org.apache.hadoop.hbase.util.Bytes;
 /**
  * Store flusher interface. Turns a snapshot of memstore into a set of store files (usually one).
  * Custom implementation can be provided.
@@ -42,6 +44,10 @@ import org.apache.hadoop.hbase.regionserver.compactions.Compactor;
 abstract class StoreFlusher {
   protected Configuration conf;
   protected Store store;
+
+  // Shen Li: the 
+  byte [] nextSplitRow;
+  int splitKeyIndex;
 
   public StoreFlusher(Configuration conf, Store store) {
     this.conf = conf;
@@ -106,6 +112,14 @@ abstract class StoreFlusher {
    */
   protected boolean shouldSeal(KeyValue kv) {
     // TODO: compare kv with HRegionInfo.splitKeys
+    store.getRegionInfo();
+
+    byte [] row = kv.getRow();
+    if (null != nextSplitRow && 
+        Bytes.compareTo(nextSplitRow, row) <= 0) {
+      nextSplitRow = store.getRegionInfo().getSplitKey(++splitKeyIndex);
+      return true;
+    }
     return false;
   }
 
@@ -113,14 +127,14 @@ abstract class StoreFlusher {
    * Shen Li
    */
   protected String getReplicaNamespace() {
-    return null;
+    return store.getRegionInfo().getReplicaNamespace();
   }
 
   /**
    * Shen Li
    */
   protected String [] getReplicaGroups() {
-    return null;
+    return store.getRegionInfo().getReplicaGroups(splitKeyIndex);
   }
 
   /**
@@ -134,6 +148,10 @@ abstract class StoreFlusher {
     int compactionKVMax =
       conf.getInt(HConstants.COMPACTION_KV_MAX, HConstants.COMPACTION_KV_MAX_DEFAULT);
     List<Cell> kvs = new ArrayList<Cell>();
+
+    // Shen Li: init nextSplitRow
+    splitKeyIndex = 0;
+    nextSplitRow = store.getRegionInfo().getSplitKey(splitKeyIndex);
 
     boolean hasMore;
     do {
@@ -160,8 +178,7 @@ abstract class StoreFlusher {
           // which can do seal, and set replica group operations.
           //
           if (shouldSeal(kv)) {
-            // TODO
-            //sink.flush();
+            // the sealCurBlock will flush buffer before seal block
             sink.sealCurBlock();
             sink.setReplicaGroups(getReplicaNamespace(), 
                                   getReplicaGroups());

@@ -28,6 +28,7 @@ import java.io.SequenceInputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.LinkedList;
 
 import com.google.protobuf.HBaseZeroCopyByteString;
 // Shen Li
@@ -181,7 +182,7 @@ public class HRegionInfo implements Comparable<HRegionInfo> {
 
   // Shen Li:
   private byte[][] splitKeys = null;
-  private byte[] replicaNamespace = null;
+  private String replicaNamespace = null;
   private int[] replicaGroupIds = null;
   private String destHostname = null;
 
@@ -321,7 +322,7 @@ public class HRegionInfo implements Comparable<HRegionInfo> {
   public HRegionInfo(final TableName tableName, final byte[][] splitKeys,
                      final int startIndex, final int endIndex, 
                      final boolean split, final long regionid,
-                     final byte[] replicaNamespace, 
+                     final String replicaNamespace, 
                      final int[] resplicaGroupIds)
   throws IllegalArgumentException {
 
@@ -367,7 +368,7 @@ public class HRegionInfo implements Comparable<HRegionInfo> {
 
     // Shen Li: set replica group info
     if (null == replicaNamespace) {
-      this.replicaNamespace = this.regionName;
+      this.replicaNamespace = new String(this.regionName);
     } else {
       this.replicaNamespace = replicaNamespace;
     }
@@ -427,7 +428,7 @@ public class HRegionInfo implements Comparable<HRegionInfo> {
   /**
    * Shen Li:
    */
-  public byte [] getReplicaNamespace() {
+  public String getReplicaNamespace() {
     return this.replicaNamespace;
   }
 
@@ -436,6 +437,25 @@ public class HRegionInfo implements Comparable<HRegionInfo> {
    */
   public int [] getReplicaGroupIds() {
     return this.replicaGroupIds;
+  }
+
+  /**
+   * Shen Li
+   */
+  public String[] getReplicaGroups(int index) {
+    if (null == replicaGroupIds || index >= replicaGroupIds.length) {
+      return null;
+    } else {
+      LinkedList<String> retStr = new LinkedList<String>();
+      // get index of the leaf node
+      int pos = splitKeys.length + index;
+      while (true) {
+        retStr.add( "" + replicaGroupIds[pos--]);
+        if (pos < 0) break;
+        pos >>>= 1;
+      }
+      return retStr.toArray(new String[retStr.size()]);
+    }
   }
 
   /**
@@ -489,6 +509,17 @@ public class HRegionInfo implements Comparable<HRegionInfo> {
     }
     allKeys[splitKeyNum + 1] = endKey;
     return allKeys;
+  }
+
+  /**
+   * Shen Li: get the ith split key
+   */
+  public byte[] getSplitKey(int index) {
+    if (null == splitKeys || index >= splitKeys.length) {
+      return null;
+    } else {
+      return splitKeys[index];
+    }
   }
 
   /**
@@ -1056,8 +1087,7 @@ public class HRegionInfo implements Comparable<HRegionInfo> {
         builder.addRgId(rgId);
       }
     }
-    builder.setReplicaNamespace(HBaseZeroCopyByteString
-                                .wrap(info.replicaNamespace));
+    builder.setReplicaNamespace(info.replicaNamespace);
     // Shen Li: split-move
     if (null == info.destHostname)
     builder.setDestHostname(info.destHostname);
@@ -1116,8 +1146,7 @@ public class HRegionInfo implements Comparable<HRegionInfo> {
     }
 
     // Shen Li: replica namespace
-    byte[] replicaNamespace = 
-      proto.getReplicaNamespace().toByteArray();
+    String replicaNamespace = proto.getReplicaNamespace();
     String destHostname = proto.getDestHostname();
 
     HRegionInfo hri = new HRegionInfo(

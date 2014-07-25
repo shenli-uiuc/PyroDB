@@ -385,4 +385,18 @@ public abstract class StripeMultiFileWriter implements Compactor.CellSink {
       this.boundaries.add(right);
     }
   }
+
+  @Override
+  public void setReplicaGroups(String replicaNamespace,
+                               String [] replicaGroups) {
+    throw new IllegalStateException("Shen Li: setReplciaGroups "
+        + "method is not supported by StripeMultiFileWriter");
+  }
+
+  @Override
+  public void sealCurBlock() throws IOException {
+    throw new IllegalStateException("Shen Li: sealCurBlock "
+        + "method is not supported by StripeMultiFileWriter");
+  }
+
 }
