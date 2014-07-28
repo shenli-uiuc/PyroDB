@@ -29,12 +29,4 @@
     Distributed Log Replay requires that tags are enabled.
   </description>
 </property>       
-<property>
-  <name>hbase.regionserver.global.memstore.size.lower.limit</name>
-  <value>0.1</value>
-</property>       
-<property>
-  <name>hfile.min.blocksize.size</name>
-  <value>1048576</value>
-</property>       
 </configuration>

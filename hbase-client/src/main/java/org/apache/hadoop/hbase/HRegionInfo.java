@@ -409,6 +409,7 @@ public class HRegionInfo implements Comparable<HRegionInfo> {
     this.splitKeys = other.splitKeys;
     this.replicaNamespace = other.getReplicaNamespace();
     this.replicaGroupIds = other.getReplicaGroupIds();
+    this.destHostname = other.getDestHostname();
   }
 
   /**
@@ -1087,10 +1088,11 @@ public class HRegionInfo implements Comparable<HRegionInfo> {
         builder.addRgId(rgId);
       }
     }
-    builder.setReplicaNamespace(info.replicaNamespace);
+    if (null != info.replicaNamespace)
+      builder.setReplicaNamespace(info.replicaNamespace);
     // Shen Li: split-move
-    if (null == info.destHostname)
-    builder.setDestHostname(info.destHostname);
+    if (null != info.destHostname)
+      builder.setDestHostname(info.destHostname);
     return builder.build();
   }
 
