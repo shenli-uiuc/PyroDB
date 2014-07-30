@@ -29,7 +29,8 @@
 export JAVA_HOME=/usr/
 
 # Extra Java CLASSPATH elements.  Optional.
-# export HBASE_CLASSPATH=
+export HBASE_CLASSPATH=/home/shen/project/hadoop-2.4.1-src/hadoop-dist/target/hadoop-2.4.1/etc/hadoop:/home/shen/project/hadoop-2.4.1-src/hadoop-dist/target/hadoop-2.4.1/share/hadoop/common/lib/*:/home/shen/project/hadoop-2.4.1-src/hadoop-dist/target/hadoop-2.4.1/share/hadoop/common/*:/home/shen/project/hadoop-2.4.1-src/hadoop-dist/target/hadoop-2.4.1/share/hadoop/hdfs:/home/shen/project/hadoop-2.4.1-src/hadoop-dist/target/hadoop-2.4.1/share/hadoop/hdfs/lib/*:/home/shen/project/hadoop-2.4.1-src/hadoop-dist/target/hadoop-2.4.1/share/hadoop/hdfs/*:/home/shen/project/hadoop-2.4.1-src/hadoop-dist/target/hadoop-2.4.1/share/hadoop/yarn/lib/*:/home/shen/project/hadoop-2.4.1-src/hadoop-dist/target/hadoop-2.4.1/share/hadoop/yarn/*:/home/shen/project/hadoop-2.4.1-src/hadoop-dist/target/hadoop-2.4.1/share/hadoop/mapreduce/lib/*:/home/shen/project/hadoop-2.4.1-src/hadoop-dist/target/hadoop-2.4.1/share/hadoop/mapreduce/*:/contrib/capacity-scheduler/*.jar
+
 
 # The maximum amount of heap to use, in MB. Default is 1000.
 # export HBASE_HEAPSIZE=1000
